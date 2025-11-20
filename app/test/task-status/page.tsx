@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, CheckCircle, XCircle, Image as ImageIcon } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Image as ImageIcon,
+} from "lucide-react";
 
 export default function TestTaskStatusPage() {
   const [taskId, setTaskId] = useState("");
@@ -22,11 +27,15 @@ export default function TestTaskStatusPage() {
     setResult(null);
 
     try {
-      const response = await fetch(`/api/test/task-status?taskId=${encodeURIComponent(taskId.trim())}`);
+      const response = await fetch(
+        `/api/test/task-status?taskId=${encodeURIComponent(taskId.trim())}`
+      );
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || "Failed to fetch task status");
+        throw new Error(
+          data.message || data.error || "Failed to fetch task status"
+        );
       }
 
       setResult(data);
@@ -141,24 +150,35 @@ export default function TestTaskStatusPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Task ID:</span>
-                    <span className="text-white font-mono text-sm">{result.taskId}</span>
+                    <span className="text-white font-mono text-sm">
+                      {result.taskId}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-400">Status Flag:</span>
-                    <span className={`font-bold ${getStatusColor(result.successFlag)}`}>
-                      {result.successFlag} - {getStatusLabel(result.successFlag)}
+                    <span
+                      className={`font-bold ${getStatusColor(
+                        result.successFlag
+                      )}`}
+                    >
+                      {result.successFlag} -{" "}
+                      {getStatusLabel(result.successFlag)}
                     </span>
                   </div>
                   {result.createTime && (
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400">Create Time:</span>
-                      <span className="text-white text-sm">{result.createTime}</span>
+                      <span className="text-white text-sm">
+                        {result.createTime}
+                      </span>
                     </div>
                   )}
                   {result.completeTime && (
                     <div className="flex items-center justify-between">
                       <span className="text-slate-400">Complete Time:</span>
-                      <span className="text-white text-sm">{result.completeTime}</span>
+                      <span className="text-white text-sm">
+                        {result.completeTime}
+                      </span>
                     </div>
                   )}
                   {result.errorMessage && (
@@ -177,7 +197,9 @@ export default function TestTaskStatusPage() {
                 <div className="rounded-lg border border-white/10 bg-white/5 p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <CheckCircle className="h-5 w-5 text-green-400" />
-                    <h2 className="text-xl font-bold text-white">Generated Image</h2>
+                    <h2 className="text-xl font-bold text-white">
+                      Generated Image
+                    </h2>
                   </div>
                   <div className="space-y-4">
                     <div className="rounded-lg overflow-hidden border border-white/10 bg-black/20">
@@ -186,7 +208,8 @@ export default function TestTaskStatusPage() {
                         alt="Generated image"
                         className="w-full h-auto"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%231e293b' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23ef4444' font-size='16' font-family='Arial'%3EImage failed to load%3C/text%3E%3C/svg%3E";
+                          (e.target as HTMLImageElement).src =
+                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%231e293b' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23ef4444' font-size='16' font-family='Arial'%3EImage failed to load%3C/text%3E%3C/svg%3E";
                         }}
                       />
                     </div>
@@ -234,4 +257,3 @@ export default function TestTaskStatusPage() {
     </div>
   );
 }
-
