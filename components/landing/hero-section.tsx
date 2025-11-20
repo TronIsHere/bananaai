@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { stats } from "@/lib/data";
+import { HiArrowLeft } from "react-icons/hi";
 
 export function HeroSection() {
   return (
@@ -16,36 +17,26 @@ export function HeroSection() {
         <div className="space-y-6 sm:space-y-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[10px] font-semibold text-white/60 sm:gap-3 sm:px-4 sm:py-2 sm:text-xs">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            نانوبنانا • نسل ۳ • چندوجهی
+            قدرتمند ترین مدل ایجاد عکس
           </div>
           <h1 className="text-3xl font-black leading-tight tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
-            <span className="block text-white">پلتفرم مولد</span>
-            <span className="mx-2 mt-2 inline-flex items-center gap-2 rounded-full bg-white/5 px-3 py-1 text-xs font-semibold text-fuchsia-300 sm:px-4 sm:py-2 sm:text-sm md:text-base">
-              هوش مصنوعی + ایران
-            </span>
             <span className="mt-2 block bg-gradient-to-r from-cyan-300 via-emerald-200 to-yellow-200 bg-clip-text text-transparent">
-              خلق تصاویر سینمایی از ذهن شما
+              خلق تصاویر از ذهن شما
             </span>
           </h1>
           <p className="max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
-            BananaAI تنها پلتفرم ایرانی با موتور{" "}
-            <span className="font-semibold text-white">نانوبنانا</span> است
-            که متن، تصویر و ویدیو را در زیرساختی کم‌تاخیر پردازش می‌کند.
-            شبکه عصبی اختصاصی ما برای ادبیات فارسی و مفاهیم بصری منطقه آموزش
-            دیده است.
+            هوش مصنوعی بنانا تنها پلتفرم ایرانی با موتور{" "}
+            <span className="font-semibold text-white">نانوبنانا</span> است که
+            متن و تصویر در زیرساختی کم‌تاخیر پردازش می‌کند. شبکه عصبی اختصاصی ما
+            برای ادبیات فارسی و مفاهیم بصری منطقه آموزش دیده است.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-            <Button className="group flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 px-5 py-3.5 text-base font-extrabold text-white shadow-[0_25px_60px_rgba(14,165,233,0.4)] transition hover:translate-y-[-2px] sm:px-6 sm:py-4 sm:text-lg">
-              <span>ورود به استودیو</span>
-              <span className="text-xl transition group-hover:translate-x-1 sm:text-2xl">
-                →
+          <div className="flex">
+            <Button className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl border border-yellow-400/20 bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-slate-900/90 px-8 py-4 text-base font-bold text-white shadow-[0_0_20px_rgba(251,191,36,0.15)] backdrop-blur-md transition-all duration-300 hover:border-yellow-400/40 hover:shadow-[0_0_30px_rgba(251,191,36,0.3)] hover:scale-[1.02] sm:px-10 sm:py-5 sm:text-lg">
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/0 via-yellow-400/10 to-yellow-400/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-hover:animate-shimmer" />
+              <span className="relative z-10 flex items-center gap-2">
+                یه عکس تست برام بساز
+                <HiArrowLeft className="text-lg transition-transform duration-300 group-hover:-translate-x-1 sm:text-xl" />
               </span>
-            </Button>
-            <Button
-              variant="outline"
-              className="flex flex-1 items-center justify-center rounded-2xl border-white/10 bg-white/5 px-5 py-3.5 text-base font-bold text-white hover:border-white/30 sm:px-6 sm:py-4 sm:text-lg"
-            >
-              نمایش دمو
             </Button>
           </div>
           <div className="grid gap-4 rounded-2xl border border-white/5 bg-white/5 p-4 sm:grid-cols-3 sm:gap-6 sm:p-6">
@@ -65,7 +56,6 @@ export function HeroSection() {
           <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/20 via-transparent to-fuchsia-500/10 blur-3xl" />
           <div className="relative rounded-[32px] border border-white/5 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-4 shadow-2xl sm:p-6">
             <div className="mb-4 flex items-center justify-between text-[10px] uppercase tracking-[0.3em] text-white/40 sm:mb-6 sm:text-xs">
-              <span>ضبط عصبی</span>
               <span>زمان واقعی</span>
             </div>
             <div className="relative h-64 overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-slate-900 to-slate-950 sm:h-72">
@@ -73,28 +63,14 @@ export function HeroSection() {
               <div className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-300/40 blur-lg" />
               <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full border border-amber-200/20 blur-2xl" />
               <div className="absolute inset-6 rounded-2xl border border-white/10 bg-white/5 p-3 text-xs text-slate-200 sm:inset-10 sm:p-4 sm:text-sm">
-                <p className="mb-2 font-semibold text-cyan-200">
-                  پرامپت نمونه
-                </p>
+                <p className="mb-2 font-semibold text-cyan-200">پرامپت نمونه</p>
                 <p className="leading-relaxed text-white/80">
-                  «یک روبات نوازنده تار در بازار تبریز، نور نئون، سبک
-                  سینمایی، رندر Octane، لنز ۳۵mm»
+                  «یک روبات نوازنده تار در بازار تبریز، نور نئون، سبک سینمایی،
+                  رندر Octane، لنز ۳۵mm»
                 </p>
               </div>
             </div>
             <div className="mt-4 grid gap-3 text-xs text-white/70 sm:mt-6 sm:gap-4 sm:text-sm">
-              <div className="flex items-center justify-between">
-                <span>تاخیر GPU</span>
-                <span className="font-semibold text-emerald-300">
-                  ۱.۸ ثانیه
-                </span>
-              </div>
-              <div className="h-1 rounded-full bg-white/5">
-                <div
-                  className="h-full rounded-full bg-gradient-to-l from-emerald-400 to-cyan-400"
-                  style={{ width: "76%" }}
-                />
-              </div>
               <div className="flex items-center justify-between">
                 <span>دقت</span>
                 <span className="font-semibold text-cyan-300">۹۸.۷٪</span>
@@ -112,4 +88,3 @@ export function HeroSection() {
     </section>
   );
 }
-

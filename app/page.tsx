@@ -9,6 +9,8 @@ import { WorkflowSection } from "@/components/landing/workflow-section";
 import { TrustedBySection } from "@/components/landing/trusted-by-section";
 import { PricingSection } from "@/components/landing/pricing-section";
 import { BetaCTASection } from "@/components/landing/beta-cta-section";
+import { AboutSection } from "@/components/landing/about-section";
+import { ContactSection } from "@/components/landing/contact-section";
 import { Footer } from "@/components/landing/footer";
 
 export default function Home() {
@@ -27,7 +29,9 @@ export default function Home() {
         <WorkflowSection />
         <TrustedBySection />
         <PricingSection />
-        <BetaCTASection />
+        <AboutSection />
+        <ContactSection />
+        {/* <BetaCTASection /> */}
       </main>
       <Footer />
     </div>

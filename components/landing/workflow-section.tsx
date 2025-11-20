@@ -9,13 +9,13 @@ export function WorkflowSection() {
       <div className="rounded-3xl border border-white/5 bg-white/5 p-6 backdrop-blur-lg sm:p-8 md:p-10">
         <div className="flex flex-col gap-3 text-center sm:gap-4">
           <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/70 sm:text-xs">
-            خط لوله عصبی
+            نحوه پردازش تصویر
           </p>
           <h2 className="text-2xl font-black sm:text-3xl md:text-4xl">
             جریان کار از پرامپت تا پیکسل
           </h2>
         </div>
-        <div className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 md:grid-cols-4 md:gap-6">
+        <div className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
           {workflow.map((step) => (
             <div
               key={step.step}
@@ -37,4 +37,3 @@ export function WorkflowSection() {
     </section>
   );
 }
-
