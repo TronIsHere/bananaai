@@ -35,10 +35,16 @@ export default function TextToImagePage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedGenerated, setSelectedGenerated] = useState<GeneratedImage | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState<{
+    attempts: number;
+    elapsedSeconds: number;
+    estimatedTimeRemaining: number;
+  } | null>(null);
   
   const { user, refreshUserData } = useUser();
   const [numOutputs] = useState(1);
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number | null>(null);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -57,6 +63,8 @@ export default function TextToImagePage() {
     setError(null);
     setGeneratedImages([]);
     setSelectedGenerated(null);
+    setLoadingProgress({ attempts: 0, elapsedSeconds: 0, estimatedTimeRemaining: 120 });
+    startTimeRef.current = Date.now();
     
     try {
       // Step 1: Submit generation request
@@ -85,12 +93,24 @@ export default function TextToImagePage() {
       const taskId = data.taskId;
 
       // Step 2: Poll for task completion
-      const pollInterval = 2000; // Poll every 2 seconds
-      const maxAttempts = 60; // Maximum 2 minutes (60 * 2 seconds)
+      const pollInterval = 1500; // Poll every 1.5 seconds (faster)
+      const maxAttempts = 80; // Maximum 2 minutes (80 * 1.5 seconds)
       let attempts = 0;
 
       const pollTaskStatus = async (): Promise<void> => {
         try {
+          attempts++;
+          const elapsedSeconds = startTimeRef.current 
+            ? Math.floor((Date.now() - startTimeRef.current) / 1000) 
+            : 0;
+          const estimatedTimeRemaining = Math.max(0, 120 - elapsedSeconds);
+          
+          setLoadingProgress({
+            attempts,
+            elapsedSeconds,
+            estimatedTimeRemaining,
+          });
+
           const statusResponse = await fetch(`/api/generate/task-status/${taskId}`);
           const statusData = await statusResponse.json();
 
@@ -120,6 +140,8 @@ export default function TextToImagePage() {
               throw new Error("هیچ تصویری تولید نشد");
             }
             setIsLoading(false);
+            setLoadingProgress(null);
+            startTimeRef.current = null;
             if (pollingTimeoutRef.current) {
               clearTimeout(pollingTimeoutRef.current);
               pollingTimeoutRef.current = null;
@@ -127,6 +149,8 @@ export default function TextToImagePage() {
           } else if (statusData.status === "failed") {
             // Task failed
             setIsLoading(false);
+            setLoadingProgress(null);
+            startTimeRef.current = null;
             if (pollingTimeoutRef.current) {
               clearTimeout(pollingTimeoutRef.current);
               pollingTimeoutRef.current = null;
@@ -134,7 +158,6 @@ export default function TextToImagePage() {
             throw new Error(statusData.error || "تولید تصویر با خطا مواجه شد");
           } else if (statusData.status === "pending" || statusData.status === "processing") {
             // Still processing, continue polling
-            attempts++;
             if (attempts >= maxAttempts) {
               setIsLoading(false);
               if (pollingTimeoutRef.current) {
@@ -149,6 +172,8 @@ export default function TextToImagePage() {
         } catch (err: any) {
           console.error("Error polling task status:", err);
           setIsLoading(false);
+          setLoadingProgress(null);
+          startTimeRef.current = null;
           if (pollingTimeoutRef.current) {
             clearTimeout(pollingTimeoutRef.current);
             pollingTimeoutRef.current = null;
@@ -157,12 +182,14 @@ export default function TextToImagePage() {
         }
       };
 
-      // Start polling
-      pollingTimeoutRef.current = setTimeout(pollTaskStatus, pollInterval);
+      // Start polling immediately (don't wait for first interval)
+      pollTaskStatus();
     } catch (err: any) {
       console.error("Error generating image:", err);
       setError(err.message || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.");
       setIsLoading(false);
+      setLoadingProgress(null);
+      startTimeRef.current = null;
     }
   };
 
@@ -310,7 +337,12 @@ export default function TextToImagePage() {
         {/* Loading State */}
         {isLoading && (
           <LoadingState 
-            message="در حال تولید تصویر..."
+            message="در حال آماده‌سازی عکس هستیم"
+            subMessage={
+              loadingProgress
+                ? `زمان سپری شده: ${loadingProgress.elapsedSeconds} ثانیه`
+                : undefined
+            }
             numOutputs={numOutputs}
           />
         )}
