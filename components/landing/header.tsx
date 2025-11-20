@@ -1,14 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { navigationItems } from "@/lib/data";
+import { LoginDialog } from "@/components/dialog/login-dialog";
 
 interface HeaderProps {
   onMobileMenuOpen: () => void;
 }
 
 export function Header({ onMobileMenuOpen }: HeaderProps) {
+  const [loginOpen, setLoginOpen] = useState(false);
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
@@ -43,31 +46,41 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
           ))}
         </nav>
 
-        {/* Mobile Menu Button */}
-        <Button
-          onClick={onMobileMenuOpen}
-          variant="ghost"
-          size="icon"
-          className="flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-lg border border-white/10 md:hidden"
-        >
-          <span className="h-0.5 w-5 bg-white"></span>
-          <span className="h-0.5 w-5 bg-white"></span>
-          <span className="h-0.5 w-5 bg-white"></span>
-        </Button>
+        {/* Mobile Menu Button and Login */}
+        <div className="flex items-center gap-2 md:hidden">
+          <Button
+            onClick={() => setLoginOpen(true)}
+            variant="outline"
+            className="border-white/10 px-4 py-2 text-xs font-semibold text-white/80 hover:border-white/30 hover:text-white"
+          >
+            ورود
+          </Button>
+          <Button
+            onClick={onMobileMenuOpen}
+            variant="ghost"
+            size="icon"
+            className="flex h-10 w-10 flex-col items-center justify-center gap-1.5 rounded-lg border border-white/10"
+          >
+            <span className="h-0.5 w-5 bg-white"></span>
+            <span className="h-0.5 w-5 bg-white"></span>
+            <span className="h-0.5 w-5 bg-white"></span>
+          </Button>
+        </div>
 
         {/* Desktop Auth Buttons */}
         <div className="hidden gap-3 text-sm md:flex">
           <Button
+            onClick={() => setLoginOpen(true)}
             variant="outline"
             className="border-white/10 text-white/80 hover:border-white/30 hover:text-white"
           >
             ورود
           </Button>
-          <Button className="bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 font-bold text-slate-950 shadow-[0_10px_35px_rgba(251,191,36,0.35)] hover:scale-[1.02] hover:opacity-90">
-            ثبت‌نام
-          </Button>
         </div>
       </div>
+
+      {/* Dialogs */}
+      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </header>
   );
 }
