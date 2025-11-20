@@ -15,6 +15,7 @@ import {
 import { GeneratedImage } from "@/types/dashboard-types";
 import { GeneratedImageDisplay } from "@/components/dashboard/generated-image-display";
 import { LoadingState } from "@/components/dashboard/loading-state";
+import { saveImageToHistory } from "@/lib/history";
 
 const STYLE_PRESETS = [
   { id: "oil-painting", name: "نقاشی رنگ روغن", icon: Palette, prompt: "oil painting style, artistic brushstrokes" },
@@ -97,6 +98,8 @@ export default function ImageToImagePage() {
       }));
       setGeneratedImages(newImages);
       setSelectedGenerated(newImages[0]);
+      // Save to history
+      newImages.forEach((img) => saveImageToHistory(img));
       setIsLoading(false);
     }, 3000);
   };

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Menu, X, Sparkles, Image } from "lucide-react";
+import { LayoutDashboard, Menu, X, Sparkles, Image, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -21,6 +21,11 @@ const menuItems = [
     href: "/dashboard/image-to-image",
     label: "تصویر به تصویر",
     icon: Image,
+  },
+  {
+    href: "/dashboard/history",
+    label: "تاریخچه",
+    icon: History,
   },
 ];
 
