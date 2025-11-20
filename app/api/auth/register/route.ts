@@ -70,11 +70,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new user
+    // Create new user with free plan (12 credits for 3 image generations)
     const newUser = await User.create({
       mobileNumber,
       firstName,
       lastName,
+      credits: 12, // Free plan: 3 image generations × 4 credits per generation
+      currentPlan: null, // null represents free plan
     });
 
     return NextResponse.json(

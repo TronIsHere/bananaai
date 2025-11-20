@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/store/user-store";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +28,8 @@ interface LoginDialogProps {
 type Step = "mobile" | "otp" | "name";
 
 export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
+  const router = useRouter();
+  const setUser = useUserStore((state) => state.setUser);
   const [step, setStep] = useState<Step>("mobile");
   const [mobileNumber, setMobileNumber] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -135,9 +140,50 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
         // User doesn't exist, go to registration
         setStep("name");
       } else {
-        // User exists, login successful
-        // TODO: Store user data in context/localStorage if needed
+        // User exists, login with NextAuth
+        const result = await signIn("credentials", {
+          mobileNumber,
+          otp: otpCode,
+          redirect: false,
+        });
+
+        if (result?.error) {
+          setOtpError("خطا در ورود به سیستم");
+          setIsLoading(false);
+          return;
+        }
+
+        // Fetch and set user data in store
+        try {
+          const userResponse = await fetch("/api/user/me");
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            setUser({
+              id: userData.id,
+              mobileNumber: userData.mobileNumber,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              credits: userData.credits,
+              currentPlan: userData.currentPlan,
+              planStartDate: userData.planStartDate
+                ? new Date(userData.planStartDate)
+                : null,
+              planEndDate: userData.planEndDate
+                ? new Date(userData.planEndDate)
+                : null,
+              imagesGeneratedThisMonth: userData.imagesGeneratedThisMonth,
+              monthlyResetDate: userData.monthlyResetDate
+                ? new Date(userData.monthlyResetDate)
+                : null,
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+
+        // Login successful, redirect to dashboard
         onOpenChange(false);
+        router.push("/dashboard");
         // Reset form
         setStep("mobile");
         setMobileNumber("");
@@ -206,9 +252,50 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       }
 
       setIsLoading(false);
-      // Registration successful
-      // TODO: Store user data in context/localStorage if needed
+      // Registration successful, now login with NextAuth
+      const result = await signIn("credentials", {
+        mobileNumber,
+        otp: otpCode,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setFirstNameError("خطا در ورود به سیستم");
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch and set user data in store
+      try {
+        const userResponse = await fetch("/api/user/me");
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setUser({
+            id: userData.id,
+            mobileNumber: userData.mobileNumber,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            credits: userData.credits,
+            currentPlan: userData.currentPlan,
+            planStartDate: userData.planStartDate
+              ? new Date(userData.planStartDate)
+              : null,
+            planEndDate: userData.planEndDate
+              ? new Date(userData.planEndDate)
+              : null,
+            imagesGeneratedThisMonth: userData.imagesGeneratedThisMonth,
+            monthlyResetDate: userData.monthlyResetDate
+              ? new Date(userData.monthlyResetDate)
+              : null,
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+
+      // Login successful, redirect to dashboard
       onOpenChange(false);
+      router.push("/dashboard");
       // Reset form
       setStep("mobile");
       setMobileNumber("");

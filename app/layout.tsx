@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { AuthSessionProvider } from "@/components/providers/session-provider";
 
 const iranSans = localFont({
   src: [
@@ -44,7 +45,7 @@ export default function RootLayout({
       <body
         className={`${iranSans.variable} antialiased font-sans bg-slate-950 text-white`}
       >
-        {children}
+        <AuthSessionProvider>{children}</AuthSessionProvider>
       </body>
     </html>
   );

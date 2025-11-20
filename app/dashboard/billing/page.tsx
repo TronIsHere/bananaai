@@ -5,6 +5,7 @@ import { CreditCard, Calendar, Download, Check, Zap, Crown, Sparkles } from "luc
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { plans as landingPlans } from "@/lib/data";
+import { useUser } from "@/hooks/use-user";
 
 interface BillingHistoryItem {
   id: string;
@@ -49,16 +50,17 @@ const planIcons: Record<string, typeof Sparkles> = {
 export default function BillingPage() {
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const { user } = useUser();
 
   // Map landing plans to billing page format
   const plans = useMemo(() => {
     return landingPlans.map((plan) => ({
       ...plan,
       icon: planIcons[plan.name] || Sparkles,
-      current: plan.featured || false, // Set featured plan as current
+      current: plan.name === user.currentPlan,
       priceNumber: parseInt(plan.price.replace(/,/g, ""), 10),
     }));
-  }, []);
+  }, [user.currentPlan]);
 
   const currentPlan = plans.find((p) => p.current);
   
@@ -72,10 +74,20 @@ export default function BillingPage() {
     return match ? parseInt(match[1], 10) : 0;
   };
 
+  const formatDate = (date: Date | null) => {
+    if (!date) return "1403/10/15";
+    // Convert to Persian date (simplified - you might want to use a proper library)
+    return new Intl.DateTimeFormat("fa-IR", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(date);
+  };
+
   const usage = {
-    imagesGenerated: 95,
-    imagesLimit: currentPlan ? getImageLimit(currentPlan.name) : 150,
-    resetDate: "1403/10/15",
+    imagesGenerated: user.imagesGeneratedThisMonth,
+    imagesLimit: currentPlan ? getImageLimit(currentPlan.name) : 0,
+    resetDate: formatDate(user.monthlyResetDate),
   };
 
   const handleUpgrade = (planName: string) => {
@@ -148,10 +160,12 @@ export default function BillingPage() {
               {currentPlan?.tagline}
             </p>
           </div>
-          <div className="mb-4 flex items-center gap-2 text-xs text-slate-400 md:text-sm">
-            <Calendar className="h-4 w-4" />
-            <span>تجدید خودکار در {usage.resetDate}</span>
-          </div>
+          {user.planEndDate && (
+            <div className="mb-4 flex items-center gap-2 text-xs text-slate-400 md:text-sm">
+              <Calendar className="h-4 w-4" />
+              <span>تجدید خودکار در {formatDate(user.planEndDate)}</span>
+            </div>
+          )}
           <Button
             variant="outline"
             className="w-full border-white/10 text-white/80 hover:border-yellow-400/30 hover:text-yellow-400"

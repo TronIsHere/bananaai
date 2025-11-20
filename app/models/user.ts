@@ -166,7 +166,7 @@ const UserSchema: Schema = new Schema(
 );
 
 // Index for faster queries
-UserSchema.index({ mobileNumber: 1 });
+// Note: mobileNumber already has an index from unique: true, so we don't need to add it again
 UserSchema.index({ "imageHistory.timestamp": -1 });
 UserSchema.index({ "billingHistory.date": -1 });
 

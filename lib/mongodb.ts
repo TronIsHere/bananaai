@@ -6,20 +6,25 @@ if (!process.env.MONGODB_URI) {
 
 const uri: string = process.env.MONGODB_URI;
 
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
 declare global {
-  var mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  };
+  var mongooseCache: MongooseCache | undefined;
 }
 
-let cached = global.mongoose;
+let cached: MongooseCache = global.mongooseCache || {
+  conn: null,
+  promise: null,
+};
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+if (!global.mongooseCache) {
+  global.mongooseCache = cached;
 }
 
-async function connectDB() {
+async function connectDB(): Promise<typeof mongoose> {
   if (cached.conn) {
     return cached.conn;
   }
@@ -29,9 +34,7 @@ async function connectDB() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
-      return mongoose;
-    });
+    cached.promise = mongoose.connect(uri, opts);
   }
 
   try {
@@ -45,4 +48,3 @@ async function connectDB() {
 }
 
 export default connectDB;
-

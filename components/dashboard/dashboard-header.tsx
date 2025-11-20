@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { User, LogOut, Settings, CreditCard, Menu } from "lucide-react";
+import { useUser } from "@/hooks/use-user";
+import { useUserStore } from "@/store/user-store";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -14,7 +18,21 @@ export function DashboardHeader({
   onMenuClick,
   isMenuOpen,
 }: DashboardHeaderProps) {
+  const router = useRouter();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const { user } = useUser();
+  const resetUser = useUserStore((state) => state.resetUser);
+
+  const handleLogout = async () => {
+    setShowUserMenu(false);
+    resetUser();
+    await signOut({ redirect: false });
+    router.push("/");
+  };
+
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat("fa-IR").format(num);
+  };
 
   const handleMenuClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -60,7 +78,9 @@ export function DashboardHeader({
             <CreditCard className="h-4 w-4 text-yellow-400" />
             <div className="text-right">
               <p className="text-xs text-slate-400">اعتبار باقیمانده</p>
-              <p className="text-sm font-bold text-yellow-400">۱۲۵ تصویر</p>
+              <p className="text-sm font-bold text-yellow-400">
+                {formatNumber(user.credits)} توکن
+              </p>
             </div>
           </Link>
 
@@ -71,10 +91,10 @@ export function DashboardHeader({
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 transition hover:bg-white/10 active:scale-95 md:h-auto md:w-auto md:gap-2 md:px-3 md:py-2"
             >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-pink-500 text-sm font-bold text-slate-950">
-                ک
+                {user.firstName?.[0] || "ک"}
               </div>
               <span className="hidden text-sm font-semibold text-white md:block">
-                کاربر
+                {user.firstName || "کاربر"}
               </span>
             </button>
 
@@ -104,10 +124,7 @@ export function DashboardHeader({
                     </Link>
                     <button
                       className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-red-400 transition hover:bg-red-500/10"
-                      onClick={() => {
-                        setShowUserMenu(false);
-                        // Handle logout
-                      }}
+                      onClick={handleLogout}
                     >
                       <LogOut className="h-4 w-4" />
                       خروج از حساب
