@@ -1,9 +1,26 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { CreditCard, Calendar, Download, Check, Zap, Crown, Sparkles } from "lucide-react";
+import {
+  CreditCard,
+  Calendar,
+  Download,
+  Check,
+  XCircle as Close,
+  Zap,
+  Crown,
+  Sparkles,
+  Gift,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { plans as landingPlans } from "@/lib/data";
 import { useUser } from "@/hooks/use-user";
 
@@ -42,6 +59,7 @@ const mockBillingHistory: BillingHistoryItem[] = [
 
 // Map plan names to icons
 const planIcons: Record<string, typeof Sparkles> = {
+  رایگان: Gift,
   کاوشگر: Sparkles,
   خلاق: Crown,
   استودیو: Zap,
@@ -63,7 +81,7 @@ export default function BillingPage() {
   }, [user.currentPlan]);
 
   const currentPlan = plans.find((p) => p.current);
-  
+
   // Calculate usage based on current plan
   const getImageLimit = (planName: string) => {
     const plan = landingPlans.find((p) => p.name === planName);
@@ -112,7 +130,9 @@ export default function BillingPage() {
     };
     return (
       <span
-        className={`rounded-lg border px-2 py-1 text-xs font-semibold ${styles[status as keyof typeof styles]}`}
+        className={`rounded-lg border px-2 py-1 text-xs font-semibold ${
+          styles[status as keyof typeof styles]
+        }`}
       >
         {labels[status as keyof typeof labels]}
       </span>
@@ -127,7 +147,9 @@ export default function BillingPage() {
             <CreditCard className="h-5 w-5 text-yellow-400 md:h-6 md:w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-white md:text-4xl">صورتحساب و پرداخت</h1>
+            <h1 className="text-2xl font-black text-white md:text-4xl">
+              صورتحساب و پرداخت
+            </h1>
             <p className="text-xs text-slate-400 md:text-base">
               مدیریت اشتراک و پرداخت‌های خود
             </p>
@@ -187,7 +209,9 @@ export default function BillingPage() {
               <div
                 className="h-full rounded-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 transition-all"
                 style={{
-                  width: `${(usage.imagesGenerated / usage.imagesLimit) * 100}%`,
+                  width: `${
+                    (usage.imagesGenerated / usage.imagesLimit) * 100
+                  }%`,
                 }}
               />
             </div>
@@ -201,7 +225,9 @@ export default function BillingPage() {
 
       {/* Plans Section */}
       <div className="mb-6 md:mb-8">
-        <h2 className="mb-4 text-xl font-bold text-white md:text-2xl">پلن‌های موجود</h2>
+        <h2 className="mb-4 text-xl font-bold text-white md:text-2xl">
+          پلن‌های موجود
+        </h2>
         <div className="grid gap-4 md:grid-cols-3">
           {plans.map((plan) => {
             const Icon = plan.icon;
@@ -225,23 +251,39 @@ export default function BillingPage() {
                     <Icon className="h-6 w-6 text-yellow-400 md:h-7 md:w-7" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-white md:text-xl">{plan.name}</h3>
-                    <p className="text-xs text-slate-400 md:text-sm">{plan.nameEn}</p>
+                    <h3 className="text-lg font-bold text-white md:text-xl">
+                      {plan.name}
+                    </h3>
+                    <p className="text-xs text-slate-400 md:text-sm">
+                      {plan.nameEn}
+                    </p>
                   </div>
                 </div>
                 <div className="mb-4">
                   <p className="text-2xl font-black text-white md:text-3xl">
                     {plan.price} {plan.currency}
                   </p>
-                  <p className="mt-1 text-xs text-slate-400 md:text-sm">{plan.tagline}</p>
+                  <p className="mt-1 text-xs text-slate-400 md:text-sm">
+                    {plan.tagline}
+                  </p>
                 </div>
                 <ul className="mb-6 space-y-2">
-                  {plan.highlights.map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-xs text-slate-300 md:text-sm">
-                      <Check className="h-4 w-4 flex-shrink-0 text-emerald-400" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
+                  {plan.highlights.map((feature, idx) => {
+                    const isNoStorage = feature.includes("بدون نگهداری");
+                    return (
+                      <li
+                        key={idx}
+                        className="flex items-center gap-2 text-xs text-slate-300 md:text-sm"
+                      >
+                        {isNoStorage ? (
+                          <Close className="h-4 w-4 flex-shrink-0 text-red-400" />
+                        ) : (
+                          <Check className="h-4 w-4 flex-shrink-0 text-emerald-400" />
+                        )}
+                        <span>{feature}</span>
+                      </li>
+                    );
+                  })}
                 </ul>
                 <Button
                   onClick={() => !isCurrent && handleUpgrade(plan.name)}
@@ -263,7 +305,9 @@ export default function BillingPage() {
 
       {/* Billing History */}
       <div>
-        <h2 className="mb-4 text-xl font-bold text-white md:text-2xl">تاریخچه پرداخت</h2>
+        <h2 className="mb-4 text-xl font-bold text-white md:text-2xl">
+          تاریخچه پرداخت
+        </h2>
         <div className="overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 md:rounded-2xl">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -298,12 +342,18 @@ export default function BillingPage() {
                     <td className="px-4 py-3 text-sm font-medium text-white md:px-6">
                       {item.id}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-300 md:px-6">{item.date}</td>
-                    <td className="px-4 py-3 text-sm text-slate-300 md:px-6">{item.plan}</td>
+                    <td className="px-4 py-3 text-sm text-slate-300 md:px-6">
+                      {item.date}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-300 md:px-6">
+                      {item.plan}
+                    </td>
                     <td className="px-4 py-3 text-sm font-semibold text-white md:px-6">
                       {formatCurrency(item.amount)}
                     </td>
-                    <td className="px-4 py-3 md:px-6">{getStatusBadge(item.status)}</td>
+                    <td className="px-4 py-3 md:px-6">
+                      {getStatusBadge(item.status)}
+                    </td>
                     <td className="px-4 py-3 md:px-6">
                       <Button
                         variant="ghost"
@@ -326,7 +376,9 @@ export default function BillingPage() {
       <Dialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen}>
         <DialogContent className="bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-right text-white">ارتقا به پلن {selectedPlan}</DialogTitle>
+            <DialogTitle className="text-right text-white">
+              ارتقا به پلن {selectedPlan}
+            </DialogTitle>
             <DialogDescription className="text-right text-slate-400">
               آیا مطمئن هستید که می‌خواهید به پلن {selectedPlan} ارتقا دهید؟
             </DialogDescription>
@@ -351,4 +403,3 @@ export default function BillingPage() {
     </div>
   );
 }
-

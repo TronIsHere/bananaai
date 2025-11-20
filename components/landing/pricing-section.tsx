@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { plans } from "@/lib/data";
 import { HiCheck, HiSparkles } from "react-icons/hi2";
-import { FaImage, FaRocket, FaCrown, FaShieldAlt } from "react-icons/fa";
+import {
+  FaImage,
+  FaRocket,
+  FaCrown,
+  FaShieldAlt,
+  FaTimesCircle,
+} from "react-icons/fa";
 
 const featureIcons: Record<string, any> = {
   تصویر: FaImage,
@@ -129,18 +135,23 @@ export function PricingSection() {
                   {/* Features list */}
                   <ul className="mb-8 space-y-3">
                     {plan.highlights.map((item) => {
+                      const isNoStorage = item.includes("بدون نگهداری");
                       const iconKey = Object.keys(featureIcons).find((key) =>
                         item.includes(key)
                       );
                       const IconComponent = iconKey
                         ? featureIcons[iconKey]
+                        : isNoStorage
+                        ? FaTimesCircle
                         : HiCheck;
 
                       return (
                         <li key={item} className="flex items-start gap-3">
                           <div
                             className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md ${
-                              isFeatured
+                              isNoStorage
+                                ? "bg-red-500/20 text-red-400"
+                                : isFeatured
                                 ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-slate-950"
                                 : "bg-emerald-500/20 text-emerald-400"
                             }`}

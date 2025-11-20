@@ -11,9 +11,10 @@ import User from "@/app/models/user";
 const HARDCODED_OTP = "123456";
 
 export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const { mobileNumber, otp, firstName, lastName } = body;
+  
   try {
-    const body = await request.json();
-    const { mobileNumber, otp, firstName, lastName } = body;
 
     // Validate all inputs
     const mobileValidation = mobileNumberSchema.safeParse(mobileNumber);
@@ -60,8 +61,23 @@ export async function POST(request: NextRequest) {
     // Connect to database
     await connectDB();
 
+    // Drop problematic index if it exists (legacy index from when billingHistory.id had unique: true)
+    // This prevents duplicate key errors when users have empty billingHistory arrays
+    try {
+      await User.collection.dropIndex("billingHistory.id_1");
+      console.log("Dropped problematic billingHistory.id_1 index");
+    } catch (error: any) {
+      // Index doesn't exist or already dropped, ignore error
+      if (error.code !== 27 && error.codeName !== "IndexNotFound") {
+        console.warn("Could not drop billingHistory.id_1 index:", error.message);
+      }
+    }
+
+    // Normalize mobile number (trim whitespace and ensure consistent format)
+    const normalizedMobileNumber = mobileNumber.trim().replace(/\s+/g, "");
+
     // Check if user already exists
-    const existingUser = await User.findOne({ mobileNumber });
+    const existingUser = await User.findOne({ mobileNumber: normalizedMobileNumber });
 
     if (existingUser) {
       return NextResponse.json(
@@ -71,12 +87,20 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new user with free plan (12 credits for 3 image generations)
+    const now = new Date();
+    const monthlyResetDate = new Date(now);
+    monthlyResetDate.setMonth(monthlyResetDate.getMonth() + 1);
+    
     const newUser = await User.create({
-      mobileNumber,
+      mobileNumber: normalizedMobileNumber,
       firstName,
       lastName,
       credits: 12, // Free plan: 3 image generations × 4 credits per generation
-      currentPlan: null, // null represents free plan
+      currentPlan: "رایگان", // Free plan
+      planStartDate: now,
+      planEndDate: monthlyResetDate, // Monthly reset date
+      monthlyResetDate: monthlyResetDate,
+      imagesGeneratedThisMonth: 0,
     });
 
     return NextResponse.json(
@@ -94,8 +118,52 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Error registering user:", error);
     
-    // Handle duplicate key error (mobileNumber unique constraint)
+    // Handle duplicate key error
     if (error.code === 11000) {
+      // Check if it's the billingHistory.id index issue
+      if (error.keyPattern && error.keyPattern["billingHistory.id"]) {
+        // Try to drop the problematic index and retry once
+        try {
+          await User.collection.dropIndex("billingHistory.id_1");
+          console.log("Dropped problematic billingHistory.id_1 index and retrying");
+          
+          // Retry user creation with stored values
+          const normalizedMobileNumber = mobileNumber.trim().replace(/\s+/g, "");
+          const now = new Date();
+          const monthlyResetDate = new Date(now);
+          monthlyResetDate.setMonth(monthlyResetDate.getMonth() + 1);
+          
+          const newUser = await User.create({
+            mobileNumber: normalizedMobileNumber,
+            firstName,
+            lastName,
+            credits: 12,
+            currentPlan: "رایگان",
+            planStartDate: now,
+            planEndDate: monthlyResetDate,
+            monthlyResetDate: monthlyResetDate,
+            imagesGeneratedThisMonth: 0,
+          });
+
+          return NextResponse.json(
+            {
+              success: true,
+              user: {
+                id: newUser._id.toString(),
+                mobileNumber: newUser.mobileNumber,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+              },
+            },
+            { status: 201 }
+          );
+        } catch (retryError: any) {
+          // If retry fails, return error
+          console.error("Retry after dropping index also failed:", retryError);
+        }
+      }
+      
+      // Mobile number duplicate or other duplicate key error
       return NextResponse.json(
         { error: "کاربر با این شماره موبایل قبلاً ثبت‌نام کرده است" },
         { status: 400 }

@@ -7,7 +7,7 @@ interface UserState {
   firstName: string | null;
   lastName: string | null;
   credits: number;
-  currentPlan: "کاوشگر" | "خلاق" | "استودیو" | null;
+  currentPlan: "رایگان" | "کاوشگر" | "خلاق" | "استودیو" | null;
   planStartDate: Date | null;
   planEndDate: Date | null;
   imagesGeneratedThisMonth: number;

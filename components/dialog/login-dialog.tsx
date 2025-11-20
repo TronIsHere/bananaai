@@ -46,7 +46,11 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     e.preventDefault();
     setMobileError("");
 
-    const result = mobileNumberSchema.safeParse(mobileNumber);
+    // Normalize mobile number (trim whitespace)
+    const normalizedMobile = mobileNumber.trim().replace(/\s+/g, "");
+    setMobileNumber(normalizedMobile);
+
+    const result = mobileNumberSchema.safeParse(normalizedMobile);
     if (!result.success) {
       setMobileError(result.error.issues[0].message);
       return;
@@ -59,7 +63,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ mobileNumber }),
+        body: JSON.stringify({ mobileNumber: normalizedMobile }),
       });
 
       const data = await response.json();
@@ -117,12 +121,15 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
 
     setIsLoading(true);
     try {
+      // Normalize mobile number (trim whitespace)
+      const normalizedMobile = mobileNumber.trim().replace(/\s+/g, "");
+      
       const response = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ mobileNumber, otp: otpCode }),
+        body: JSON.stringify({ mobileNumber: normalizedMobile, otp: otpCode }),
       });
 
       const data = await response.json();
@@ -142,7 +149,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       } else {
         // User exists, login with NextAuth
         const result = await signIn("credentials", {
-          mobileNumber,
+          mobileNumber: normalizedMobile,
           otp: otpCode,
           redirect: false,
         });
@@ -221,13 +228,16 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     setIsLoading(true);
     try {
       const otpCode = otp.join("");
+      // Normalize mobile number (trim whitespace)
+      const normalizedMobile = mobileNumber.trim().replace(/\s+/g, "");
+      
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          mobileNumber,
+          mobileNumber: normalizedMobile,
           otp: otpCode,
           firstName,
           lastName,

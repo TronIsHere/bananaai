@@ -39,8 +39,11 @@ export async function POST(request: NextRequest) {
     // Connect to database
     await connectDB();
 
+    // Normalize mobile number (trim whitespace and ensure consistent format)
+    const normalizedMobileNumber = mobileNumber.trim().replace(/\s+/g, "");
+
     // Check if user exists
-    const user = await User.findOne({ mobileNumber });
+    const user = await User.findOne({ mobileNumber: normalizedMobileNumber });
 
     if (user) {
       // User exists, return user data

@@ -64,24 +64,26 @@ export async function POST(request: NextRequest) {
         if (user && !task.creditsDeducted) {
           user.credits = Math.max(0, user.credits - task.creditsReserved);
           
-          // Save generated image to history
-          const generatedImage = {
-            id: `${Date.now()}-0`,
-            url: resultImageUrl,
-            timestamp: new Date(),
-            prompt: task.prompt,
-          };
+          // Save generated image to history (skip for free plan)
+          if (user.currentPlan !== "رایگان") {
+            const generatedImage = {
+              id: `${Date.now()}-0`,
+              url: resultImageUrl,
+              timestamp: new Date(),
+              prompt: task.prompt,
+            };
 
-          // Add to image history
-          user.imageHistory = [
-            {
-              id: generatedImage.id,
-              url: generatedImage.url,
-              timestamp: generatedImage.timestamp,
-              prompt: generatedImage.prompt,
-            },
-            ...user.imageHistory,
-          ].slice(0, 1000); // Keep last 1000 images
+            // Add to image history
+            user.imageHistory = [
+              {
+                id: generatedImage.id,
+                url: generatedImage.url,
+                timestamp: generatedImage.timestamp,
+                prompt: generatedImage.prompt,
+              },
+              ...user.imageHistory,
+            ].slice(0, 1000); // Keep last 1000 images
+          }
 
           // Increment images generated counter
           user.imagesGeneratedThisMonth = (user.imagesGeneratedThisMonth || 0) + 1;

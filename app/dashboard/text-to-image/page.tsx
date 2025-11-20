@@ -16,7 +16,6 @@ import { demoPrompts } from "@/lib/data";
 import { GeneratedImage } from "@/types/dashboard-types";
 import { GeneratedImageDisplay } from "@/components/dashboard/generated-image-display";
 import { LoadingState } from "@/components/dashboard/loading-state";
-import { saveImageToHistory } from "@/lib/history";
 import { useUser } from "@/hooks/use-user";
 
 const STYLE_PRESETS = [
@@ -130,9 +129,6 @@ export default function TextToImagePage() {
 
               setGeneratedImages(newImages);
               setSelectedGenerated(newImages[0]);
-              
-              // Save to local history
-              newImages.forEach((img) => saveImageToHistory(img));
               
               // Refresh user data to update credits
               await refreshUserData();

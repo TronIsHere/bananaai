@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GeneratedImage } from "@/types/dashboard-types";
 import { ImageGallery } from "@/components/dashboard/image-gallery";
-import { getImageHistory, deleteImageFromHistory, clearImageHistory } from "@/lib/history";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export default function HistoryPage() {
@@ -14,12 +13,39 @@ export default function HistoryPage() {
   const [filteredImages, setFilteredImages] = useState<GeneratedImage[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const history = getImageHistory();
-    setImages(history);
-    setFilteredImages(history);
+    fetchHistory();
   }, []);
+
+  const fetchHistory = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const response = await fetch("/api/user/history");
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch history");
+      }
+      
+      const history = await response.json();
+      // Convert timestamp strings to Date objects
+      const formattedHistory = history.map((img: any) => ({
+        ...img,
+        timestamp: new Date(img.timestamp),
+      }));
+      
+      setImages(formattedHistory);
+      setFilteredImages(formattedHistory);
+    } catch (err) {
+      console.error("Error fetching history:", err);
+      setError("خطا در بارگذاری تاریخچه");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -36,22 +62,47 @@ export default function HistoryPage() {
     setFilteredImages(filtered);
   }, [searchQuery, images]);
 
-  const handleDelete = (imageId: string) => {
-    deleteImageFromHistory(imageId);
-    const updatedImages = images.filter((img) => img.id !== imageId);
-    setImages(updatedImages);
-    setFilteredImages(updatedImages.filter((img) => 
-      !searchQuery.trim() || 
-      img.prompt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      img.id.toLowerCase().includes(searchQuery.toLowerCase())
-    ));
+  const handleDelete = async (imageId: string) => {
+    try {
+      const response = await fetch(`/api/user/history/${imageId}`, {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to delete image");
+      }
+      
+      // Update local state
+      const updatedImages = images.filter((img) => img.id !== imageId);
+      setImages(updatedImages);
+      setFilteredImages(updatedImages.filter((img) => 
+        !searchQuery.trim() || 
+        img.prompt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        img.id.toLowerCase().includes(searchQuery.toLowerCase())
+      ));
+    } catch (err) {
+      console.error("Error deleting image:", err);
+      setError("خطا در حذف تصویر");
+    }
   };
 
-  const handleClearAll = () => {
-    clearImageHistory();
-    setImages([]);
-    setFilteredImages([]);
-    setIsClearDialogOpen(false);
+  const handleClearAll = async () => {
+    try {
+      const response = await fetch("/api/user/history", {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to clear history");
+      }
+      
+      setImages([]);
+      setFilteredImages([]);
+      setIsClearDialogOpen(false);
+    } catch (err) {
+      console.error("Error clearing history:", err);
+      setError("خطا در پاک کردن تاریخچه");
+    }
   };
 
   const handleDownload = (imageUrl: string, id: string) => {
@@ -62,6 +113,29 @@ export default function HistoryPage() {
     link.click();
     document.body.removeChild(link);
   };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <p className="text-slate-400">در حال بارگذاری...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <p className="text-red-400">{error}</p>
+          <Button onClick={fetchHistory} variant="outline">
+            تلاش مجدد
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -107,11 +181,21 @@ export default function HistoryPage() {
       </div>
 
       {/* Gallery */}
-      <ImageGallery
-        images={filteredImages}
-        onDelete={handleDelete}
-        onDownload={handleDownload}
-      />
+      {filteredImages.length > 0 ? (
+        <ImageGallery
+          images={filteredImages}
+          onDelete={handleDelete}
+          onDownload={handleDownload}
+        />
+      ) : images.length === 0 ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <p className="text-slate-400">تاریخچه شما خالی است</p>
+        </div>
+      ) : (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <p className="text-slate-400">نتیجه‌ای یافت نشد</p>
+        </div>
+      )}
 
       {/* Clear All Dialog */}
       <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>

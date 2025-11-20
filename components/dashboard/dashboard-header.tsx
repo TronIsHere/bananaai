@@ -5,7 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Settings, CreditCard, Menu } from "lucide-react";
+import {
+  User,
+  LogOut,
+  Settings,
+  CreditCard,
+  Menu,
+  ChevronDown,
+} from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 import { useUserStore } from "@/store/user-store";
 
@@ -96,6 +103,7 @@ export function DashboardHeader({
               <span className="hidden text-sm font-semibold text-white md:block">
                 {user.firstName || "کاربر"}
               </span>
+              <ChevronDown className="hidden h-4 w-4 text-white md:block" />
             </button>
 
             {showUserMenu && (

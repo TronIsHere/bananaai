@@ -15,7 +15,6 @@ const BillingHistorySchema = new Schema<IBillingHistory>(
     id: {
       type: String,
       required: true,
-      unique: true,
     },
     date: {
       type: Date,
@@ -30,7 +29,7 @@ const BillingHistorySchema = new Schema<IBillingHistory>(
     plan: {
       type: String,
       required: true,
-      enum: ["کاوشگر", "خلاق", "استودیو"],
+      enum: ["رایگان", "کاوشگر", "خلاق", "استودیو"],
     },
     status: {
       type: String,
@@ -85,7 +84,7 @@ export interface IUser extends Document {
   lastName: string;
   // Credits and Plan
   credits: number; // Remaining image credits
-  currentPlan: "کاوشگر" | "خلاق" | "استودیو" | null;
+  currentPlan: "رایگان" | "کاوشگر" | "خلاق" | "استودیو" | null;
   planStartDate: Date | null; // When current plan started
   planEndDate: Date | null; // When current plan expires/renews
   imagesGeneratedThisMonth: number; // Counter for monthly usage
@@ -129,8 +128,8 @@ const UserSchema: Schema = new Schema(
     },
     currentPlan: {
       type: String,
-      enum: ["کاوشگر", "خلاق", "استودیو", null],
-      default: null,
+      enum: ["رایگان", "کاوشگر", "خلاق", "استودیو", null],
+      default: "رایگان",
     },
     planStartDate: {
       type: Date,
@@ -173,5 +172,13 @@ UserSchema.index({ "billingHistory.date": -1 });
 // Prevent re-compilation during development
 const User: Model<IUser> =
   mongoose.models.User || mongoose.model<IUser>("User", UserSchema);
+
+// Drop problematic index if it exists (legacy index from when billingHistory.id had unique: true)
+// This index causes duplicate key errors when users have empty billingHistory arrays
+if (mongoose.connection.readyState === 1) {
+  User.collection.dropIndex("billingHistory.id_1").catch(() => {
+    // Index doesn't exist or already dropped, ignore error
+  });
+}
 
 export default User;

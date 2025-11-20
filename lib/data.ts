@@ -45,6 +45,22 @@ export const workflow = [
 
 export const plans = [
   {
+    name: "رایگان",
+    nameEn: "Free",
+    price: "0",
+    currency: "تومان",
+    tagline: "برای شروع و امتحان سرویس",
+    highlights: [
+      "۳ تصویر",
+      "متن به تصویر",
+      "کیفیت ۵۱۲×۵۱۲",
+      "پردازش عادی",
+      "واترمارک BananaAI",
+      "بدون نگهداری تصاویر",
+    ],
+    cta: "شروع کنید",
+  },
+  {
     name: "کاوشگر",
     nameEn: "Explorer",
     price: "350,000",
