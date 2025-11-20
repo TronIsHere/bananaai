@@ -1,10 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Image as ImageIcon, Download, Copy, Check, Trash2, X, Calendar, FileText } from "lucide-react";
+import {
+  Image as ImageIcon,
+  Download,
+  Copy,
+  Check,
+  Trash2,
+  X,
+  Calendar,
+  FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GeneratedImage } from "@/types/dashboard-types";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface ImageGalleryProps {
   images: GeneratedImage[];
@@ -12,8 +26,14 @@ interface ImageGalleryProps {
   onDownload?: (imageUrl: string, id: string) => void;
 }
 
-export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps) {
-  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
+export function ImageGallery({
+  images,
+  onDelete,
+  onDownload,
+}: ImageGalleryProps) {
+  const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(
+    null
+  );
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -22,7 +42,11 @@ export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps
     setIsDialogOpen(true);
   };
 
-  const handleDownload = (imageUrl: string, id: string, e?: React.MouseEvent) => {
+  const handleDownload = (
+    imageUrl: string,
+    id: string,
+    e?: React.MouseEvent
+  ) => {
     e?.stopPropagation();
     if (onDownload) {
       onDownload(imageUrl, id);
@@ -81,7 +105,9 @@ export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps
         <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-800/50">
           <ImageIcon className="h-10 w-10 text-slate-600" />
         </div>
-        <h3 className="mb-2 text-xl font-bold text-white">هیچ تصویری یافت نشد</h3>
+        <h3 className="mb-2 text-xl font-bold text-white">
+          هیچ تصویری یافت نشد
+        </h3>
         <p className="text-slate-400">شما هنوز تصویری تولید نکرده‌اید</p>
       </div>
     );
@@ -141,7 +167,9 @@ export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-4xl bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-right text-white">جزئیات تصویر</DialogTitle>
+            <DialogTitle className="text-right text-white pt-4">
+              جزئیات تصویر
+            </DialogTitle>
           </DialogHeader>
           {selectedImage && (
             <div className="space-y-4">
@@ -156,28 +184,41 @@ export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps
                 <div className="flex items-start gap-2 rounded-lg bg-slate-800/50 p-3">
                   <FileText className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0 md:h-5 md:w-5" />
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-white/80 mb-1 md:text-sm">پرامپت:</p>
-                    <p className="text-xs text-white/90 text-right md:text-sm">{selectedImage.prompt}</p>
+                    <p className="text-xs font-semibold text-white/80 mb-1 md:text-sm">
+                      پرامپت:
+                    </p>
+                    <p className="text-xs text-white/90 text-right md:text-sm">
+                      {selectedImage.prompt}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 rounded-lg bg-slate-800/50 p-3">
                   <Calendar className="h-4 w-4 text-yellow-400 flex-shrink-0 md:h-5 md:w-5" />
                   <div>
-                    <p className="text-xs font-semibold text-white/80 mb-1 md:text-sm">تاریخ تولید:</p>
-                    <p className="text-xs text-white/90 md:text-sm">{formatDate(selectedImage.timestamp)}</p>
+                    <p className="text-xs font-semibold text-white/80 mb-1 md:text-sm">
+                      تاریخ تولید:
+                    </p>
+                    <p className="text-xs text-white/90 md:text-sm">
+                      {formatDate(selectedImage.timestamp)}
+                    </p>
                   </div>
                 </div>
               </div>
               <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:gap-3">
                 <Button
-                  onClick={() => handleDownload(selectedImage.url, selectedImage.id)}
+                  onClick={() =>
+                    handleDownload(selectedImage.url, selectedImage.id)
+                  }
+                  variant="outline"
                   className="flex-1 border-white/10 text-white/80 active:scale-95 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
                 >
                   <Download className="h-4 w-4 ml-2 md:h-5 md:w-5" />
                   دانلود تصویر
                 </Button>
                 <Button
-                  onClick={() => handleCopyPrompt(selectedImage.id, selectedImage.prompt)}
+                  onClick={() =>
+                    handleCopyPrompt(selectedImage.id, selectedImage.prompt)
+                  }
                   variant="outline"
                   className="flex-1 border-white/10 text-white/80 active:scale-95 hover:border-white/30 hover:text-white"
                 >
@@ -211,4 +252,3 @@ export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps
     </>
   );
 }
-
