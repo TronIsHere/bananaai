@@ -131,21 +131,21 @@ export default function ImageToImagePage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20">
-            <ImageIcon className="h-6 w-6 text-yellow-400" />
+      <div className="mb-6 md:mb-8">
+        <div className="mb-3 flex items-center gap-2 md:mb-4 md:gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-12 md:w-12">
+            <ImageIcon className="h-5 w-5 text-yellow-400 md:h-6 md:w-6" />
           </div>
           <div>
-            <h1 className="text-4xl font-black text-white">تصویر به تصویر</h1>
-            <p className="text-slate-400">تبدیل و پردازش تصویر با هوش مصنوعی پیشرفته</p>
+            <h1 className="text-2xl font-black text-white md:text-4xl">تصویر به تصویر</h1>
+            <p className="text-xs text-slate-400 md:text-base">تبدیل و پردازش تصویر با هوش مصنوعی پیشرفته</p>
           </div>
         </div>
       </div>
 
-      <div className="space-y-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-5">
+      <div className="space-y-4 md:space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          <div className="grid gap-4 lg:grid-cols-5 lg:gap-6">
             {/* Image Upload Section - Takes 2 columns */}
             <div className="lg:col-span-2 space-y-3">
               <label className="text-sm font-semibold text-white/80 block text-right">
@@ -158,21 +158,21 @@ export default function ImageToImagePage() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onClick={() => fileInputRef.current?.click()}
-                  className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all h-[400px] ${
+                  className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all h-[250px] active:scale-[0.98] md:h-[400px] ${
                     isDragging
                       ? "border-yellow-400 bg-yellow-400/10 scale-[1.02]"
                       : "border-white/20 bg-white/5 hover:border-yellow-400/50 hover:bg-white/10"
                   }`}
                 >
-                  <div className="text-center p-8">
-                    <Upload className={`mx-auto mb-4 h-16 w-16 transition-all ${isDragging ? 'text-yellow-400 scale-110' : 'text-slate-400'}`} />
-                    <p className="mb-2 text-base font-semibold text-white">
+                  <div className="text-center p-4 md:p-8">
+                    <Upload className={`mx-auto mb-3 h-12 w-12 transition-all md:mb-4 md:h-16 md:w-16 ${isDragging ? 'text-yellow-400 scale-110' : 'text-slate-400'}`} />
+                    <p className="mb-2 text-sm font-semibold text-white md:text-base">
                       {isDragging ? "رها کنید!" : "کلیک کنید یا تصویر را بکشید"}
                     </p>
-                    <p className="text-sm text-slate-400 mb-4">
+                    <p className="text-xs text-slate-400 mb-3 md:mb-4 md:text-sm">
                       فرمت‌های پشتیبانی شده: JPG, PNG, GIF, WEBP
                     </p>
-                    <div className="inline-flex items-center gap-2 rounded-lg bg-yellow-400/10 px-4 py-2 text-xs text-yellow-400">
+                    <div className="inline-flex items-center gap-2 rounded-lg bg-yellow-400/10 px-3 py-1.5 text-[10px] text-yellow-400 md:px-4 md:py-2 md:text-xs">
                       <Zap className="h-3 w-3" />
                       حداکثر 10 مگابایت
                     </div>
@@ -191,7 +191,7 @@ export default function ImageToImagePage() {
                     <img
                       src={selectedImage}
                       alt="Selected"
-                      className="w-full object-contain h-[400px]"
+                      className="w-full object-contain h-[250px] md:h-[400px]"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <button
@@ -224,7 +224,7 @@ export default function ImageToImagePage() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="چه تغییراتی می‌خواهید در تصویر اعمال شود؟ مثلاً: به سبک نقاشی رنگ روغن، افزودن نور غروب، تبدیل به سیاه و سفید..."
-                  className="w-full rounded-lg border border-white/10 bg-white/5 p-4 text-right text-white placeholder:text-white/30 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 min-h-[140px] resize-none"
+                  className="w-full rounded-lg border border-white/10 bg-white/5 p-3 text-right text-sm text-white placeholder:text-white/30 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 min-h-[120px] resize-none md:p-4 md:text-base md:min-h-[140px]"
                   dir="rtl"
                 />
               </div>
@@ -234,7 +234,7 @@ export default function ImageToImagePage() {
                 <label className="text-sm font-semibold text-white/80 block text-right">
                   سبک‌های پیشنهادی
                 </label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                   {STYLE_PRESETS.map((preset) => {
                     const Icon = preset.icon;
                     return (
@@ -242,10 +242,10 @@ export default function ImageToImagePage() {
                         key={preset.id}
                         type="button"
                         onClick={() => applyPreset(preset)}
-                        className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80 transition hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
+                        className="flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[10px] text-white/80 transition active:scale-95 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400 md:gap-2 md:px-3 md:text-xs"
                       >
-                        <Icon className="h-3 w-3" />
-                        <span>{preset.name}</span>
+                        <Icon className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{preset.name}</span>
                       </button>
                     );
                   })}
@@ -258,7 +258,7 @@ export default function ImageToImagePage() {
           <Button
             type="submit"
             disabled={isLoading || !selectedImage || !prompt.trim()}
-            className="w-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 font-bold text-slate-950 shadow-[0_10px_35px_rgba(251,191,36,0.35)] hover:scale-[1.02] hover:opacity-90 h-14 text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            className="w-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 font-bold text-slate-950 shadow-[0_10px_35px_rgba(251,191,36,0.35)] hover:scale-[1.02] hover:opacity-90 h-12 text-base active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 md:h-14 md:text-lg"
           >
             {isLoading ? (
               <>

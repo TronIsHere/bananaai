@@ -65,15 +65,15 @@ export default function HistoryPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20">
-              <History className="h-6 w-6 text-yellow-400" />
+      <div className="mb-6 md:mb-8">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-12 md:w-12">
+              <History className="h-5 w-5 text-yellow-400 md:h-6 md:w-6" />
             </div>
             <div>
-              <h1 className="text-4xl font-black text-white">تاریخچه تصاویر</h1>
-              <p className="text-slate-400">
+              <h1 className="text-2xl font-black text-white md:text-4xl">تاریخچه تصاویر</h1>
+              <p className="text-xs text-slate-400 md:text-base">
                 تمام تصاویر تولید شده شما ({images.length} تصویر)
               </p>
             </div>
@@ -82,9 +82,9 @@ export default function HistoryPage() {
             <Button
               onClick={() => setIsClearDialogOpen(true)}
               variant="outline"
-              className="border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500"
+              className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500 active:scale-95 md:w-auto"
             >
-              <Trash2 className="h-5 w-5 ml-2" />
+              <Trash2 className="h-4 w-4 ml-2 md:h-5 md:w-5" />
               پاک کردن همه
             </Button>
           )}
@@ -93,13 +93,13 @@ export default function HistoryPage() {
         {/* Search Bar */}
         {images.length > 0 && (
           <div className="relative">
-            <Search className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 md:h-5 md:w-5" />
             <Input
               type="text"
-              placeholder="جستجو در تاریخچه (بر اساس پرامپت)..."
+              placeholder="جستجو در تاریخچه..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-white/10 bg-white/5 pr-10 text-white placeholder:text-white/30 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20"
+              className="w-full rounded-lg border border-white/10 bg-white/5 pr-9 text-sm text-white placeholder:text-white/30 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 md:pr-10 md:text-base"
               dir="rtl"
             />
           </div>

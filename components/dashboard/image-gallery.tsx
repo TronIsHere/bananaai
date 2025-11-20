@@ -89,7 +89,7 @@ export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
         {images.map((image) => (
           <div
             key={image.id}
@@ -115,10 +115,10 @@ export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps
                 </div>
               </div>
             </div>
-            <div className="absolute top-2 left-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="absolute top-2 left-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 md:opacity-0">
               <button
                 onClick={(e) => handleDownload(image.url, image.id, e)}
-                className="rounded-lg bg-slate-900/90 p-1.5 text-white transition hover:bg-yellow-400 hover:text-slate-950"
+                className="rounded-lg bg-slate-900/90 p-1.5 text-white transition active:scale-95 hover:bg-yellow-400 hover:text-slate-950"
                 title="دانلود"
               >
                 <Download className="h-3 w-3" />
@@ -126,7 +126,7 @@ export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps
               {onDelete && (
                 <button
                   onClick={(e) => handleDelete(image.id, e)}
-                  className="rounded-lg bg-slate-900/90 p-1.5 text-white transition hover:bg-red-500"
+                  className="rounded-lg bg-slate-900/90 p-1.5 text-white transition active:scale-95 hover:bg-red-500"
                   title="حذف"
                 >
                   <Trash2 className="h-3 w-3" />
@@ -154,41 +154,41 @@ export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps
               </div>
               <div className="space-y-3">
                 <div className="flex items-start gap-2 rounded-lg bg-slate-800/50 p-3">
-                  <FileText className="h-5 w-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+                  <FileText className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0 md:h-5 md:w-5" />
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-white/80 mb-1">پرامپت:</p>
-                    <p className="text-sm text-white/90 text-right">{selectedImage.prompt}</p>
+                    <p className="text-xs font-semibold text-white/80 mb-1 md:text-sm">پرامپت:</p>
+                    <p className="text-xs text-white/90 text-right md:text-sm">{selectedImage.prompt}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 rounded-lg bg-slate-800/50 p-3">
-                  <Calendar className="h-5 w-5 text-yellow-400 flex-shrink-0" />
+                  <Calendar className="h-4 w-4 text-yellow-400 flex-shrink-0 md:h-5 md:w-5" />
                   <div>
-                    <p className="text-sm font-semibold text-white/80 mb-1">تاریخ تولید:</p>
-                    <p className="text-sm text-white/90">{formatDate(selectedImage.timestamp)}</p>
+                    <p className="text-xs font-semibold text-white/80 mb-1 md:text-sm">تاریخ تولید:</p>
+                    <p className="text-xs text-white/90 md:text-sm">{formatDate(selectedImage.timestamp)}</p>
                   </div>
                 </div>
               </div>
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:gap-3">
                 <Button
                   onClick={() => handleDownload(selectedImage.url, selectedImage.id)}
-                  className="flex-1 border-white/10 text-white/80 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
+                  className="flex-1 border-white/10 text-white/80 active:scale-95 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
                 >
-                  <Download className="h-5 w-5 ml-2" />
+                  <Download className="h-4 w-4 ml-2 md:h-5 md:w-5" />
                   دانلود تصویر
                 </Button>
                 <Button
                   onClick={() => handleCopyPrompt(selectedImage.id, selectedImage.prompt)}
                   variant="outline"
-                  className="flex-1 border-white/10 text-white/80 hover:border-white/30 hover:text-white"
+                  className="flex-1 border-white/10 text-white/80 active:scale-95 hover:border-white/30 hover:text-white"
                 >
                   {copiedId === selectedImage.id ? (
                     <>
-                      <Check className="h-5 w-5 ml-2 text-green-400" />
+                      <Check className="h-4 w-4 ml-2 text-green-400 md:h-5 md:w-5" />
                       کپی شد!
                     </>
                   ) : (
                     <>
-                      <Copy className="h-5 w-5 ml-2" />
+                      <Copy className="h-4 w-4 ml-2 md:h-5 md:w-5" />
                       کپی پرامپت
                     </>
                   )}
@@ -197,9 +197,9 @@ export function ImageGallery({ images, onDelete, onDownload }: ImageGalleryProps
                   <Button
                     onClick={(e) => handleDelete(selectedImage.id, e)}
                     variant="outline"
-                    className="border-white/10 text-white/80 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400"
+                    className="flex-1 border-white/10 text-white/80 active:scale-95 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 sm:flex-1"
                   >
-                    <Trash2 className="h-5 w-5 ml-2" />
+                    <Trash2 className="h-4 w-4 ml-2 md:h-5 md:w-5" />
                     حذف
                   </Button>
                 )}
