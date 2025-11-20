@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Image as ImageIcon, 
@@ -10,12 +10,14 @@ import {
   Sparkles,
   Palette,
   Wand2,
-  Zap
+  Zap,
+  AlertCircle
 } from "lucide-react";
 import { GeneratedImage } from "@/types/dashboard-types";
 import { GeneratedImageDisplay } from "@/components/dashboard/generated-image-display";
 import { LoadingState } from "@/components/dashboard/loading-state";
 import { saveImageToHistory } from "@/lib/history";
+import { useUser } from "@/hooks/use-user";
 
 const STYLE_PRESETS = [
   { id: "oil-painting", name: "نقاشی رنگ روغن", icon: Palette, prompt: "oil painting style, artistic brushstrokes" },
@@ -29,23 +31,51 @@ const STYLE_PRESETS = [
 export default function ImageToImagePage() {
   const [prompt, setPrompt] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedGenerated, setSelectedGenerated] = useState<GeneratedImage | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState<{
+    attempts: number;
+    elapsedSeconds: number;
+    estimatedTimeRemaining: number;
+  } | null>(null);
   
+  const { user, refreshUserData } = useUser();
   const [numOutputs] = useState(1);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number | null>(null);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleImageSelect = (file: File) => {
     if (file && file.type.startsWith("image/")) {
+      // Validate file size (10MB max)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        setError("حجم فایل نباید بیشتر از 10 مگابایت باشد");
+        return;
+      }
+
+      setSelectedImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedImage(reader.result as string);
         setGeneratedImages([]);
         setSelectedGenerated(null);
+        setError(null);
       };
       reader.readAsDataURL(file);
     }
@@ -75,8 +105,10 @@ export default function ImageToImagePage() {
 
   const handleRemoveImage = () => {
     setSelectedImage(null);
+    setSelectedImageFile(null);
     setGeneratedImages([]);
     setSelectedGenerated(null);
+    setError(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -84,24 +116,164 @@ export default function ImageToImagePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedImage || !prompt.trim()) return;
+    if (!selectedImageFile || !prompt.trim()) return;
 
     setIsLoading(true);
+    setError(null);
+    setGeneratedImages([]);
+    setSelectedGenerated(null);
+    setLoadingProgress({ attempts: 0, elapsedSeconds: 0, estimatedTimeRemaining: 120 });
+    startTimeRef.current = Date.now();
     
-    // Simulate API call with multiple outputs
-    setTimeout(() => {
-      const newImages: GeneratedImage[] = Array.from({ length: numOutputs }, (_, i) => ({
-        id: `${Date.now()}-${i}`,
-        url: `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512'%3E%3Crect fill='%23${['1e293b', '334155', '475569'][i % 3]}' width='512' height='512'/%3E%3Ctext x='50%25' y='45%25' dominant-baseline='middle' text-anchor='middle' fill='%23fbbf24' font-size='16' font-family='Arial'%3Eتصویر پردازش شده ${i + 1}%3C/text%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' fill='%23cbd5e1' font-size='12' font-family='Arial'%3E${prompt.substring(0, 20)}...%3C/text%3E%3C/svg%3E`,
-        timestamp: new Date(),
-        prompt: prompt,
-      }));
-      setGeneratedImages(newImages);
-      setSelectedGenerated(newImages[0]);
-      // Save to history
-      newImages.forEach((img) => saveImageToHistory(img));
+    try {
+      // Step 1: Upload image to get public URL
+      const formData = new FormData();
+      formData.append("image", selectedImageFile);
+
+      const uploadResponse = await fetch("/api/upload/image", {
+        method: "POST",
+        body: formData,
+      });
+
+      const uploadData = await uploadResponse.json();
+
+      if (!uploadResponse.ok) {
+        throw new Error(uploadData.message || uploadData.error || "Failed to upload image");
+      }
+
+      if (!uploadData.success || !uploadData.url) {
+        throw new Error("خطا در آپلود تصویر");
+      }
+
+      const imageUrl = uploadData.url;
+
+      // Step 2: Submit generation request
+      const response = await fetch("/api/generate/image-to-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          imageUrls: [imageUrl], // Array of input image URLs
+          numImages: numOutputs,
+          image_size: "16:9",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || "Failed to generate image");
+      }
+
+      if (!data.success || !data.taskId) {
+        throw new Error(data.message || "خطا در ثبت درخواست تولید تصویر");
+      }
+
+      const taskId = data.taskId;
+
+      // Step 3: Poll for task completion
+      const pollInterval = 1500; // Poll every 1.5 seconds
+      const maxAttempts = 80; // Maximum 2 minutes
+      let attempts = 0;
+
+      const pollTaskStatus = async (): Promise<void> => {
+        try {
+          attempts++;
+          const elapsedSeconds = startTimeRef.current 
+            ? Math.floor((Date.now() - startTimeRef.current) / 1000) 
+            : 0;
+          const estimatedTimeRemaining = Math.max(0, 120 - elapsedSeconds);
+          
+          setLoadingProgress({
+            attempts,
+            elapsedSeconds,
+            estimatedTimeRemaining,
+          });
+
+          const statusResponse = await fetch(`/api/generate/task-status/${taskId}`);
+          const statusData = await statusResponse.json();
+
+          if (!statusResponse.ok) {
+            throw new Error(statusData.message || statusData.error || "خطا در بررسی وضعیت");
+          }
+
+          if (statusData.status === "completed") {
+            // Task completed successfully
+            if (statusData.images && statusData.images.length > 0) {
+              const newImages: GeneratedImage[] = statusData.images.map((url: string, index: number) => ({
+                id: `${Date.now()}-${index}`,
+                url,
+                timestamp: new Date(),
+                prompt: prompt.trim(),
+              }));
+
+              setGeneratedImages(newImages);
+              setSelectedGenerated(newImages[0]);
+              
+              // Save to local history
+              newImages.forEach((img) => saveImageToHistory(img));
+              
+              // Refresh user data to update credits
+              await refreshUserData();
+            } else {
+              throw new Error("هیچ تصویری تولید نشد");
+            }
+            setIsLoading(false);
+            setLoadingProgress(null);
+            startTimeRef.current = null;
+            if (pollingTimeoutRef.current) {
+              clearTimeout(pollingTimeoutRef.current);
+              pollingTimeoutRef.current = null;
+            }
+          } else if (statusData.status === "failed") {
+            // Task failed
+            setIsLoading(false);
+            setLoadingProgress(null);
+            startTimeRef.current = null;
+            if (pollingTimeoutRef.current) {
+              clearTimeout(pollingTimeoutRef.current);
+              pollingTimeoutRef.current = null;
+            }
+            throw new Error(statusData.error || "تولید تصویر با خطا مواجه شد");
+          } else if (statusData.status === "pending" || statusData.status === "processing") {
+            // Still processing, continue polling
+            if (attempts >= maxAttempts) {
+              setIsLoading(false);
+              setLoadingProgress(null);
+              startTimeRef.current = null;
+              if (pollingTimeoutRef.current) {
+                clearTimeout(pollingTimeoutRef.current);
+                pollingTimeoutRef.current = null;
+              }
+              throw new Error("زمان انتظار به پایان رسید. لطفاً دوباره تلاش کنید.");
+            } else {
+              pollingTimeoutRef.current = setTimeout(pollTaskStatus, pollInterval);
+            }
+          }
+        } catch (err: any) {
+          console.error("Error polling task status:", err);
+          setIsLoading(false);
+          setLoadingProgress(null);
+          startTimeRef.current = null;
+          if (pollingTimeoutRef.current) {
+            clearTimeout(pollingTimeoutRef.current);
+            pollingTimeoutRef.current = null;
+          }
+          setError(err.message || "خطا در بررسی وضعیت تولید تصویر");
+        }
+      };
+
+      // Start polling immediately
+      pollTaskStatus();
+    } catch (err: any) {
+      console.error("Error generating image:", err);
+      setError(err.message || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.");
       setIsLoading(false);
-    }, 3000);
+      setLoadingProgress(null);
+      startTimeRef.current = null;
+    }
   };
 
   const handleDownload = (imageUrl: string, id: string) => {
@@ -126,7 +298,13 @@ export default function ImageToImagePage() {
   };
 
   const applyPreset = (preset: typeof STYLE_PRESETS[0]) => {
-    setPrompt(preset.prompt);
+    if (prompt.trim()) {
+      // Append to existing prompt on a new line
+      setPrompt(`${prompt.trim()}\n${preset.prompt}`);
+    } else {
+      // If prompt is empty, just set the preset
+      setPrompt(preset.prompt);
+    }
   };
 
   return (
@@ -144,6 +322,22 @@ export default function ImageToImagePage() {
       </div>
 
       <div className="space-y-4 md:space-y-6">
+        {/* Error Message */}
+        {error && (
+          <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-red-400 font-medium">{error}</p>
+            </div>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-400 hover:text-red-300 transition"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
           <div className="grid gap-4 lg:grid-cols-5 lg:gap-6">
             {/* Image Upload Section - Takes 2 columns */}
@@ -277,7 +471,12 @@ export default function ImageToImagePage() {
         {/* Loading State */}
         {isLoading && (
           <LoadingState 
-            message="در حال پردازش تصویر..."
+            message="در حال آماده‌سازی عکس هستیم"
+            subMessage={
+              loadingProgress
+                ? `زمان سپری شده: ${loadingProgress.elapsedSeconds} ثانیه`
+                : undefined
+            }
             numOutputs={numOutputs}
           />
         )}

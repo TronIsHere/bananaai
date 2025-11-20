@@ -213,7 +213,13 @@ export default function TextToImagePage() {
   };
 
   const applyPreset = (preset: typeof STYLE_PRESETS[0]) => {
-    setPrompt(preset.prompt);
+    if (prompt.trim()) {
+      // Append to existing prompt on a new line
+      setPrompt(`${prompt.trim()}\n${preset.prompt}`);
+    } else {
+      // If prompt is empty, just set the preset
+      setPrompt(preset.prompt);
+    }
   };
 
   return (
