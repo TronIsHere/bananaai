@@ -24,7 +24,7 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
           </div>
           <div>
             <p className="text-[10px] font-semibold text-slate-400 sm:text-xs">
-              آزمایشگاه هوش مصنوعی فارسی
+              آزمایشگاه هوش مصنوعی
             </p>
             <p className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-xl font-black text-transparent sm:text-2xl">
               BananaAI
@@ -84,4 +84,3 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
     </header>
   );
 }
-

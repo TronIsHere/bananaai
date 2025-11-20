@@ -37,7 +37,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const [lastNameError, setLastNameError] = useState<string>("");
   const [userExists, setUserExists] = useState<boolean | null>(null);
 
-  const handleMobileSubmit = (e: React.FormEvent) => {
+  const handleMobileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMobileError("");
 
@@ -48,11 +48,30 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mobileNumber }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMobileError(data.error || "خطا در ارسال کد تأیید");
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(false);
       setStep("otp");
-    }, 1000);
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      setMobileError("خطا در ارتباط با سرور");
+      setIsLoading(false);
+    }
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -80,7 +99,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     }
   };
 
-  const handleOtpSubmit = (e: React.FormEvent) => {
+  const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const otpCode = otp.join("");
     setOtpError("");
@@ -92,17 +111,32 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     }
 
     setIsLoading(true);
-    // Simulate API call - check if user exists
-    setTimeout(() => {
-      setIsLoading(false);
-      // Simulate: user doesn't exist (you would check this from API)
-      const userDoesNotExist = true; // This would come from API response
-      setUserExists(!userDoesNotExist);
+    try {
+      const response = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mobileNumber, otp: otpCode }),
+      });
 
-      if (userDoesNotExist) {
+      const data = await response.json();
+
+      if (!response.ok) {
+        setOtpError(data.error || "خطا در تأیید کد");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(false);
+      setUserExists(data.userExists);
+
+      if (!data.userExists) {
+        // User doesn't exist, go to registration
         setStep("name");
       } else {
         // User exists, login successful
+        // TODO: Store user data in context/localStorage if needed
         onOpenChange(false);
         // Reset form
         setStep("mobile");
@@ -110,11 +144,16 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
         setOtp(["", "", "", "", "", ""]);
         setMobileError("");
         setOtpError("");
+        setUserExists(null);
       }
-    }, 1500);
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      setOtpError("خطا در ارتباط با سرور");
+      setIsLoading(false);
+    }
   };
 
-  const handleNameSubmit = (e: React.FormEvent) => {
+  const handleNameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFirstNameError("");
     setLastNameError("");
@@ -134,10 +173,41 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     }
 
     setIsLoading(true);
-    // Simulate API call - register user
-    setTimeout(() => {
+    try {
+      const otpCode = otp.join("");
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mobileNumber,
+          otp: otpCode,
+          firstName,
+          lastName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Check if error is for firstName or lastName
+        if (data.error.includes("نام")) {
+          setFirstNameError(data.error);
+        } else if (data.error.includes("نام خانوادگی")) {
+          setLastNameError(data.error);
+        } else if (data.error.includes("کد تأیید")) {
+          setOtpError(data.error);
+        } else {
+          setFirstNameError(data.error || "خطا در ثبت‌نام");
+        }
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(false);
-      // Here you would navigate to dashboard
+      // Registration successful
+      // TODO: Store user data in context/localStorage if needed
       onOpenChange(false);
       // Reset form
       setStep("mobile");
@@ -150,7 +220,11 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       setFirstNameError("");
       setLastNameError("");
       setUserExists(null);
-    }, 1500);
+    } catch (error) {
+      console.error("Error registering user:", error);
+      setFirstNameError("خطا در ارتباط با سرور");
+      setIsLoading(false);
+    }
   };
 
   const handleBack = () => {
