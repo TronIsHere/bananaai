@@ -1,10 +1,32 @@
 import type { Metadata } from "next";
-import { Vazirmatn } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const vazirmatn = Vazirmatn({
-  subsets: ["arabic"],
-  variable: "--font-vazirmatn",
+const iranSans = localFont({
+  src: [
+    {
+      path: "../public/fonts/IRANSans-Light.woff",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/IRANSans-Reg.woff",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/IRANSans-SemiBold.woff",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../public/fonts/IRANSans-Bold.woff",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-iran-sans",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -20,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body
-        className={`${vazirmatn.variable} antialiased font-sans bg-gray-50 text-gray-900`}
+        className={`${iranSans.variable} antialiased font-sans bg-slate-950 text-white`}
       >
         {children}
       </body>
