@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { stats, demoPrompts } from "@/lib/data";
-import { AnimationState } from "@/types";
+import { AnimationState } from "@/types/landing-types";
 import { HiArrowLeft } from "react-icons/hi";
 import { useEffect, useState } from "react";
 
