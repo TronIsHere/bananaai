@@ -41,12 +41,12 @@ export async function POST(request: NextRequest) {
     user.planStartDate = planStartDate;
     user.planEndDate = planEndDate;
 
-    // Calculate credits based on plan
+    // Calculate credits based on plan (4 credits per image)
     const planCredits: Record<string, number> = {
-      free: 3,
-      explorer: 50,
-      creator: 150,
-      studio: 500,
+      free: 12, // 3 images * 4 credits
+      explorer: 200, // 50 images * 4 credits
+      creator: 600, // 150 images * 4 credits
+      studio: 2000, // 500 images * 4 credits
     };
 
     // Set credits to the plan's limit

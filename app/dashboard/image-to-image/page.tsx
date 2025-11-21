@@ -82,6 +82,7 @@ const IMAGE_SIZES = [
 
 export default function ImageToImagePage() {
   const [prompt, setPrompt] = useState("");
+  const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
@@ -212,6 +213,19 @@ export default function ImageToImagePage() {
 
       const imageUrl = uploadData.url;
 
+      // Construct final prompt with style
+      let finalPrompt = prompt.trim();
+
+      // Add selected style
+      if (selectedStyleId) {
+        const selectedStyle = STYLE_PRESETS.find(
+          (s) => s.id === selectedStyleId
+        );
+        if (selectedStyle) {
+          finalPrompt += `\n${selectedStyle.prompt}`;
+        }
+      }
+
       // Step 2: Submit generation request
       const response = await fetch("/api/generate/image-to-image", {
         method: "POST",
@@ -219,7 +233,7 @@ export default function ImageToImagePage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          prompt: prompt.trim(),
+          prompt: finalPrompt,
           imageUrls: [imageUrl], // Array of input image URLs
           numImages: numOutputs,
           image_size: imageSize,
@@ -376,12 +390,10 @@ export default function ImageToImagePage() {
   };
 
   const applyPreset = (preset: (typeof STYLE_PRESETS)[0]) => {
-    if (prompt.trim()) {
-      // Append to existing prompt on a new line
-      setPrompt(`${prompt.trim()}\n${preset.prompt}`);
+    if (selectedStyleId === preset.id) {
+      setSelectedStyleId(null);
     } else {
-      // If prompt is empty, just set the preset
-      setPrompt(preset.prompt);
+      setSelectedStyleId(preset.id);
     }
   };
 
@@ -551,7 +563,11 @@ export default function ImageToImagePage() {
                               key={preset.id}
                               type="button"
                               onClick={() => applyPreset(preset)}
-                              className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-[10px] text-white/70 transition active:scale-95 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
+                              className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border px-2 py-2.5 text-[10px] transition active:scale-95 ${
+                                selectedStyleId === preset.id
+                                  ? "border-yellow-400 bg-yellow-400/20 text-yellow-400"
+                                  : "border-white/10 bg-white/5 text-white/70 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
+                              }`}
                             >
                               <Icon className="h-4 w-4 flex-shrink-0" />
                               <span className="truncate w-full text-center">
