@@ -11,6 +11,8 @@ import {
   Crown,
   Sparkles,
   Gift,
+  Coins,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -145,14 +147,14 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto px-4 md:px-6 pb-10">
       <div className="mb-6 md:mb-8">
         <div className="flex items-center gap-2 md:gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-12 md:w-12">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-12 md:w-12 flex-shrink-0">
             <CreditCard className="h-5 w-5 text-yellow-400 md:h-6 md:w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-white md:text-4xl">
+            <h1 className="text-xl font-black text-white md:text-4xl">
               صورتحساب و پرداخت
             </h1>
             <p className="text-xs text-slate-400 md:text-base">
@@ -165,72 +167,126 @@ export default function BillingPage() {
       {/* Current Plan & Usage */}
       <div className="mb-6 md:mb-8 grid gap-4 md:grid-cols-2">
         {/* Current Plan Card */}
-        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 p-6 md:rounded-2xl md:p-8">
+        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 p-4 md:rounded-2xl md:p-8">
           <div className="mb-4 flex items-center justify-between">
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-slate-400 md:text-sm">اشتراک فعلی</p>
-              <h3 className="mt-1 text-xl font-bold text-white md:text-2xl">
+              <h3 className="mt-1 text-lg font-bold text-white md:text-2xl truncate">
                 {currentPlan?.name}
               </h3>
             </div>
             {currentPlan && (
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-14 md:w-14">
-                <currentPlan.icon className="h-6 w-6 text-yellow-400 md:h-7 md:w-7" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-14 md:w-14 flex-shrink-0 mr-2">
+                <currentPlan.icon className="h-5 w-5 text-yellow-400 md:h-7 md:w-7" />
               </div>
             )}
           </div>
           <div className="mb-4">
-            <p className="text-2xl font-black text-white md:text-3xl">
+            <p className="text-xl font-black text-white md:text-3xl">
               {currentPlan && `${currentPlan.price} ${currentPlan.currency}`}
             </p>
-            <p className="text-xs text-slate-400 md:text-sm">
+            <p className="text-xs text-slate-400 md:text-sm mt-1">
               {currentPlan?.tagline}
             </p>
           </div>
           {user.planEndDate && (
             <div className="mb-4 flex items-center gap-2 text-xs text-slate-400 md:text-sm">
-              <Calendar className="h-4 w-4" />
-              <span>تجدید خودکار در {formatDate(user.planEndDate)}</span>
+              <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
+              <span className="break-words">
+                تجدید خودکار در {formatDate(user.planEndDate)}
+              </span>
             </div>
           )}
           <Button
             variant="outline"
-            className="w-full border-white/10 text-white/80 hover:border-yellow-400/30 hover:text-yellow-400"
+            className="w-full border-white/10 text-white/80 hover:border-yellow-400/30 hover:text-yellow-400 h-10 md:h-auto"
           >
             تغییر اشتراک
           </Button>
         </div>
 
-        {/* Usage Card */}
-        <div className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 p-6 md:rounded-2xl md:p-8">
-          <div className="mb-4">
-            <p className="text-xs text-slate-400 md:text-sm">استفاده این ماه</p>
-            <h3 className="mt-1 text-xl font-bold text-white md:text-2xl">
-              {usage.imagesGenerated} / {usage.imagesLimit}
-            </h3>
-          </div>
-          <div className="mb-4">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 transition-all"
-                style={{
-                  width: `${
-                    (usage.imagesGenerated / usage.imagesLimit) * 100
-                  }%`,
-                }}
-              />
+        {/* Credits Card */}
+        <div className="relative overflow-hidden rounded-xl border border-yellow-400/30 bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-pink-500/10 p-4 shadow-[0_0_40px_rgba(251,191,36,0.15)] md:rounded-2xl md:p-8">
+          {/* Decorative background elements */}
+          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-yellow-400/10 blur-3xl" />
+          <div className="absolute -bottom-6 -left-6 h-24 w-24 rounded-full bg-orange-400/10 blur-2xl" />
+
+          <div className="relative z-10">
+            {/* Header with icon */}
+            <div className="mb-6 flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400/30 via-orange-400/30 to-pink-500/30 shadow-lg shadow-yellow-400/20 md:h-16 md:w-16">
+                  <Coins className="h-6 w-6 text-yellow-400 md:h-8 md:w-8" />
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-300 md:text-sm">
+                    میزان اعتبار باقی مانده
+                  </p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <TrendingUp className="h-3.5 w-3.5 text-emerald-400 md:h-4 md:w-4" />
+                    <span className="text-xs text-emerald-400 md:text-sm">
+                      فعال
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400 md:text-sm">
-            <Calendar className="h-4 w-4" />
-            <span>بازنشانی در {usage.resetDate}</span>
+
+            {/* Credits display */}
+            <div className="mb-6">
+              <div className="flex items-baseline gap-2">
+                <h3 className="text-4xl font-black text-white md:text-6xl">
+                  {new Intl.NumberFormat("fa-IR").format(user.credits)}
+                </h3>
+                <span className="text-lg font-semibold text-slate-400 md:text-xl">
+                  اعتبار
+                </span>
+              </div>
+              {usage.imagesLimit > 0 && (
+                <p className="mt-2 text-xs text-slate-400 md:text-sm">
+                  از {new Intl.NumberFormat("fa-IR").format(usage.imagesLimit)}{" "}
+                  اعتبار کل
+                </p>
+              )}
+            </div>
+
+            {/* Progress bar */}
+            {usage.imagesLimit > 0 && (
+              <div className="mb-6">
+                <div className="mb-2 flex items-center justify-between text-xs text-slate-400 md:text-sm">
+                  <span>میزان استفاده</span>
+                  <span className="font-semibold text-white">
+                    {Math.round((user.credits / usage.imagesLimit) * 100)}%
+                  </span>
+                </div>
+                <div className="relative h-3 w-full overflow-hidden rounded-full bg-white/10 backdrop-blur-sm">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 shadow-lg shadow-yellow-400/30 transition-all duration-500"
+                    style={{
+                      width: `${Math.min(
+                        (user.credits / usage.imagesLimit) * 100,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Footer info */}
+            <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 backdrop-blur-sm">
+              <Calendar className="h-4 w-4 text-slate-400 flex-shrink-0" />
+              <span className="text-xs text-slate-300 md:text-sm">
+                بازنشانی در {usage.resetDate}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Plans Section */}
       <div className="mb-6 md:mb-8">
-        <h2 className="mb-4 text-xl font-bold text-white md:text-2xl">
+        <h2 className="mb-4 text-lg font-bold text-white md:text-2xl">
           پلن‌های موجود
         </h2>
         <div className="grid gap-4 md:grid-cols-3">
@@ -240,52 +296,52 @@ export default function BillingPage() {
             return (
               <div
                 key={plan.name}
-                className={`relative overflow-hidden rounded-xl border p-6 transition-all md:rounded-2xl md:p-8 ${
+                className={`relative overflow-hidden rounded-xl border p-4 transition-all md:rounded-2xl md:p-8 ${
                   isCurrent
                     ? "border-yellow-400/50 bg-gradient-to-br from-yellow-400/10 via-orange-400/10 to-pink-500/10 shadow-[0_0_30px_rgba(251,191,36,0.2)]"
                     : "border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 hover:border-yellow-400/30"
                 }`}
               >
                 {isCurrent && (
-                  <div className="absolute left-4 top-4 rounded-lg bg-yellow-400/20 px-2 py-1 text-xs font-semibold text-yellow-400">
+                  <div className="absolute left-3 top-3 md:left-4 md:top-4 rounded-lg bg-yellow-400/20 px-2 py-1 text-xs font-semibold text-yellow-400">
                     فعلی
                   </div>
                 )}
                 <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-14 md:w-14">
-                    <Icon className="h-6 w-6 text-yellow-400 md:h-7 md:w-7" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-14 md:w-14 flex-shrink-0">
+                    <Icon className="h-5 w-5 text-yellow-400 md:h-7 md:w-7" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold text-white md:text-xl">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-bold text-white md:text-xl truncate">
                       {plan.name}
                     </h3>
-                    <p className="text-xs text-slate-400 md:text-sm">
+                    <p className="text-xs text-slate-400 md:text-sm truncate">
                       {plan.nameEn}
                     </p>
                   </div>
                 </div>
                 <div className="mb-4">
-                  <p className="text-2xl font-black text-white md:text-3xl">
+                  <p className="text-xl font-black text-white md:text-3xl">
                     {plan.price} {plan.currency}
                   </p>
                   <p className="mt-1 text-xs text-slate-400 md:text-sm">
                     {plan.tagline}
                   </p>
                 </div>
-                <ul className="mb-6 space-y-2">
+                <ul className="mb-4 md:mb-6 space-y-2">
                   {plan.highlights.map((feature, idx) => {
                     const isNoStorage = feature.includes("بدون نگهداری");
                     return (
                       <li
                         key={idx}
-                        className="flex items-center gap-2 text-xs text-slate-300 md:text-sm"
+                        className="flex items-start gap-2 text-xs text-slate-300 md:text-sm"
                       >
                         {isNoStorage ? (
-                          <Close className="h-4 w-4 flex-shrink-0 text-red-400" />
+                          <Close className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 text-red-400 mt-0.5" />
                         ) : (
-                          <Check className="h-4 w-4 flex-shrink-0 text-emerald-400" />
+                          <Check className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 text-emerald-400 mt-0.5" />
                         )}
-                        <span>{feature}</span>
+                        <span className="break-words">{feature}</span>
                       </li>
                     );
                   })}
@@ -294,7 +350,7 @@ export default function BillingPage() {
                   onClick={() => !isCurrent && handleUpgrade(plan.name)}
                   disabled={isCurrent}
                   variant={isCurrent ? "outline" : "default"}
-                  className={`w-full ${
+                  className={`w-full h-10 md:h-auto ${
                     isCurrent
                       ? "border-white/10 text-white/80"
                       : "bg-gradient-to-r from-yellow-400 to-orange-400 text-white hover:from-yellow-500 hover:to-orange-500"
@@ -310,30 +366,80 @@ export default function BillingPage() {
 
       {/* Billing History */}
       <div>
-        <h2 className="mb-4 text-xl font-bold text-white md:text-2xl">
+        <h2 className="mb-4 text-lg font-bold text-white md:text-2xl">
           تاریخچه پرداخت
         </h2>
-        <div className="overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 md:rounded-2xl">
+
+        {/* Mobile Card View */}
+        <div className="space-y-3 md:hidden">
+          {mockBillingHistory.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 p-4"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-slate-400">شماره فاکتور</p>
+                  <p className="mt-1 text-sm font-medium text-white">
+                    {item.id}
+                  </p>
+                </div>
+                <div className="text-left">{getStatusBadge(item.status)}</div>
+              </div>
+              <div className="space-y-2 border-t border-white/10 pt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">تاریخ</span>
+                  <span className="text-sm text-slate-300">{item.date}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">پلن</span>
+                  <span className="text-sm text-slate-300">
+                    {getPlanNamePersian(item.plan as any)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400">مبلغ</span>
+                  <span className="text-sm font-semibold text-white">
+                    {formatCurrency(item.amount)}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-white/10">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-slate-400 hover:text-white h-9"
+                >
+                  <Download className="h-4 w-4 ml-1" />
+                  دانلود فاکتور
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 md:rounded-2xl">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10">
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 md:px-6 md:text-sm">
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
                     شماره فاکتور
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 md:px-6 md:text-sm">
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
                     تاریخ
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 md:px-6 md:text-sm">
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
                     پلن
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 md:px-6 md:text-sm">
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
                     مبلغ
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 md:px-6 md:text-sm">
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
                     وضعیت
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-slate-400 md:px-6 md:text-sm">
+                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
                     عملیات
                   </th>
                 </tr>
@@ -344,22 +450,20 @@ export default function BillingPage() {
                     key={item.id}
                     className="border-b border-white/5 transition-colors hover:bg-white/5"
                   >
-                    <td className="px-4 py-3 text-sm font-medium text-white md:px-6">
+                    <td className="px-6 py-3 text-sm font-medium text-white">
                       {item.id}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-300 md:px-6">
+                    <td className="px-6 py-3 text-sm text-slate-300">
                       {item.date}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-300 md:px-6">
+                    <td className="px-6 py-3 text-sm text-slate-300">
                       {getPlanNamePersian(item.plan as any)}
                     </td>
-                    <td className="px-4 py-3 text-sm font-semibold text-white md:px-6">
+                    <td className="px-6 py-3 text-sm font-semibold text-white">
                       {formatCurrency(item.amount)}
                     </td>
-                    <td className="px-4 py-3 md:px-6">
-                      {getStatusBadge(item.status)}
-                    </td>
-                    <td className="px-4 py-3 md:px-6">
+                    <td className="px-6 py-3">{getStatusBadge(item.status)}</td>
+                    <td className="px-6 py-3">
                       <Button
                         variant="ghost"
                         size="sm"
@@ -379,26 +483,26 @@ export default function BillingPage() {
 
       {/* Upgrade Dialog */}
       <Dialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen}>
-        <DialogContent className="bg-slate-900 border-white/10 text-white">
+        <DialogContent className="bg-slate-900 border-white/10 text-white max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-right text-white mt-5">
+            <DialogTitle className="text-right text-white mt-5 text-base sm:text-lg">
               ارتقا به پلن {selectedPlan}
             </DialogTitle>
-            <DialogDescription className="text-right text-slate-400">
+            <DialogDescription className="text-right text-slate-400 text-sm">
               آیا مطمئن هستید که می‌خواهید به پلن {selectedPlan} ارتقا دهید؟
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-row-reverse gap-2">
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row-reverse sm:gap-2">
             <Button
               onClick={() => setIsUpgradeDialogOpen(false)}
-              className="bg-gradient-to-r from-yellow-400 to-orange-400 text-white hover:from-yellow-500 hover:to-orange-500"
+              className="w-full sm:w-auto bg-gradient-to-r from-yellow-400 to-orange-400 text-white hover:from-yellow-500 hover:to-orange-500 h-10"
             >
               تایید و پرداخت
             </Button>
             <Button
               onClick={() => setIsUpgradeDialogOpen(false)}
               variant="outline"
-              className="border-white/10 text-white/80 hover:border-white/30"
+              className="w-full sm:w-auto border-white/10 text-white/80 hover:border-white/30 h-10"
             >
               انصراف
             </Button>

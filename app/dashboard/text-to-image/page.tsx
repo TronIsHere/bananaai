@@ -10,7 +10,11 @@ import {
   Wand2,
   Zap,
   Image as ImageIcon,
-  AlertCircle
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  Lightbulb,
+  Settings
 } from "lucide-react";
 import { demoPrompts } from "@/lib/data";
 import { GeneratedImage } from "@/types/dashboard-types";
@@ -63,6 +67,7 @@ export default function TextToImagePage() {
   const { user, refreshUserData } = useUser();
   const [numOutputs] = useState(1);
   const [imageSize, setImageSize] = useState("16:9");
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
   
@@ -243,20 +248,20 @@ export default function TextToImagePage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-6 md:mb-8">
-        <div className="mb-3 flex items-center gap-2 md:mb-4 md:gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-12 md:w-12">
-            <Sparkles className="h-5 w-5 text-yellow-400 md:h-6 md:w-6" />
+    <div className="max-w-5xl mx-auto">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20">
+            <Sparkles className="h-6 w-6 text-yellow-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-white md:text-4xl">متن به تصویر</h1>
-            <p className="text-xs text-slate-400 md:text-base">تولید تصویر از متن با هوش مصنوعی پیشرفته</p>
+            <h1 className="text-3xl font-black text-white">متن به تصویر</h1>
+            <p className="text-sm text-slate-400 mt-1">ایده‌هایتان را به تصویر تبدیل کنید</p>
           </div>
         </div>
       </div>
 
-      <div className="space-y-4 md:space-y-6">
+      <div className="space-y-6">
         {/* Error Message */}
         {error && (
           <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 flex items-start gap-3">
@@ -274,94 +279,120 @@ export default function TextToImagePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-          <div className="space-y-3 md:space-y-4">
-            {/* Prompt */}
+          {/* Main Prompt Input - Prominent */}
+          <div className="space-y-3">
             <div className="space-y-2">
               <label
                 htmlFor="prompt"
-                className="text-sm font-semibold text-white/80 block text-right"
+                className="text-sm font-semibold text-white/90 block text-right"
               >
-                متن توصیفی (پرامپت)
+                تصویری که می‌خواهید را توصیف کنید
               </label>
               <textarea
                 id="prompt"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder="تصویری که می‌خواهید را به فارسی یا انگلیسی توصیف کنید... مثلاً: یک گربه فضانورد در حال رانندگی با موتورسیکلت در مریخ، نور طلایی، سبک علمی تخیلی"
-                className="w-full rounded-lg border border-white/10 bg-white/5 p-3 text-right text-sm text-white placeholder:text-white/30 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 min-h-[140px] resize-none md:p-4 md:text-base md:min-h-[180px]"
+                placeholder="مثلاً: یک گربه فضانورد در حال رانندگی با موتورسیکلت در مریخ، نور طلایی، سبک علمی تخیلی"
+                className="w-full rounded-xl border-2 border-white/10 bg-white/5 p-4 text-right text-base text-white placeholder:text-white/30 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 min-h-[160px] resize-none transition-all md:min-h-[180px] md:text-lg"
                 dir="rtl"
+                autoFocus
               />
-              <p className="text-xs text-slate-400 text-right">
-                هرچه جزئیات بیشتری بنویسید، نتیجه بهتری خواهید گرفت
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-400 text-right">
+                  💡 هرچه جزئیات بیشتری بنویسید، نتیجه بهتری خواهید گرفت
+                </p>
+                <span className="text-xs text-slate-500">
+                  {prompt.length} کاراکتر
+                </span>
+              </div>
             </div>
 
-            {/* Example Prompts */}
+            {/* Quick Example Prompts - Compact */}
             {demoPrompts.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-white/80 block text-right">
-                  مثال‌های آماده
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {demoPrompts.map((example, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => handleUseExample(example)}
-                      className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/80 transition hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
-                    >
-                      {example.substring(0, 40)}...
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Lightbulb className="h-4 w-4 text-yellow-400/60 flex-shrink-0" />
+                <span className="text-xs text-slate-400">مثال‌های آماده:</span>
+                {demoPrompts.slice(0, 2).map((example, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => handleUseExample(example)}
+                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 transition hover:border-yellow-400/40 hover:bg-yellow-400/10 hover:text-yellow-400 active:scale-95"
+                  >
+                    {example.substring(0, 35)}...
+                  </button>
+                ))}
               </div>
             )}
+          </div>
 
-            {/* Style Presets */}
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-white/80 block text-right">
-                سبک‌های پیشنهادی
-              </label>
-                <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-                  {STYLE_PRESETS.map((preset) => {
-                    const Icon = preset.icon;
-                    return (
-                      <button
-                        key={preset.id}
-                        type="button"
-                        onClick={() => applyPreset(preset)}
-                        className="flex items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-2 text-[10px] text-white/80 transition active:scale-95 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400 md:gap-2 md:px-3 md:text-xs"
-                      >
-                        <Icon className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{preset.name}</span>
-                      </button>
-                    );
-                  })}
+          {/* Advanced Options - Collapsible */}
+          <div className="border-t border-white/10 pt-4">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="flex items-center justify-between w-full text-sm font-medium text-white/80 hover:text-white transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span>تنظیمات پیشرفته</span>
+              </div>
+              {showAdvanced ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
+            </button>
+
+            {showAdvanced && (
+              <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
+                {/* Style Presets */}
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-white/70 block text-right">
+                    افزودن سبک هنری
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {STYLE_PRESETS.map((preset) => {
+                      const Icon = preset.icon;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() => applyPreset(preset)}
+                          className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-[10px] text-white/70 transition active:scale-95 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
+                        >
+                          <Icon className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate w-full text-center">{preset.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-            </div>
 
-            {/* Image Size Selector - Only for Creator and Studio plans */}
-            {canSelectImageSize && (
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-white/80 block text-right">
-                  اندازه تصویر
-                </label>
-                <Select value={imageSize} onValueChange={setImageSize}>
-                  <SelectTrigger className="w-full border-white/10 bg-white/5 text-white hover:bg-white/10 focus:border-yellow-400">
-                    <SelectValue placeholder="انتخاب اندازه تصویر" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-900 border-white/10 text-white">
-                    {IMAGE_SIZES.map((size) => (
-                      <SelectItem
-                        key={size.value}
-                        value={size.value}
-                        className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
-                      >
-                        {size.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* Image Size Selector - Only for Creator and Studio plans */}
+                {canSelectImageSize && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-white/70 block text-right">
+                      اندازه تصویر
+                    </label>
+                    <Select value={imageSize} onValueChange={setImageSize}>
+                      <SelectTrigger className="w-full border-white/10 bg-white/5 text-white hover:bg-white/10 focus:border-yellow-400 text-sm">
+                        <SelectValue placeholder="انتخاب اندازه تصویر" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-900 border-white/10 text-white">
+                        {IMAGE_SIZES.map((size) => (
+                          <SelectItem
+                            key={size.value}
+                            value={size.value}
+                            className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
+                          >
+                            {size.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -369,7 +400,7 @@ export default function TextToImagePage() {
           <Button
             type="submit"
             disabled={isLoading || !prompt.trim()}
-            className="w-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 font-bold text-slate-950 shadow-[0_10px_35px_rgba(251,191,36,0.35)] hover:scale-[1.02] hover:opacity-90 h-12 text-base active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 md:h-14 md:text-lg"
+            className="w-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 font-bold text-slate-950 shadow-[0_10px_35px_rgba(251,191,36,0.35)] hover:scale-[1.02] hover:opacity-90 h-14 text-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all"
           >
             {isLoading ? (
               <>
@@ -379,7 +410,7 @@ export default function TextToImagePage() {
             ) : (
               <>
                 <Sparkles className="h-5 w-5 ml-2" />
-                تولید تصویر با هوش مصنوعی
+                تولید تصویر
               </>
             )}
           </Button>
