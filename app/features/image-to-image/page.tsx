@@ -136,30 +136,29 @@ export default function ImageToImageFeaturePage() {
 
       <main>
         {/* Hero Section - Modern & Tech-focused */}
-        <section className="relative overflow-hidden py-20 sm:py-32 lg:pb-32 xl:pb-36">
+        <section className="relative overflow-hidden py-16 sm:py-24 lg:py-28">
           <div className="absolute inset-0">
-            <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
             <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-purple-500/10 blur-3xl" />
           </div>
 
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-            <div className="mx-auto max-w-3xl text-center">
-              <div className="mb-8 inline-flex items-center rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1 text-sm text-fuchsia-300 backdrop-blur-sm">
-                <span className="flex h-2 w-2 rounded-full bg-fuchsia-400 mr-2 animate-pulse"></span>
+            <div className="mx-auto max-w-3xl text-center mb-12 sm:mb-16">
+              <div className="mb-6 inline-flex gap-2 items-center rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1 text-sm text-fuchsia-300 backdrop-blur-sm">
+                <span className="flex h-2 w-2 rounded-full bg-fuchsia-400  animate-pulse"></span>
                 نسل جدید پردازش تصویر
               </div>
-              <h1 className="text-5xl font-black tracking-tight text-white sm:text-7xl bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 mb-6">
+              <h1 className="text-4xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl mb-6">
                 جادوی تبدیل <br />
                 <span className="text-fuchsia-400">تصویر به تصویر</span>
               </h1>
-              <p className="mt-6 text-lg leading-8 text-slate-300 max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg leading-8 text-slate-300 max-w-2xl mx-auto mb-8">
                 با حفظ ساختار اصلی، تصاویر خود را دگرگون کنید. هوش مصنوعی
                 پیشرفته BananaAI با درک عمیق از محتوا، سبک و جزئیات را بازآفرینی
                 می‌کند.
               </p>
-              <div className="mt-10 flex items-center justify-center gap-x-6">
+              <div className="flex items-center justify-center gap-x-6">
                 <Link href="/dashboard/image-to-image">
-                  <Button className="h-14 px-8 text-lg rounded-2xl bg-fuchsia-600 hover:bg-fuchsia-500 shadow-[0_0_40px_-10px_rgba(192,38,211,0.5)] hover:shadow-[0_0_60px_-10px_rgba(192,38,211,0.6)] transition-all duration-300 group">
+                  <Button className="h-12 sm:h-14 px-6 sm:px-8 text-base sm:text-lg rounded-2xl bg-fuchsia-600 hover:bg-fuchsia-500 shadow-[0_0_40px_-10px_rgba(192,38,211,0.5)] hover:shadow-[0_0_60px_-10px_rgba(192,38,211,0.6)] transition-all duration-300 group">
                     شروع رایگان
                     <MoveRight className="mr-2 h-5 w-5 transition-transform group-hover:-translate-x-1" />
                   </Button>
@@ -167,37 +166,35 @@ export default function ImageToImageFeaturePage() {
               </div>
             </div>
 
-            {/* Hero Image / Demo Placeholder */}
-            <div className="mt-16 flow-root sm:mt-24">
-              <div className="relative rounded-xl bg-slate-900/50 border border-white/10 p-2 ring-1 ring-inset ring-white/10 lg:-m-4 lg:rounded-2xl lg:p-4">
-                <div className="absolute -inset-4 bg-gradient-to-r from-fuchsia-500 to-purple-600 opacity-20 blur-2xl -z-10 rounded-[3rem]" />
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-2 rounded-lg overflow-hidden aspect-[2/1] relative group">
-                  {/* Before Image Placeholder */}
-                  <div className="relative h-full bg-slate-800 flex items-center justify-center border-r border-white/10 group-hover:w-[45%] transition-all duration-500 ease-out">
-                    <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium border border-white/10">
+            {/* Before/After Section - Simple Side by Side */}
+            <div className="mt-12 sm:mt-16">
+              <div className="relative rounded-2xl bg-slate-900/50 border border-white/10 p-3 sm:p-4">
+                <div className="absolute -inset-2 bg-gradient-to-r from-fuchsia-500 to-purple-600 opacity-20 blur-2xl -z-10 rounded-2xl" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                  {/* Before Image */}
+                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-800 border border-white/10">
+                    <div className="absolute top-3 right-3 z-10 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/20">
                       قبل
                     </div>
-                    <ImageIcon className="h-16 w-16 text-slate-600 opacity-50" />
-                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center opacity-60 grayscale hover:grayscale-0 transition-all duration-500" />
-                  </div>
-                  {/* After Image Placeholder */}
-                  <div className="relative h-full bg-slate-800 flex items-center justify-center group-hover:w-[55%] transition-all duration-500 ease-out">
-                    <div className="absolute top-4 left-4 bg-fuchsia-500/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium border border-fuchsia-500/30 text-fuchsia-200">
-                      بعد
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+                      <ImageIcon className="h-12 w-12 text-slate-600 opacity-50" />
                     </div>
-                    <Sparkles className="h-16 w-16 text-fuchsia-500 opacity-50" />
-                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center mix-blend-overlay opacity-80 bg-fuchsia-500/30" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent flex items-end p-6">
-                      <p className="text-white font-medium">
-                        تبدیل شده به سبک سایبرپانک
-                      </p>
-                    </div>
+                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop')] bg-cover bg-center opacity-70 grayscale" />
                   </div>
 
-                  {/* Interactive Slider Handle (Visual only) */}
-                  <div className="absolute inset-y-0 left-1/2 w-1 bg-white/20 backdrop-blur cursor-ew-resize flex items-center justify-center group-hover:left-[45%] transition-all duration-500">
-                    <div className="h-8 w-8 rounded-full bg-white shadow-lg flex items-center justify-center text-slate-900">
-                      <Layers className="h-4 w-4" />
+                  {/* After Image */}
+                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-800 border border-fuchsia-500/30">
+                    <div className="absolute top-3 left-3 z-10 bg-fuchsia-500/30 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-semibold border border-fuchsia-500/50 text-fuchsia-200">
+                      بعد
+                    </div>
+                    <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-900/50 to-purple-900/50 flex items-center justify-center">
+                      <Sparkles className="h-12 w-12 text-fuchsia-500 opacity-50" />
+                    </div>
+                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop')] bg-cover bg-center opacity-90" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent flex items-end p-4">
+                      <p className="text-white text-sm font-medium">
+                        تبدیل شده به سبک سایبرپانک
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -207,30 +204,30 @@ export default function ImageToImageFeaturePage() {
         </section>
 
         {/* Features Grid - Bento Style */}
-        <section className="py-24 sm:py-32 bg-slate-950 relative">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl lg:text-center mb-16">
-              <h2 className="text-base font-semibold leading-7 text-fuchsia-400">
+        <section className="py-16 sm:py-24 lg:py-28 bg-slate-950 relative">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl lg:text-center mb-12 sm:mb-16">
+              <h2 className="text-sm sm:text-base font-semibold leading-7 text-fuchsia-400 mb-3">
                 امکانات پیشرفته
               </h2>
-              <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
                 همه چیز برای خلاقیت بی‌پایان
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[200px]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 auto-rows-[minmax(180px,auto)]">
               {/* Feature 1 - Large */}
-              <div className="md:col-span-2 row-span-2 relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-8 hover:bg-white/[0.07] transition-colors group">
+              <div className="md:col-span-2 md:row-span-2 relative overflow-hidden rounded-2xl sm:rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8 hover:bg-white/[0.07] transition-colors group">
                 <div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-l from-fuchsia-500/10 to-transparent" />
                 <div className="relative z-10 h-full flex flex-col justify-between">
-                  <div className="h-12 w-12 rounded-2xl bg-fuchsia-500/20 flex items-center justify-center mb-4">
-                    <Target className="h-6 w-6 text-fuchsia-400" />
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-fuchsia-500/20 flex items-center justify-center mb-4">
+                    <Target className="h-5 w-5 sm:h-6 sm:w-6 text-fuchsia-400" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-white mb-2">
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
                       حفظ دقیق ترکیب‌بندی
                     </h3>
-                    <p className="text-slate-400 max-w-md">
+                    <p className="text-sm sm:text-base text-slate-400 max-w-md">
                       با استفاده از تکنولوژی ControlNet، ساختار اصلی تصویر شما
                       کاملاً حفظ می‌شود در حالی که سبک و جزئیات تغییر می‌کنند.
                     </p>
@@ -243,37 +240,37 @@ export default function ImageToImageFeaturePage() {
               </div>
 
               {/* Feature 2 */}
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 hover:bg-white/[0.07] transition-colors relative overflow-hidden group">
+              <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6 hover:bg-white/[0.07] transition-colors relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Wand2 className="h-8 w-8 text-purple-400 mb-4" />
-                <h3 className="text-lg font-bold text-white mb-2">
+                <Wand2 className="h-7 w-7 sm:h-8 sm:w-8 text-purple-400 mb-3 sm:mb-4" />
+                <h3 className="text-base sm:text-lg font-bold text-white mb-2">
                   تغییر سبک هنری
                 </h3>
-                <p className="text-sm text-slate-400">
+                <p className="text-xs sm:text-sm text-slate-400">
                   تبدیل عکس به نقاشی، کارتون و طرح دستی
                 </p>
               </div>
 
               {/* Feature 3 */}
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-6 hover:bg-white/[0.07] transition-colors relative overflow-hidden group">
+              <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-6 hover:bg-white/[0.07] transition-colors relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <Sparkles className="h-8 w-8 text-blue-400 mb-4" />
-                <h3 className="text-lg font-bold text-white mb-2">
+                <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-blue-400 mb-3 sm:mb-4" />
+                <h3 className="text-base sm:text-lg font-bold text-white mb-2">
                   بهبود کیفیت
                 </h3>
-                <p className="text-sm text-slate-400">
+                <p className="text-xs sm:text-sm text-slate-400">
                   افزایش وضوح و جزئیات تصاویر قدیمی
                 </p>
               </div>
 
               {/* Feature 4 - Wide */}
-              <div className="md:col-span-2 rounded-3xl border border-white/10 bg-white/5 p-8 hover:bg-white/[0.07] transition-colors relative overflow-hidden flex items-center justify-between group">
+              <div className="md:col-span-2 rounded-2xl sm:rounded-3xl border border-white/10 bg-white/5 p-6 sm:p-8 hover:bg-white/[0.07] transition-colors relative overflow-hidden flex flex-col sm:flex-row sm:items-center sm:justify-between group">
                 <div className="relative z-10">
-                  <Zap className="h-8 w-8 text-yellow-400 mb-4" />
-                  <h3 className="text-xl font-bold text-white mb-2">
+                  <Zap className="h-7 w-7 sm:h-8 sm:w-8 text-yellow-400 mb-3 sm:mb-4" />
+                  <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
                     پردازش در لحظه
                   </h3>
-                  <p className="text-slate-400">
+                  <p className="text-sm sm:text-base text-slate-400">
                     تولید تصاویر با سرعت بالا توسط GPUهای قدرتمند
                   </p>
                 </div>
@@ -284,33 +281,33 @@ export default function ImageToImageFeaturePage() {
         </section>
 
         {/* Process Section - Steps */}
-        <section className="py-24 bg-slate-950 relative overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-fuchsia-600/5 rounded-full blur-3xl" />
+        <section className="py-16 sm:py-24 lg:py-28 bg-slate-950 relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] bg-fuchsia-600/5 rounded-full blur-3xl" />
 
-          <div className="mx-auto max-w-7xl px-6 lg:px-8 relative">
-            <div className="mx-auto max-w-2xl lg:text-center mb-16">
-              <h2 className="text-base font-semibold leading-7 text-fuchsia-400">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+            <div className="mx-auto max-w-2xl lg:text-center mb-12 sm:mb-16">
+              <h2 className="text-sm sm:text-base font-semibold leading-7 text-fuchsia-400 mb-3">
                 مسیر ساده
               </h2>
-              <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              <p className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
                 سه گام تا شاهکار هنری
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
               {steps.map((step, index) => (
                 <div key={index} className="relative">
                   {index !== steps.length - 1 && (
                     <div className="hidden md:block absolute top-12 left-0 w-full h-[2px] bg-gradient-to-r from-fuchsia-500/50 to-transparent -z-10" />
                   )}
                   <div className="relative z-10 flex flex-col items-center text-center">
-                    <div className="w-24 h-24 rounded-full bg-slate-900 border border-fuchsia-500/30 flex items-center justify-center mb-6 shadow-[0_0_30px_-10px_rgba(192,38,211,0.3)]">
-                      <step.icon className="h-10 w-10 text-fuchsia-400" />
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-900 border border-fuchsia-500/30 flex items-center justify-center mb-4 sm:mb-6 shadow-[0_0_30px_-10px_rgba(192,38,211,0.3)]">
+                      <step.icon className="h-8 w-8 sm:h-10 sm:w-10 text-fuchsia-400" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-3">
+                    <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">
                       {step.title}
                     </h3>
-                    <p className="text-slate-400 leading-relaxed">
+                    <p className="text-sm sm:text-base text-slate-400 leading-relaxed">
                       {step.description}
                     </p>
                   </div>
@@ -321,25 +318,25 @@ export default function ImageToImageFeaturePage() {
         </section>
 
         {/* Use Cases - Scrolling Cards */}
-        <section className="py-24 bg-slate-900/30">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl mb-12 text-center">
+        <section className="py-16 sm:py-24 lg:py-28 bg-slate-900/30">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white mb-10 sm:mb-12 text-center">
               کاربردهای نامحدود
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {useCases.map((useCase, idx) => (
                 <div
                   key={idx}
-                  className="group relative p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-fuchsia-500/50 transition-all duration-300 hover:-translate-y-1"
+                  className="group relative p-5 sm:p-6 bg-white/5 rounded-xl sm:rounded-2xl border border-white/10 hover:border-fuchsia-500/50 transition-all duration-300 hover:-translate-y-1"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/5 to-transparent opacity-0 group-hover:opacity-100 rounded-xl sm:rounded-2xl transition-opacity" />
                   <div className="relative z-10">
-                    <h3 className="text-lg font-semibold text-white mb-2 flex items-center">
-                      <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 mr-2" />
+                    <h3 className="text-base sm:text-lg font-semibold text-white gap-2 mb-2 flex items-center">
+                      <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-500 " />
                       {useCase.title}
                     </h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
                       {useCase.description}
                     </p>
                   </div>
@@ -350,22 +347,22 @@ export default function ImageToImageFeaturePage() {
         </section>
 
         {/* CTA Section - Tech Style */}
-        <section className="relative py-24 overflow-hidden">
+        <section className="relative py-16 sm:py-24 lg:py-28 overflow-hidden">
           <div className="absolute inset-0 bg-fuchsia-950/20" />
           <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-fuchsia-500 to-transparent" />
 
-          <div className="mx-auto max-w-7xl px-6 lg:px-8 relative text-center">
-            <h2 className="text-4xl font-black text-white mb-6">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative text-center">
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-4 sm:mb-6">
               آماده تغییر هستید؟
             </h2>
-            <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-slate-300 mb-8 sm:mb-10 max-w-2xl mx-auto">
               به جمع هزاران خالق دیجیتال بپیوندید و ایده‌های خود را با قدرت هوش
               مصنوعی به واقعیت تبدیل کنید.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="/dashboard/image-to-image">
-                <Button className="h-14 px-10 rounded-full bg-white text-slate-950 hover:bg-slate-200 font-bold text-lg shadow-xl hover:shadow-2xl transition-all transform hover:scale-105">
+                <Button className="h-12 sm:h-14 px-8 sm:px-10 rounded-full bg-white text-slate-950 hover:bg-slate-200 font-bold text-base sm:text-lg shadow-xl hover:shadow-2xl transition-all transform hover:scale-105">
                   شروع کنید رایگان
                   <Zap className="mr-2 h-5 w-5 fill-slate-950" />
                 </Button>
@@ -373,7 +370,7 @@ export default function ImageToImageFeaturePage() {
               <Link href="/#features">
                 <Button
                   variant="outline"
-                  className="h-14 px-10 rounded-full border-white/20 bg-transparent text-white hover:bg-white/10 font-medium text-lg"
+                  className="h-12 sm:h-14 px-8 sm:px-10 rounded-full border-white/20 bg-transparent text-white hover:bg-white/10 font-medium text-base sm:text-lg"
                 >
                   بازگشت به خانه
                 </Button>

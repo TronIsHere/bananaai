@@ -17,6 +17,13 @@ import { GeneratedImage } from "@/types/dashboard-types";
 import { GeneratedImageDisplay } from "@/components/dashboard/generated-image-display";
 import { LoadingState } from "@/components/dashboard/loading-state";
 import { useUser } from "@/hooks/use-user";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const STYLE_PRESETS = [
   { id: "realistic", name: "واقع‌گرایانه", icon: ImageIcon, prompt: "ultra realistic, high detail, professional photography" },
@@ -25,6 +32,19 @@ const STYLE_PRESETS = [
   { id: "sketch", name: "طراحی", icon: Wand2, prompt: "pencil sketch, hand-drawn, artistic, monochrome" },
   { id: "vintage", name: "قدیمی", icon: Zap, prompt: "vintage style, retro, aged photo effect, nostalgic" },
   { id: "cyberpunk", name: "سایبرپانک", icon: Zap, prompt: "cyberpunk style, neon lights, futuristic, dark atmosphere" },
+];
+
+const IMAGE_SIZES = [
+  { value: "1:1", label: "مربع (1:1)" },
+  { value: "9:16", label: "عمودی موبایل (9:16)" },
+  { value: "16:9", label: "افقی واید (16:9)" },
+  { value: "3:4", label: "عمودی (3:4)" },
+  { value: "4:3", label: "افقی کلاسیک (4:3)" },
+  { value: "3:2", label: "افقی عکس (3:2)" },
+  { value: "2:3", label: "عمودی عکس (2:3)" },
+  { value: "5:4", label: "عمودی نزدیک به مربع (5:4)" },
+  { value: "4:5", label: "عمودی نزدیک به مربع (4:5)" },
+  { value: "21:9", label: "افقی اولترا واید (21:9)" },
 ];
 
 export default function TextToImagePage() {
@@ -42,8 +62,12 @@ export default function TextToImagePage() {
   
   const { user, refreshUserData } = useUser();
   const [numOutputs] = useState(1);
+  const [imageSize, setImageSize] = useState("16:9");
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  
+  // Check if user has access to image size selection (creator or studio plans)
+  const canSelectImageSize = user.currentPlan === "creator" || user.currentPlan === "studio";
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -75,7 +99,7 @@ export default function TextToImagePage() {
         body: JSON.stringify({
           prompt: prompt.trim(),
           numImages: numOutputs,
-          image_size: "16:9",
+          image_size: imageSize,
         }),
       });
 
@@ -315,6 +339,31 @@ export default function TextToImagePage() {
                   })}
                 </div>
             </div>
+
+            {/* Image Size Selector - Only for Creator and Studio plans */}
+            {canSelectImageSize && (
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-white/80 block text-right">
+                  اندازه تصویر
+                </label>
+                <Select value={imageSize} onValueChange={setImageSize}>
+                  <SelectTrigger className="w-full border-white/10 bg-white/5 text-white hover:bg-white/10 focus:border-yellow-400">
+                    <SelectValue placeholder="انتخاب اندازه تصویر" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-white/10 text-white">
+                    {IMAGE_SIZES.map((size) => (
+                      <SelectItem
+                        key={size.value}
+                        value={size.value}
+                        className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
+                      >
+                        {size.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <Button
