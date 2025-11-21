@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { plans } from "@/lib/data";
 import { HiCheck, HiSparkles } from "react-icons/hi2";
@@ -8,6 +12,8 @@ import {
   FaShieldAlt,
   FaTimesCircle,
 } from "react-icons/fa";
+import { useUser } from "@/hooks/use-user";
+import { LoginDialog } from "@/components/dialog/login-dialog";
 
 const featureIcons: Record<string, any> = {
   تصویر: FaImage,
@@ -21,6 +27,18 @@ const featureIcons: Record<string, any> = {
 };
 
 export function PricingSection() {
+  const router = useRouter();
+  const { isAuthenticated } = useUser();
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  const handlePlanClick = () => {
+    if (isAuthenticated) {
+      router.push("/dashboard/billing");
+    } else {
+      setLoginOpen(true);
+    }
+  };
+
   return (
     <section id="pricing" className="mx-auto mt-16 max-w-7xl sm:mt-20 md:mt-24">
       <div className="text-center">
@@ -172,6 +190,7 @@ export function PricingSection() {
 
                   {/* CTA Button */}
                   <Button
+                    onClick={handlePlanClick}
                     className={`w-full rounded-2xl px-6 py-6 text-sm font-black uppercase tracking-[0.15em] transition-all duration-300 ${
                       isFeatured
                         ? "bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 text-slate-950 shadow-lg hover:scale-105 hover:shadow-xl hover:shadow-yellow-400/50"
@@ -202,6 +221,7 @@ export function PricingSection() {
           تمام پلن‌ها شامل پشتیبانی ۲۴/۷ و به‌روزرسانی‌های رایگان هستند
         </p>
       </div>
+      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </section>
   );
 }

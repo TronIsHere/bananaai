@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       firstName,
       lastName,
       credits: 12, // Free plan: 3 image generations × 4 credits per generation
-      currentPlan: "رایگان", // Free plan
+      currentPlan: "free", // Free plan
       planStartDate: now,
       planEndDate: monthlyResetDate, // Monthly reset date
       monthlyResetDate: monthlyResetDate,
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
             firstName,
             lastName,
             credits: 12,
-            currentPlan: "رایگان",
+            currentPlan: "free",
             planStartDate: now,
             planEndDate: monthlyResetDate,
             monthlyResetDate: monthlyResetDate,

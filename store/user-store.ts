@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { PlanType } from "@/lib/utils";
 
 interface UserState {
   id: string | null;
@@ -7,7 +8,7 @@ interface UserState {
   firstName: string | null;
   lastName: string | null;
   credits: number;
-  currentPlan: "رایگان" | "کاوشگر" | "خلاق" | "استودیو" | null;
+  currentPlan: PlanType;
   planStartDate: Date | null;
   planEndDate: Date | null;
   imagesGeneratedThisMonth: number;

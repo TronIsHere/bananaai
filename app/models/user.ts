@@ -1,11 +1,12 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
+import { PlanType } from "@/lib/utils";
 
 // Billing History Schema
 export interface IBillingHistory {
   id: string;
   date: Date;
   amount: number;
-  plan: string;
+  plan: string; // Stored as English: "free", "explorer", "creator", "studio"
   status: "paid" | "pending" | "failed";
   invoiceUrl?: string;
 }
@@ -29,7 +30,7 @@ const BillingHistorySchema = new Schema<IBillingHistory>(
     plan: {
       type: String,
       required: true,
-      enum: ["رایگان", "کاوشگر", "خلاق", "استودیو"],
+      enum: ["free", "explorer", "creator", "studio"],
     },
     status: {
       type: String,
@@ -84,7 +85,7 @@ export interface IUser extends Document {
   lastName: string;
   // Credits and Plan
   credits: number; // Remaining image credits
-  currentPlan: "رایگان" | "کاوشگر" | "خلاق" | "استودیو" | null;
+  currentPlan: PlanType; // Stored as English: "free", "explorer", "creator", "studio", or null
   planStartDate: Date | null; // When current plan started
   planEndDate: Date | null; // When current plan expires/renews
   imagesGeneratedThisMonth: number; // Counter for monthly usage
@@ -128,8 +129,8 @@ const UserSchema: Schema = new Schema(
     },
     currentPlan: {
       type: String,
-      enum: ["رایگان", "کاوشگر", "خلاق", "استودیو", null],
-      default: "رایگان",
+      enum: ["free", "explorer", "creator", "studio", null],
+      default: "free",
     },
     planStartDate: {
       type: Date,

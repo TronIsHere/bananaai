@@ -70,22 +70,25 @@ export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
     <>
       {/* Logo Section */}
       <div className="mb-6 md:mb-8">
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 via-orange-400 to-pink-500 text-xl shadow-[0_0_35px_rgba(251,191,36,0.45)] md:h-11 md:w-11 md:text-2xl">
-              🍌
+        <Link href="/" className="flex items-center gap-3">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400 via-orange-400 to-pink-500 text-xl shadow-[0_0_35px_rgba(251,191,36,0.45)] md:h-11 md:w-11 md:text-2xl">
+                🍌
+              </div>
+              <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-slate-900" />
             </div>
-            <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-slate-900" />
+
+            <div>
+              <p className="text-[10px] font-semibold text-slate-400 sm:text-xs">
+                آزمایشگاه هوش مصنوعی
+              </p>
+              <p className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-lg font-black text-transparent sm:text-xl md:text-2xl">
+                بنانا
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-semibold text-slate-400 sm:text-xs">
-              آزمایشگاه هوش مصنوعی
-            </p>
-            <p className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-lg font-black text-transparent sm:text-xl md:text-2xl">
-              بنانا
-            </p>
-          </div>
-        </div>
+        </Link>
       </div>
 
       {/* Navigation */}

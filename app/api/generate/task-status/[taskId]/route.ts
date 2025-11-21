@@ -92,7 +92,7 @@ export async function GET(
             user.credits = Math.max(0, user.credits - task.creditsReserved);
 
             // Save generated image to history (skip for free plan)
-            if (user.currentPlan !== "رایگان") {
+            if (user.currentPlan !== "free") {
               const generatedImage = {
                 id: `${Date.now()}-0`,
                 url: imageUrl,

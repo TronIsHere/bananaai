@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { FiDatabase } from "react-icons/fi";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -82,11 +83,11 @@ export function DashboardHeader({
             href="/dashboard/billing"
             className="hidden sm:flex items-center gap-2 rounded-lg border border-yellow-400/30 bg-yellow-400/10 px-3 py-1.5 transition-all hover:border-yellow-400/50 hover:bg-yellow-400/15 active:scale-95 md:px-4 md:py-2 cursor-pointer"
           >
-            <CreditCard className="h-4 w-4 text-yellow-400" />
+            <FiDatabase className="h-4 w-4 text-yellow-400" />
             <div className="text-right">
               <p className="text-xs text-slate-400">اعتبار باقیمانده</p>
               <p className="text-sm font-bold text-yellow-400">
-                {formatNumber(user.credits)} توکن
+                {formatNumber(user.credits)} اعتبار
               </p>
             </div>
           </Link>

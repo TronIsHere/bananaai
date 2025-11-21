@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { plans as landingPlans } from "@/lib/data";
 import { useUser } from "@/hooks/use-user";
+import { getPlanNamePersian, getPlanNameEnglish } from "@/lib/utils";
 
 interface BillingHistoryItem {
   id: string;
@@ -38,31 +39,31 @@ const mockBillingHistory: BillingHistoryItem[] = [
     id: "inv-001",
     date: "1403/09/15",
     amount: 999000,
-    plan: "خلاق",
+    plan: "creator", // Stored as English
     status: "paid",
   },
   {
     id: "inv-002",
     date: "1403/08/15",
     amount: 999000,
-    plan: "خلاق",
+    plan: "creator", // Stored as English
     status: "paid",
   },
   {
     id: "inv-003",
     date: "1403/07/15",
     amount: 350000,
-    plan: "کاوشگر",
+    plan: "explorer", // Stored as English
     status: "paid",
   },
 ];
 
-// Map plan names to icons
+// Map plan names (English) to icons
 const planIcons: Record<string, typeof Sparkles> = {
-  رایگان: Gift,
-  کاوشگر: Sparkles,
-  خلاق: Crown,
-  استودیو: Zap,
+  free: Gift,
+  explorer: Sparkles,
+  creator: Crown,
+  studio: Zap,
 };
 
 export default function BillingPage() {
@@ -72,12 +73,16 @@ export default function BillingPage() {
 
   // Map landing plans to billing page format
   const plans = useMemo(() => {
-    return landingPlans.map((plan) => ({
-      ...plan,
-      icon: planIcons[plan.name] || Sparkles,
-      current: plan.name === user.currentPlan,
-      priceNumber: parseInt(plan.price.replace(/,/g, ""), 10),
-    }));
+    return landingPlans.map((plan) => {
+      // Convert Persian plan name to English for comparison
+      const planEnglish = getPlanNameEnglish(plan.name);
+      return {
+        ...plan,
+        icon: planIcons[planEnglish || ""] || Sparkles,
+        current: planEnglish === user.currentPlan,
+        priceNumber: parseInt(plan.price.replace(/,/g, ""), 10),
+      };
+    });
   }, [user.currentPlan]);
 
   const currentPlan = plans.find((p) => p.current);
@@ -346,7 +351,7 @@ export default function BillingPage() {
                       {item.date}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-300 md:px-6">
-                      {item.plan}
+                      {getPlanNamePersian(item.plan as any)}
                     </td>
                     <td className="px-4 py-3 text-sm font-semibold text-white md:px-6">
                       {formatCurrency(item.amount)}
@@ -376,7 +381,7 @@ export default function BillingPage() {
       <Dialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen}>
         <DialogContent className="bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-right text-white">
+            <DialogTitle className="text-right text-white mt-5">
               ارتقا به پلن {selectedPlan}
             </DialogTitle>
             <DialogDescription className="text-right text-slate-400">

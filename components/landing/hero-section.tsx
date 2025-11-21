@@ -5,6 +5,9 @@ import { stats, demoPrompts } from "@/lib/data";
 import { AnimationState } from "@/types/landing-types";
 import { HiArrowLeft } from "react-icons/hi";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/hooks/use-user";
+import { LoginDialog } from "@/components/dialog/login-dialog";
 
 function ImageGeneratorDemo() {
   const [state, setState] = useState<AnimationState>("typing");
@@ -180,6 +183,18 @@ function ImageGeneratorDemo() {
 }
 
 export function HeroSection() {
+  const router = useRouter();
+  const { isAuthenticated } = useUser();
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  const handleCreateImage = () => {
+    if (isAuthenticated) {
+      router.push("/dashboard/text-to-image");
+    } else {
+      setLoginOpen(true);
+    }
+  };
+
   return (
     <section className="relative mx-auto mt-6 max-w-6xl overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 shadow-[0_40px_140px_rgba(15,23,42,0.7)] sm:mt-10 sm:p-8 md:p-10">
       <div className="absolute inset-0">
@@ -211,7 +226,10 @@ export function HeroSection() {
             برای ادبیات فارسی و مفاهیم بصری منطقه آموزش دیده است.
           </p>
           <div className="flex">
-            <Button className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl border border-yellow-400/20 bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-slate-900/90 px-8 py-4 text-base font-bold text-white shadow-[0_0_20px_rgba(251,191,36,0.15)] backdrop-blur-md transition-all duration-300 hover:border-yellow-400/40 hover:shadow-[0_0_30px_rgba(251,191,36,0.3)] hover:scale-[1.02] sm:px-10 sm:py-5 sm:text-lg">
+            <Button
+              onClick={handleCreateImage}
+              className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl border border-yellow-400/20 bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-slate-900/90 px-8 py-4 text-base font-bold text-white shadow-[0_0_20px_rgba(251,191,36,0.15)] backdrop-blur-md transition-all duration-300 hover:border-yellow-400/40 hover:shadow-[0_0_30px_rgba(251,191,36,0.3)] hover:scale-[1.02] sm:px-10 sm:py-5 sm:text-lg"
+            >
               <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/0 via-yellow-400/10 to-yellow-400/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-hover:animate-shimmer" />
               <span className="relative z-10 flex items-center gap-2">
                 یه عکس تست برام بساز
@@ -233,6 +251,7 @@ export function HeroSection() {
           </div>
         </div>
       </div>
+      <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </section>
   );
 }
