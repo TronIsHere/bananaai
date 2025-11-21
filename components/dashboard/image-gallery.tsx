@@ -165,54 +165,54 @@ export function ImageGallery({
 
       {/* Image Detail Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl bg-slate-900 border-white/10 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-right text-white pt-4">
+        <DialogContent className="bg-slate-900 border-white/10 text-white p-0 overflow-hidden max-w-md sm:max-w-lg gap-0 sm:rounded-3xl max-h-[90vh] overflow-y-auto sm:max-h-none sm:overflow-visible">
+          <DialogHeader className="px-5 pb-3">
+            <DialogTitle className="text-right text-white text-lg">
               جزئیات تصویر
             </DialogTitle>
           </DialogHeader>
           {selectedImage && (
-            <div className="space-y-4">
+            <div className="px-5 pb-4 space-y-3">
               <div className="relative overflow-hidden rounded-xl border border-white/10 bg-slate-800/50">
                 <img
                   src={selectedImage.url}
                   alt={selectedImage.prompt}
-                  className="w-full h-auto max-h-[600px] object-contain mx-auto"
+                  className="w-full h-auto max-h-[400px] sm:max-h-[350px] object-contain mx-auto"
                 />
               </div>
-              <div className="space-y-3">
-                <div className="flex items-start gap-2 rounded-lg bg-slate-800/50 p-3">
-                  <FileText className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0 md:h-5 md:w-5" />
+              <div className="space-y-2">
+                <div className="flex items-start gap-2 rounded-lg bg-slate-800/50 p-2.5">
+                  <FileText className="h-4 w-4 text-yellow-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-xs font-semibold text-white/80 mb-1 md:text-sm">
+                    <p className="text-xs font-semibold text-white/80 mb-1">
                       پرامپت:
                     </p>
-                    <p className="text-xs text-white/90 text-right md:text-sm">
+                    <p className="text-xs text-white/90 text-right leading-relaxed">
                       {selectedImage.prompt}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg bg-slate-800/50 p-3">
-                  <Calendar className="h-4 w-4 text-yellow-400 flex-shrink-0 md:h-5 md:w-5" />
+                <div className="flex items-center gap-2 rounded-lg bg-slate-800/50 p-2.5">
+                  <Calendar className="h-4 w-4 text-yellow-400 flex-shrink-0" />
                   <div>
-                    <p className="text-xs font-semibold text-white/80 mb-1 md:text-sm">
+                    <p className="text-xs font-semibold text-white/80 mb-1">
                       تاریخ تولید:
                     </p>
-                    <p className="text-xs text-white/90 md:text-sm">
+                    <p className="text-xs text-white/90">
                       {formatDate(selectedImage.timestamp)}
                     </p>
                   </div>
                 </div>
               </div>
-              <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:gap-3">
+              <div className="flex flex-col gap-2 pt-1 sm:flex-row sm:gap-2">
                 <Button
                   onClick={() =>
                     handleDownload(selectedImage.url, selectedImage.id)
                   }
                   variant="outline"
-                  className="flex-1 border-white/10 text-white/80 active:scale-95 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
+                  className="flex-1 h-9 text-xs border-white/10 text-white/80 active:scale-95 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
                 >
-                  <Download className="h-4 w-4 ml-2 md:h-5 md:w-5" />
+                  <Download className="h-3.5 w-3.5 ml-2" />
                   دانلود تصویر
                 </Button>
                 <Button
@@ -220,16 +220,16 @@ export function ImageGallery({
                     handleCopyPrompt(selectedImage.id, selectedImage.prompt)
                   }
                   variant="outline"
-                  className="flex-1 border-white/10 text-white/80 active:scale-95 hover:border-white/30 hover:text-white"
+                  className="flex-1 h-9 text-xs border-white/10 text-white/80 active:scale-95 hover:border-white/30 hover:text-white"
                 >
                   {copiedId === selectedImage.id ? (
                     <>
-                      <Check className="h-4 w-4 ml-2 text-green-400 md:h-5 md:w-5" />
+                      <Check className="h-3.5 w-3.5 ml-2 text-green-400" />
                       کپی شد!
                     </>
                   ) : (
                     <>
-                      <Copy className="h-4 w-4 ml-2 md:h-5 md:w-5" />
+                      <Copy className="h-3.5 w-3.5 ml-2" />
                       کپی پرامپت
                     </>
                   )}
@@ -238,9 +238,9 @@ export function ImageGallery({
                   <Button
                     onClick={(e) => handleDelete(selectedImage.id, e)}
                     variant="outline"
-                    className="flex-1 border-white/10 text-white/80 active:scale-95 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 sm:flex-1"
+                    className="flex-1 h-9 text-xs border-white/10 text-white/80 active:scale-95 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400"
                   >
-                    <Trash2 className="h-4 w-4 ml-2 md:h-5 md:w-5" />
+                    <Trash2 className="h-3.5 w-3.5 ml-2" />
                     حذف
                   </Button>
                 )}

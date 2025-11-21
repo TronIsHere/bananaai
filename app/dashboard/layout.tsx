@@ -30,7 +30,7 @@ export default function DashboardLayout({
           onMenuClick={toggleMenu}
           isMenuOpen={isMobileMenuOpen}
         />
-        <main className="p-4 pb-6 md:p-8 md:pb-8">
+        <main className="w-full p-4 pb-6 md:p-8 md:pb-8">
           {children}
         </main>
       </div>

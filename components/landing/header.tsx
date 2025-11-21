@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { navigationItems } from "@/lib/data";
 import { LoginDialog } from "@/components/dialog/login-dialog";
@@ -12,6 +13,9 @@ interface HeaderProps {
 
 export function Header({ onMobileMenuOpen }: HeaderProps) {
   const [loginOpen, setLoginOpen] = useState(false);
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated" && !!session;
+
   return (
     <header className="sticky top-0 z-50 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
@@ -51,13 +55,24 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
 
         {/* Mobile Menu Button and Login */}
         <div className="flex items-center gap-2 md:hidden">
-          <Button
-            onClick={() => setLoginOpen(true)}
-            variant="outline"
-            className="border-white/10 px-4 py-2 text-xs font-semibold text-white/80 hover:border-white/30 hover:text-white"
-          >
-            ورود
-          </Button>
+          {isAuthenticated ? (
+            <Link href="/dashboard">
+              <Button
+                variant="outline"
+                className="border-white/10 px-4 py-2 text-xs font-semibold text-white/80 hover:border-white/30 hover:text-white"
+              >
+                برو به داشبورد
+              </Button>
+            </Link>
+          ) : (
+            <Button
+              onClick={() => setLoginOpen(true)}
+              variant="outline"
+              className="border-white/10 px-4 py-2 text-xs font-semibold text-white/80 hover:border-white/30 hover:text-white"
+            >
+              ورود
+            </Button>
+          )}
           <Button
             onClick={onMobileMenuOpen}
             variant="ghost"
@@ -72,13 +87,24 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
 
         {/* Desktop Auth Buttons */}
         <div className="hidden gap-3 text-sm md:flex">
-          <Button
-            onClick={() => setLoginOpen(true)}
-            variant="outline"
-            className="border-white/10 text-white/80 hover:border-white/30 hover:text-white"
-          >
-            ورود
-          </Button>
+          {isAuthenticated ? (
+            <Link href="/dashboard">
+              <Button
+                variant="outline"
+                className="border-white/10 text-white/80 hover:border-white/30 hover:text-white"
+              >
+                برو به داشبورد
+              </Button>
+            </Link>
+          ) : (
+            <Button
+              onClick={() => setLoginOpen(true)}
+              variant="outline"
+              className="border-white/10 text-white/80 hover:border-white/30 hover:text-white"
+            >
+              ورود
+            </Button>
+          )}
         </div>
       </div>
 

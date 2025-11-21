@@ -2,11 +2,11 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Image as ImageIcon, 
-  Upload, 
-  X, 
-  Loader2, 
+import {
+  Image as ImageIcon,
+  Upload,
+  X,
+  Loader2,
   Sparkles,
   Palette,
   Wand2,
@@ -14,7 +14,7 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
-  Settings
+  Settings,
 } from "lucide-react";
 import { GeneratedImage } from "@/types/dashboard-types";
 import { GeneratedImageDisplay } from "@/components/dashboard/generated-image-display";
@@ -29,12 +29,42 @@ import {
 } from "@/components/ui/select";
 
 const STYLE_PRESETS = [
-  { id: "oil-painting", name: "نقاشی رنگ روغن", icon: Palette, prompt: "oil painting style, artistic brushstrokes" },
-  { id: "cartoon", name: "کارتونی", icon: Sparkles, prompt: "cartoon style, animated, vibrant colors" },
-  { id: "sketch", name: "طراحی", icon: Wand2, prompt: "pencil sketch, hand-drawn, artistic" },
-  { id: "vintage", name: "قدیمی", icon: Zap, prompt: "vintage style, retro, aged photo effect" },
-  { id: "cyberpunk", name: "سایبرپانک", icon: Zap, prompt: "cyberpunk style, neon lights, futuristic" },
-  { id: "watercolor", name: "آبرنگ", icon: Palette, prompt: "watercolor painting, soft colors, artistic" },
+  {
+    id: "oil-painting",
+    name: "نقاشی رنگ روغن",
+    icon: Palette,
+    prompt: "oil painting style, artistic brushstrokes",
+  },
+  {
+    id: "cartoon",
+    name: "کارتونی",
+    icon: Sparkles,
+    prompt: "cartoon style, animated, vibrant colors",
+  },
+  {
+    id: "sketch",
+    name: "طراحی",
+    icon: Wand2,
+    prompt: "pencil sketch, hand-drawn, artistic",
+  },
+  {
+    id: "vintage",
+    name: "قدیمی",
+    icon: Zap,
+    prompt: "vintage style, retro, aged photo effect",
+  },
+  {
+    id: "cyberpunk",
+    name: "سایبرپانک",
+    icon: Zap,
+    prompt: "cyberpunk style, neon lights, futuristic",
+  },
+  {
+    id: "watercolor",
+    name: "آبرنگ",
+    icon: Palette,
+    prompt: "watercolor painting, soft colors, artistic",
+  },
 ];
 
 const IMAGE_SIZES = [
@@ -58,23 +88,25 @@ export default function ImageToImagePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [selectedGenerated, setSelectedGenerated] = useState<GeneratedImage | null>(null);
+  const [selectedGenerated, setSelectedGenerated] =
+    useState<GeneratedImage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState<{
     attempts: number;
     elapsedSeconds: number;
     estimatedTimeRemaining: number;
   } | null>(null);
-  
+
   const { user, refreshUserData } = useUser();
   const [numOutputs] = useState(1);
   const [imageSize, setImageSize] = useState("16:9");
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Check if user has access to image size selection (creator or studio plans)
-  const canSelectImageSize = user.currentPlan === "creator" || user.currentPlan === "studio";
+  const canSelectImageSize =
+    user.currentPlan === "creator" || user.currentPlan === "studio";
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
@@ -149,9 +181,13 @@ export default function ImageToImagePage() {
     setError(null);
     setGeneratedImages([]);
     setSelectedGenerated(null);
-    setLoadingProgress({ attempts: 0, elapsedSeconds: 0, estimatedTimeRemaining: 120 });
+    setLoadingProgress({
+      attempts: 0,
+      elapsedSeconds: 0,
+      estimatedTimeRemaining: 120,
+    });
     startTimeRef.current = Date.now();
-    
+
     try {
       // Step 1: Upload image to get public URL
       const formData = new FormData();
@@ -165,7 +201,9 @@ export default function ImageToImagePage() {
       const uploadData = await uploadResponse.json();
 
       if (!uploadResponse.ok) {
-        throw new Error(uploadData.message || uploadData.error || "Failed to upload image");
+        throw new Error(
+          uploadData.message || uploadData.error || "Failed to upload image"
+        );
       }
 
       if (!uploadData.success || !uploadData.url) {
@@ -191,7 +229,9 @@ export default function ImageToImagePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || "Failed to generate image");
+        throw new Error(
+          data.message || data.error || "Failed to generate image"
+        );
       }
 
       if (!data.success || !data.taskId) {
@@ -208,37 +248,43 @@ export default function ImageToImagePage() {
       const pollTaskStatus = async (): Promise<void> => {
         try {
           attempts++;
-          const elapsedSeconds = startTimeRef.current 
-            ? Math.floor((Date.now() - startTimeRef.current) / 1000) 
+          const elapsedSeconds = startTimeRef.current
+            ? Math.floor((Date.now() - startTimeRef.current) / 1000)
             : 0;
           const estimatedTimeRemaining = Math.max(0, 120 - elapsedSeconds);
-          
+
           setLoadingProgress({
             attempts,
             elapsedSeconds,
             estimatedTimeRemaining,
           });
 
-          const statusResponse = await fetch(`/api/generate/task-status/${taskId}`);
+          const statusResponse = await fetch(
+            `/api/generate/task-status/${taskId}`
+          );
           const statusData = await statusResponse.json();
 
           if (!statusResponse.ok) {
-            throw new Error(statusData.message || statusData.error || "خطا در بررسی وضعیت");
+            throw new Error(
+              statusData.message || statusData.error || "خطا در بررسی وضعیت"
+            );
           }
 
           if (statusData.status === "completed") {
             // Task completed successfully
             if (statusData.images && statusData.images.length > 0) {
-              const newImages: GeneratedImage[] = statusData.images.map((url: string, index: number) => ({
-                id: `${Date.now()}-${index}`,
-                url,
-                timestamp: new Date(),
-                prompt: prompt.trim(),
-              }));
+              const newImages: GeneratedImage[] = statusData.images.map(
+                (url: string, index: number) => ({
+                  id: `${Date.now()}-${index}`,
+                  url,
+                  timestamp: new Date(),
+                  prompt: prompt.trim(),
+                })
+              );
 
               setGeneratedImages(newImages);
               setSelectedGenerated(newImages[0]);
-              
+
               // Refresh user data to update credits
               await refreshUserData();
             } else {
@@ -261,7 +307,10 @@ export default function ImageToImagePage() {
               pollingTimeoutRef.current = null;
             }
             throw new Error(statusData.error || "تولید تصویر با خطا مواجه شد");
-          } else if (statusData.status === "pending" || statusData.status === "processing") {
+          } else if (
+            statusData.status === "pending" ||
+            statusData.status === "processing"
+          ) {
             // Still processing, continue polling
             if (attempts >= maxAttempts) {
               setIsLoading(false);
@@ -271,9 +320,14 @@ export default function ImageToImagePage() {
                 clearTimeout(pollingTimeoutRef.current);
                 pollingTimeoutRef.current = null;
               }
-              throw new Error("زمان انتظار به پایان رسید. لطفاً دوباره تلاش کنید.");
+              throw new Error(
+                "زمان انتظار به پایان رسید. لطفاً دوباره تلاش کنید."
+              );
             } else {
-              pollingTimeoutRef.current = setTimeout(pollTaskStatus, pollInterval);
+              pollingTimeoutRef.current = setTimeout(
+                pollTaskStatus,
+                pollInterval
+              );
             }
           }
         } catch (err: any) {
@@ -321,7 +375,7 @@ export default function ImageToImagePage() {
     setSelectedGenerated(null);
   };
 
-  const applyPreset = (preset: typeof STYLE_PRESETS[0]) => {
+  const applyPreset = (preset: (typeof STYLE_PRESETS)[0]) => {
     if (prompt.trim()) {
       // Append to existing prompt on a new line
       setPrompt(`${prompt.trim()}\n${preset.prompt}`);
@@ -332,7 +386,7 @@ export default function ImageToImagePage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto ">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20">
@@ -340,7 +394,9 @@ export default function ImageToImagePage() {
           </div>
           <div>
             <h1 className="text-3xl font-black text-white">تصویر به تصویر</h1>
-            <p className="text-sm text-slate-400 mt-1">تصاویر خود را به سبک‌های مختلف تبدیل کنید</p>
+            <p className="text-sm text-slate-400 mt-1">
+              تصاویر خود را به سبک‌های مختلف تبدیل کنید
+            </p>
           </div>
         </div>
       </div>
@@ -369,7 +425,7 @@ export default function ImageToImagePage() {
               <label className="text-sm font-semibold text-white/90 block text-right">
                 تصویر اولیه
               </label>
-              
+
               {!selectedImage ? (
                 <div
                   onDrop={handleDrop}
@@ -383,7 +439,13 @@ export default function ImageToImagePage() {
                   }`}
                 >
                   <div className="text-center p-6 md:p-8">
-                    <Upload className={`mx-auto mb-4 h-14 w-14 transition-all md:h-16 md:w-16 ${isDragging ? 'text-yellow-400 scale-110' : 'text-slate-400'}`} />
+                    <Upload
+                      className={`mx-auto mb-4 h-14 w-14 transition-all md:h-16 md:w-16 ${
+                        isDragging
+                          ? "text-yellow-400 scale-110"
+                          : "text-slate-400"
+                      }`}
+                    />
                     <p className="mb-2 text-base font-semibold text-white md:text-lg">
                       {isDragging ? "رها کنید!" : "کلیک کنید یا تصویر را بکشید"}
                     </p>
@@ -492,7 +554,9 @@ export default function ImageToImagePage() {
                               className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-2.5 text-[10px] text-white/70 transition active:scale-95 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
                             >
                               <Icon className="h-4 w-4 flex-shrink-0" />
-                              <span className="truncate w-full text-center">{preset.name}</span>
+                              <span className="truncate w-full text-center">
+                                {preset.name}
+                              </span>
                             </button>
                           );
                         })}
@@ -532,7 +596,7 @@ export default function ImageToImagePage() {
           <Button
             type="submit"
             disabled={isLoading || !selectedImage || !prompt.trim()}
-            className="w-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 font-bold text-slate-950 shadow-[0_10px_35px_rgba(251,191,36,0.35)] hover:scale-[1.02] hover:opacity-90 h-14 text-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all"
+            className="w-full bg-yellow-500 font-bold text-slate-950 hover:bg-yellow-600 h-10 text-sm px-4 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all"
           >
             {isLoading ? (
               <>
@@ -550,7 +614,7 @@ export default function ImageToImagePage() {
 
         {/* Loading State */}
         {isLoading && (
-          <LoadingState 
+          <LoadingState
             message="در حال آماده‌سازی عکس هستیم"
             subMessage={
               loadingProgress
@@ -577,4 +641,3 @@ export default function ImageToImagePage() {
     </div>
   );
 }
-

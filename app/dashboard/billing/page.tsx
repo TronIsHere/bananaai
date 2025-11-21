@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   CreditCard,
   Calendar,
@@ -15,17 +15,10 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { plans as landingPlans } from "@/lib/data";
 import { useUser } from "@/hooks/use-user";
 import { getPlanNamePersian, getPlanNameEnglish } from "@/lib/utils";
+import { UpgradeDialog } from "@/components/dialog/upgrade-dialog";
 
 interface BillingHistoryItem {
   id: string;
@@ -35,30 +28,6 @@ interface BillingHistoryItem {
   status: "paid" | "pending" | "failed";
   invoiceUrl?: string;
 }
-
-const mockBillingHistory: BillingHistoryItem[] = [
-  {
-    id: "inv-001",
-    date: "1403/09/15",
-    amount: 999000,
-    plan: "creator", // Stored as English
-    status: "paid",
-  },
-  {
-    id: "inv-002",
-    date: "1403/08/15",
-    amount: 999000,
-    plan: "creator", // Stored as English
-    status: "paid",
-  },
-  {
-    id: "inv-003",
-    date: "1403/07/15",
-    amount: 350000,
-    plan: "explorer", // Stored as English
-    status: "paid",
-  },
-];
 
 // Map plan names (English) to icons
 const planIcons: Record<string, typeof Sparkles> = {
@@ -71,7 +40,12 @@ const planIcons: Record<string, typeof Sparkles> = {
 export default function BillingPage() {
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const { user } = useUser();
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>(
+    []
+  );
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const { user, refreshUserData } = useUser();
 
   // Map landing plans to billing page format
   const plans = useMemo(() => {
@@ -99,14 +73,32 @@ export default function BillingPage() {
     return match ? parseInt(match[1], 10) : 0;
   };
 
-  const formatDate = (date: Date | null) => {
+  const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return "1403/10/15";
+
+    // Convert string to Date if needed
+    let dateObj: Date;
+    if (typeof date === "string") {
+      dateObj = new Date(date);
+    } else {
+      dateObj = date;
+    }
+
+    // Check if date is valid
+    if (isNaN(dateObj.getTime())) {
+      return "1403/10/15";
+    }
+
     // Convert to Persian date (simplified - you might want to use a proper library)
-    return new Intl.DateTimeFormat("fa-IR", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(date);
+    try {
+      return new Intl.DateTimeFormat("fa-IR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(dateObj);
+    } catch (error) {
+      return "1403/10/15";
+    }
   };
 
   const usage = {
@@ -115,9 +107,77 @@ export default function BillingPage() {
     resetDate: formatDate(user.monthlyResetDate),
   };
 
+  // Fetch billing history
+  const fetchBillingHistory = useCallback(async () => {
+    try {
+      setIsLoadingHistory(true);
+      const response = await fetch("/api/user/billing");
+      if (!response.ok) {
+        throw new Error("Failed to fetch billing history");
+      }
+      const history = await response.json();
+      // Convert date strings to Date objects and format for display
+      const formattedHistory: BillingHistoryItem[] = history.map(
+        (item: any) => ({
+          ...item,
+          date: formatDate(item.date),
+        })
+      );
+      setBillingHistory(formattedHistory);
+    } catch (error) {
+      console.error("Error fetching billing history:", error);
+      setBillingHistory([]);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, []);
+
+  // Fetch billing history on mount
+  useEffect(() => {
+    fetchBillingHistory();
+  }, [fetchBillingHistory]);
+
   const handleUpgrade = (planName: string) => {
     setSelectedPlan(planName);
     setIsUpgradeDialogOpen(true);
+  };
+
+  const handlePurchase = async () => {
+    if (!selectedPlan) return;
+
+    const planEnglish = getPlanNameEnglish(selectedPlan);
+    if (!planEnglish) return;
+
+    setIsPurchasing(true);
+    try {
+      const response = await fetch("/api/user/plan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ plan: planEnglish }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update plan");
+      }
+
+      // Refresh user data
+      await refreshUserData();
+
+      // Refresh billing history to show the new purchase
+      await fetchBillingHistory();
+
+      // Close dialog
+      setIsUpgradeDialogOpen(false);
+      setSelectedPlan(null);
+    } catch (error) {
+      console.error("Error purchasing plan:", error);
+      alert("خطا در خرید پلن. لطفا دوباره تلاش کنید.");
+    } finally {
+      setIsPurchasing(false);
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -197,12 +257,6 @@ export default function BillingPage() {
               </span>
             </div>
           )}
-          <Button
-            variant="outline"
-            className="w-full border-white/10 text-white/80 hover:border-yellow-400/30 hover:text-yellow-400 h-10 md:h-auto"
-          >
-            تغییر اشتراک
-          </Button>
         </div>
 
         {/* Credits Card */}
@@ -215,8 +269,8 @@ export default function BillingPage() {
             {/* Header with icon */}
             <div className="mb-6 flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-yellow-400/30 via-orange-400/30 to-pink-500/30 shadow-lg shadow-yellow-400/20 md:h-16 md:w-16">
-                  <Coins className="h-6 w-6 text-yellow-400 md:h-8 md:w-8" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-14 md:w-14 flex-shrink-0">
+                  <Coins className="h-5 w-5 text-yellow-400 md:h-7 md:w-7" />
                 </div>
                 <div>
                   <p className="text-xs font-medium text-slate-300 md:text-sm">
@@ -274,12 +328,13 @@ export default function BillingPage() {
             )}
 
             {/* Footer info */}
-            <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 backdrop-blur-sm">
+            {/* TODO: Maybe add reset date in future */}
+            {/* <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 backdrop-blur-sm">
               <Calendar className="h-4 w-4 text-slate-400 flex-shrink-0" />
               <span className="text-xs text-slate-300 md:text-sm">
                 بازنشانی در {usage.resetDate}
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -289,59 +344,61 @@ export default function BillingPage() {
         <h2 className="mb-4 text-lg font-bold text-white md:text-2xl">
           پلن‌های موجود
         </h2>
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-4">
           {plans.map((plan) => {
             const Icon = plan.icon;
             const isCurrent = plan.current;
             return (
               <div
                 key={plan.name}
-                className={`relative overflow-hidden rounded-xl border p-4 transition-all md:rounded-2xl md:p-8 ${
+                className={`relative flex flex-col overflow-hidden rounded-xl border p-3 transition-all md:rounded-xl md:p-4 ${
                   isCurrent
                     ? "border-yellow-400/50 bg-gradient-to-br from-yellow-400/10 via-orange-400/10 to-pink-500/10 shadow-[0_0_30px_rgba(251,191,36,0.2)]"
                     : "border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 hover:border-yellow-400/30"
                 }`}
               >
                 {isCurrent && (
-                  <div className="absolute left-3 top-3 md:left-4 md:top-4 rounded-lg bg-yellow-400/20 px-2 py-1 text-xs font-semibold text-yellow-400">
+                  <div className="absolute left-2 top-2 md:left-3 md:top-3 rounded-lg bg-yellow-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-400 md:text-xs">
                     فعلی
                   </div>
                 )}
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-14 md:w-14 flex-shrink-0">
-                    <Icon className="h-5 w-5 text-yellow-400 md:h-7 md:w-7" />
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-10 md:w-10 flex-shrink-0">
+                    <Icon className="h-4 w-4 text-yellow-400 md:h-5 md:w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-bold text-white md:text-xl truncate">
+                    <h3 className="text-sm font-bold text-white md:text-base truncate">
                       {plan.name}
                     </h3>
-                    <p className="text-xs text-slate-400 md:text-sm truncate">
+                    <p className="text-[10px] text-slate-400 md:text-xs truncate">
                       {plan.nameEn}
                     </p>
                   </div>
                 </div>
-                <div className="mb-4">
-                  <p className="text-xl font-black text-white md:text-3xl">
+                <div className="mb-3">
+                  <p className="text-lg font-black text-white md:text-xl">
                     {plan.price} {plan.currency}
                   </p>
-                  <p className="mt-1 text-xs text-slate-400 md:text-sm">
+                  <p className="mt-0.5 text-[10px] text-slate-400 md:text-xs">
                     {plan.tagline}
                   </p>
                 </div>
-                <ul className="mb-4 md:mb-6 space-y-2">
+                <ul className="mb-3 flex-1 space-y-1.5">
                   {plan.highlights.map((feature, idx) => {
                     const isNoStorage = feature.includes("بدون نگهداری");
                     return (
                       <li
                         key={idx}
-                        className="flex items-start gap-2 text-xs text-slate-300 md:text-sm"
+                        className="flex items-start gap-1.5 text-[10px] text-slate-300 md:text-xs"
                       >
                         {isNoStorage ? (
-                          <Close className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 text-red-400 mt-0.5" />
+                          <Close className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0 text-red-400 mt-0.5" />
                         ) : (
-                          <Check className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 text-emerald-400 mt-0.5" />
+                          <Check className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0 text-emerald-400 mt-0.5" />
                         )}
-                        <span className="break-words">{feature}</span>
+                        <span className="break-words leading-tight">
+                          {feature}
+                        </span>
                       </li>
                     );
                   })}
@@ -350,7 +407,7 @@ export default function BillingPage() {
                   onClick={() => !isCurrent && handleUpgrade(plan.name)}
                   disabled={isCurrent}
                   variant={isCurrent ? "outline" : "default"}
-                  className={`w-full h-10 md:h-auto ${
+                  className={`w-full h-8 text-xs md:h-9 md:text-sm mt-auto ${
                     isCurrent
                       ? "border-white/10 text-white/80"
                       : "bg-gradient-to-r from-yellow-400 to-orange-400 text-white hover:from-yellow-500 hover:to-orange-500"
@@ -372,143 +429,151 @@ export default function BillingPage() {
 
         {/* Mobile Card View */}
         <div className="space-y-3 md:hidden">
-          {mockBillingHistory.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 p-4"
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-slate-400">شماره فاکتور</p>
-                  <p className="mt-1 text-sm font-medium text-white">
-                    {item.id}
-                  </p>
-                </div>
-                <div className="text-left">{getStatusBadge(item.status)}</div>
-              </div>
-              <div className="space-y-2 border-t border-white/10 pt-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">تاریخ</span>
-                  <span className="text-sm text-slate-300">{item.date}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">پلن</span>
-                  <span className="text-sm text-slate-300">
-                    {getPlanNamePersian(item.plan as any)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-400">مبلغ</span>
-                  <span className="text-sm font-semibold text-white">
-                    {formatCurrency(item.amount)}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-white/10">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full text-slate-400 hover:text-white h-9"
-                >
-                  <Download className="h-4 w-4 ml-1" />
-                  دانلود فاکتور
-                </Button>
-              </div>
+          {isLoadingHistory ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-slate-400">در حال بارگذاری...</p>
             </div>
-          ))}
+          ) : billingHistory.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-slate-400">تاریخچه پرداخت خالی است</p>
+            </div>
+          ) : (
+            billingHistory.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 p-4"
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-slate-400">شماره فاکتور</p>
+                    <p className="mt-1 text-sm font-medium text-white">
+                      {item.id}
+                    </p>
+                  </div>
+                  <div className="text-left">{getStatusBadge(item.status)}</div>
+                </div>
+                <div className="space-y-2 border-t border-white/10 pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">تاریخ</span>
+                    <span className="text-sm text-slate-300">{item.date}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">پلن</span>
+                    <span className="text-sm text-slate-300">
+                      {getPlanNamePersian(item.plan as any)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">مبلغ</span>
+                    <span className="text-sm font-semibold text-white">
+                      {formatCurrency(item.amount)}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-white/10">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-slate-400 hover:text-white h-9"
+                  >
+                    <Download className="h-4 w-4 ml-1" />
+                    دانلود فاکتور
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Desktop Table View */}
         <div className="hidden md:block overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 md:rounded-2xl">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
-                    شماره فاکتور
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
-                    تاریخ
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
-                    پلن
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
-                    مبلغ
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
-                    وضعیت
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
-                    عملیات
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockBillingHistory.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="border-b border-white/5 transition-colors hover:bg-white/5"
-                  >
-                    <td className="px-6 py-3 text-sm font-medium text-white">
-                      {item.id}
-                    </td>
-                    <td className="px-6 py-3 text-sm text-slate-300">
-                      {item.date}
-                    </td>
-                    <td className="px-6 py-3 text-sm text-slate-300">
-                      {getPlanNamePersian(item.plan as any)}
-                    </td>
-                    <td className="px-6 py-3 text-sm font-semibold text-white">
-                      {formatCurrency(item.amount)}
-                    </td>
-                    <td className="px-6 py-3">{getStatusBadge(item.status)}</td>
-                    <td className="px-6 py-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-slate-400 hover:text-white"
-                      >
-                        <Download className="h-4 w-4 ml-1" />
-                        دانلود
-                      </Button>
-                    </td>
+          {isLoadingHistory ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-slate-400">در حال بارگذاری...</p>
+            </div>
+          ) : billingHistory.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <p className="text-slate-400">تاریخچه پرداخت خالی است</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
+                      شماره فاکتور
+                    </th>
+                    <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
+                      تاریخ
+                    </th>
+                    <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
+                      پلن
+                    </th>
+                    <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
+                      مبلغ
+                    </th>
+                    <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
+                      وضعیت
+                    </th>
+                    <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
+                      عملیات
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {billingHistory.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="border-b border-white/5 transition-colors hover:bg-white/5"
+                    >
+                      <td className="px-6 py-3 text-sm font-medium text-white">
+                        {item.id}
+                      </td>
+                      <td className="px-6 py-3 text-sm text-slate-300">
+                        {item.date}
+                      </td>
+                      <td className="px-6 py-3 text-sm text-slate-300">
+                        {getPlanNamePersian(item.plan as any)}
+                      </td>
+                      <td className="px-6 py-3 text-sm font-semibold text-white">
+                        {formatCurrency(item.amount)}
+                      </td>
+                      <td className="px-6 py-3">
+                        {getStatusBadge(item.status)}
+                      </td>
+                      <td className="px-6 py-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-slate-400 hover:text-white"
+                        >
+                          <Download className="h-4 w-4 ml-1" />
+                          دانلود
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Upgrade Dialog */}
-      <Dialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen}>
-        <DialogContent className="bg-slate-900 border-white/10 text-white max-w-[calc(100vw-2rem)] sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="text-right text-white mt-5 text-base sm:text-lg">
-              ارتقا به پلن {selectedPlan}
-            </DialogTitle>
-            <DialogDescription className="text-right text-slate-400 text-sm">
-              آیا مطمئن هستید که می‌خواهید به پلن {selectedPlan} ارتقا دهید؟
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row-reverse sm:gap-2">
-            <Button
-              onClick={() => setIsUpgradeDialogOpen(false)}
-              className="w-full sm:w-auto bg-gradient-to-r from-yellow-400 to-orange-400 text-white hover:from-yellow-500 hover:to-orange-500 h-10"
-            >
-              تایید و پرداخت
-            </Button>
-            <Button
-              onClick={() => setIsUpgradeDialogOpen(false)}
-              variant="outline"
-              className="w-full sm:w-auto border-white/10 text-white/80 hover:border-white/30 h-10"
-            >
-              انصراف
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <UpgradeDialog
+        open={isUpgradeDialogOpen}
+        onOpenChange={(open) => {
+          setIsUpgradeDialogOpen(open);
+          if (!open) {
+            setSelectedPlan(null);
+          }
+        }}
+        selectedPlan={selectedPlan}
+        plans={plans}
+        onPurchase={handlePurchase}
+        isPurchasing={isPurchasing}
+      />
     </div>
   );
 }

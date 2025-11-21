@@ -359,7 +359,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-md border-white/10 bg-slate-900/95 backdrop-blur-xl">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black text-white text-right pt-5">
+          <DialogTitle className="text-2xl font-black text-white text-right">
             {step === "mobile"
               ? "ورود به حساب کاربری"
               : step === "otp"

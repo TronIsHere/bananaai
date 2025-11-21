@@ -134,9 +134,9 @@ export default function ImageToImageFeaturePage() {
       />
       <Header onMobileMenuOpen={() => setMobileMenuOpen(true)} />
 
-      <main>
+      <main className="">
         {/* Hero Section - Modern & Tech-focused */}
-        <section className="relative overflow-hidden py-16 sm:py-24 lg:py-28">
+        <section className="relative overflow-hidden  py-16 sm:py-24 lg:py-28">
           <div className="absolute inset-0">
             <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-purple-500/10 blur-3xl" />
           </div>
