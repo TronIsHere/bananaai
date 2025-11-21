@@ -9,6 +9,7 @@ import {
   Image,
   History,
   CreditCard,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -38,6 +39,11 @@ const menuItems = [
     href: "/dashboard/billing",
     label: "صورتحساب",
     icon: CreditCard,
+  },
+  {
+    href: "/dashboard/settings",
+    label: "تنظیمات",
+    icon: Settings,
   },
 ];
 
