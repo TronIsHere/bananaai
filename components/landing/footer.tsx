@@ -18,8 +18,11 @@ export function Footer() {
             <span className="text-slate-500">توسط</span>
             <img
               src="https://whitediv.ir/img/logo-transparent.png"
-              alt="WhiteDiv"
+              alt="لوگوی WhiteDiv - توسعه‌دهنده وب"
               className="h-6 w-auto opacity-70 hover:opacity-100 transition-opacity"
+              width="80"
+              height="24"
+              loading="lazy"
             />
           </Link>
         </div>

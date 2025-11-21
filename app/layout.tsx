@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { AuthSessionProvider } from "@/components/providers/session-provider";
+import { siteConfig, defaultSEO } from "@/lib/seo-config";
 
 const iranSans = localFont({
   src: [
@@ -31,8 +32,50 @@ const iranSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "BananaAI | پلتفرم هوش مصنوعی ایرانی",
-  description: "تولید تصویر با هوش مصنوعی نانوبنانا - تبدیل متن به تصویر و تصویر به تصویر",
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: defaultSEO.title,
+    template: defaultSEO.title.includes("|")
+      ? defaultSEO.title
+      : "%s | BananaAI",
+  },
+  description: defaultSEO.description,
+  keywords: siteConfig.keywords,
+  authors: [{ name: siteConfig.author.name, url: siteConfig.author.url }],
+  creator: siteConfig.creator,
+  publisher: siteConfig.publisher,
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    ...defaultSEO.openGraph,
+    url: siteConfig.url,
+  },
+  twitter: defaultSEO.twitter,
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: siteConfig.url,
+    languages: {
+      "fa-IR": siteConfig.url,
+    },
+  },
+  verification: {
+    // Add your verification codes here when available
+    // google: "your-google-verification-code",
+    // yandex: "your-yandex-verification-code",
+  },
 };
 
 export default function RootLayout({

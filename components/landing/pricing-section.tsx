@@ -58,13 +58,15 @@ export function PricingSection() {
           const isFeatured = plan.featured;
 
           return (
-            <div
+            <article
               key={plan.name}
               className={`group relative flex flex-col overflow-hidden rounded-xl border transition-all md:rounded-xl ${
                 isFeatured
                   ? "border-yellow-400/50 bg-gradient-to-br from-yellow-400/10 via-orange-400/10 to-pink-500/10 shadow-[0_0_30px_rgba(251,191,36,0.2)]"
                   : "border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 hover:border-yellow-400/30"
               }`}
+              itemScope
+              itemType="https://schema.org/Offer"
             >
               {/* Featured badge */}
               {isFeatured && (
@@ -96,10 +98,10 @@ export function PricingSection() {
 
                 {/* Pricing */}
                 <div className="mb-3">
-                  <p className="text-lg font-black text-white md:text-xl">
-                    {plan.price} {plan.currency}
+                  <p className="text-lg font-black text-white md:text-xl" itemProp="price" itemScope itemType="https://schema.org/PriceSpecification">
+                    <span itemProp="price">{plan.price}</span> <span itemProp="priceCurrency">{plan.currency}</span>
                   </p>
-                  <p className="mt-0.5 text-[10px] text-slate-400 md:text-xs">
+                  <p className="mt-0.5 text-[10px] text-slate-400 md:text-xs" itemProp="description">
                     {plan.tagline}
                   </p>
                 </div>
@@ -148,7 +150,7 @@ export function PricingSection() {
                   {plan.cta}
                 </Button>
               </div>
-            </div>
+            </article>
           );
         })}
       </div>

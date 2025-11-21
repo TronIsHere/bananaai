@@ -143,7 +143,10 @@ function ImageGeneratorDemo() {
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
+                        aria-hidden="true"
+                        role="img"
                       >
+                        <title>آیکون تصویر تولید شده</title>
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -236,18 +239,18 @@ export function HeroSection() {
               </span>
             </Button>
           </div>
-          <div className="grid gap-4 rounded-2xl border border-white/5 bg-white/5 p-4 sm:grid-cols-3 sm:gap-6 sm:p-6">
+          <dl className="grid gap-4 rounded-2xl border border-white/5 bg-white/5 p-4 sm:grid-cols-3 sm:gap-6 sm:p-6">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center sm:text-right">
-                <p className="text-xl font-black text-white sm:text-2xl">
+                <dt className="text-xl font-black text-white sm:text-2xl">
                   {stat.value}
-                </p>
-                <p className="mt-1 text-[10px] text-white/60 sm:text-xs">
+                </dt>
+                <dd className="mt-1 text-[10px] text-white/60 sm:text-xs">
                   {stat.label}
-                </p>
+                </dd>
               </div>
             ))}
-          </div>
+          </dl>
         </div>
       </div>
       <LoginDialog open={loginOpen} onOpenChange={setLoginOpen} />

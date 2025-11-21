@@ -15,13 +15,13 @@ export function WorkflowSection() {
             جریان کار از پرامپت تا پیکسل
           </h2>
         </div>
-        <div className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
+        <ol className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 md:grid-cols-3 md:gap-6" aria-label="مراحل کار">
           {workflow.map((step) => (
-            <div
+            <li
               key={step.step}
               className="relative rounded-2xl border border-white/10 bg-slate-950/60 p-5 sm:p-6"
             >
-              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-pink-500 text-lg font-black text-slate-950">
+              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-pink-500 text-lg font-black text-slate-950" aria-hidden="true">
                 {step.step}
               </div>
               <h3 className="text-base font-bold text-white sm:text-lg">
@@ -30,9 +30,9 @@ export function WorkflowSection() {
               <p className="mt-2 text-xs text-slate-300 sm:text-sm">
                 {step.body}
               </p>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   );
