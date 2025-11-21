@@ -88,9 +88,8 @@ export function ContactSection() {
           <div className="flex justify-center">
             <Button
               type="submit"
-              className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl border border-yellow-400/20 bg-gradient-to-br from-slate-900/90 via-slate-800/90 to-slate-900/90 px-8 py-4 text-base font-bold text-white shadow-[0_0_20px_rgba(251,191,36,0.15)] backdrop-blur-md transition-all duration-300 hover:border-yellow-400/40 hover:shadow-[0_0_30px_rgba(251,191,36,0.3)] hover:scale-[1.02] sm:px-10 sm:py-5 sm:text-lg"
+              className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-xl bg-gradient-to-r from-yellow-400 to-orange-400 px-8 py-4 text-base font-bold text-white shadow-lg transition-all duration-300 hover:from-yellow-500 hover:to-orange-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-yellow-400/50 sm:px-10 sm:py-5 sm:text-lg"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/0 via-yellow-400/10 to-yellow-400/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-hover:animate-shimmer" />
               <span className="relative z-10 flex items-center gap-2">
                 ارسال پیام
                 <HiArrowLeft className="text-lg transition-transform duration-300 group-hover:-translate-x-1 sm:text-xl" />
