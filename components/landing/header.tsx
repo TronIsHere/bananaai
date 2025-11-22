@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { navigationItems } from "@/lib/data";
 import { LoginDialog } from "@/components/dialog/login-dialog";
@@ -81,9 +82,9 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
           ) : (
             <Button
               onClick={() => setLoginOpen(true)}
-              variant="outline"
-              className="border-white/10 px-4 py-2 text-xs font-semibold text-white/80 hover:border-white/30 hover:text-white"
+              className="bg-yellow-400 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-yellow-500"
             >
+              <LogIn className="h-4 w-4" />
               ورود
             </Button>
           )}
@@ -115,9 +116,10 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
           ) : (
             <Button
               onClick={() => setLoginOpen(true)}
-              variant="outline"
-              className="border-white/10 text-white/80 hover:border-white/30 hover:text-white"
+              variant={"primary"}
+              className="text-slate-950"
             >
+              <LogIn className="h-4 w-4" />
               ورود
             </Button>
           )}

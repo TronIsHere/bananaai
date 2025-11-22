@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/store/user-store";
 import {
@@ -36,6 +37,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [mobileError, setMobileError] = useState<string>("");
   const [otpError, setOtpError] = useState<string>("");
   const [firstNameError, setFirstNameError] = useState<string>("");
@@ -80,6 +82,46 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       console.error("Error sending OTP:", error);
       setMobileError("خطا در ارتباط با سرور");
       setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setOtpError("");
+
+    // Normalize mobile number (trim whitespace)
+    const normalizedMobile = mobileNumber.trim().replace(/\s+/g, "");
+
+    const result = mobileNumberSchema.safeParse(normalizedMobile);
+    if (!result.success) {
+      setOtpError(result.error.issues[0].message);
+      return;
+    }
+
+    setIsResending(true);
+    try {
+      const response = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ mobileNumber: normalizedMobile }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setOtpError(data.error || "خطا در ارسال کد تأیید");
+        setIsResending(false);
+        return;
+      }
+
+      setIsResending(false);
+      setOtpError("");
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      setOtpError("خطا در ارتباط با سرور");
+      setIsResending(false);
     }
   };
 
@@ -352,6 +394,8 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       setFirstNameError("");
       setLastNameError("");
       setUserExists(null);
+      setIsLoading(false);
+      setIsResending(false);
     }, 200);
   };
 
@@ -411,6 +455,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
               disabled={isLoading}
               className="w-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 font-bold text-slate-950 shadow-[0_10px_35px_rgba(251,191,36,0.35)] hover:scale-[1.02] hover:opacity-90 h-12 text-base"
             >
+              {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
               {isLoading ? "در حال ارسال..." : "ارسال کد تأیید"}
             </Button>
           </form>
@@ -449,10 +494,12 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                 کد را دریافت نکردید؟{" "}
                 <button
                   type="button"
-                  className="text-cyan-400 hover:text-cyan-300 underline"
-                  onClick={handleMobileSubmit}
+                  className="text-cyan-400 hover:text-cyan-300 underline disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-1"
+                  onClick={handleResendOtp}
+                  disabled={isResending || isLoading}
                 >
-                  ارسال مجدد
+                  {isResending && <Loader2 className="h-3 w-3 animate-spin" />}
+                  {isResending ? "در حال ارسال..." : "ارسال مجدد"}
                 </button>
               </p>
             </div>
@@ -471,6 +518,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                 disabled={isLoading}
                 className="flex-1 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 font-bold text-slate-950 shadow-[0_10px_35px_rgba(251,191,36,0.35)] hover:scale-[1.02] hover:opacity-90 h-12"
               >
+                {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
                 {isLoading ? "در حال ورود..." : "ورود"}
               </Button>
             </div>
@@ -545,6 +593,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                 disabled={isLoading}
                 className="flex-1 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 font-bold text-slate-950 shadow-[0_10px_35px_rgba(251,191,36,0.35)] hover:scale-[1.02] hover:opacity-90 h-12"
               >
+                {isLoading && <Loader2 className="h-5 w-5 animate-spin" />}
                 {isLoading ? "در حال ثبت‌نام..." : "ثبت‌نام و ورود"}
               </Button>
             </div>
