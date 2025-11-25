@@ -100,6 +100,24 @@ export function Footer() {
           <p>© {currentYear} BananaAI — تمامی حقوق محفوظ است.</p>
 
           <div className="flex items-center gap-4">
+            {/* eNamad Trust Seal */}
+
+            <a
+              referrerPolicy="origin"
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://trustseal.enamad.ir/?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
+              className="transition-opacity hover:opacity-80"
+            >
+              <img
+                referrerPolicy="origin"
+                src="https://trustseal.enamad.ir/logo.aspx?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
+                alt="eNamad Trust Seal"
+                className="h-12 w-auto cursor-pointer"
+                loading="lazy"
+              />
+            </a>
+
             <Link
               href="https://whitediv.ir"
               target="_blank"
