@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ChevronUp,
   Settings,
+  Check,
 } from "lucide-react";
 import { GeneratedImage } from "@/types/dashboard-types";
 import { GeneratedImageDisplay } from "@/components/dashboard/generated-image-display";
@@ -102,6 +103,7 @@ export default function ImageToImagePage() {
   const [numOutputs] = useState(1);
   const [imageSize, setImageSize] = useState("16:9");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isPro, setIsPro] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -237,6 +239,7 @@ export default function ImageToImagePage() {
           imageUrls: [imageUrl], // Array of input image URLs
           numImages: numOutputs,
           image_size: imageSize,
+          isPro: isPro,
         }),
       });
 
@@ -431,6 +434,109 @@ export default function ImageToImagePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Mode Selection - Compact & Top */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-white/90 block text-right">
+              مدل انتخابی
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Standard Mode */}
+              <div
+                onClick={() => setIsPro(false)}
+                className={`cursor-pointer relative rounded-xl border p-3 transition-all duration-200 ${
+                  !isPro
+                    ? "border-cyan-500 bg-cyan-500/10"
+                    : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`p-1.5 rounded-lg ${
+                        !isPro ? "bg-cyan-500/20" : "bg-white/10"
+                      }`}
+                    >
+                      <Sparkles
+                        className={`h-4 w-4 ${
+                          !isPro ? "text-cyan-400" : "text-white/70"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <h3
+                        className={`font-bold text-sm ${
+                          !isPro ? "text-white" : "text-white/80"
+                        }`}
+                      >
+                        استاندارد
+                      </h3>
+                      <div className="flex items-center gap-1 text-cyan-300 text-[10px] font-medium">
+                        <span className="font-bold">۴</span>
+                        <span>اعتبار</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Checkmark */}
+                  {!isPro && (
+                    <div className="h-5 w-5 rounded-full bg-cyan-500 flex items-center justify-center">
+                      <Check className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Pro Mode */}
+              <div
+                onClick={() => setIsPro(true)}
+                className={`cursor-pointer relative rounded-xl border p-3 transition-all duration-200 ${
+                  isPro
+                    ? "border-yellow-400 bg-yellow-400/10 shadow-[0_0_15px_-5px_rgba(250,204,21,0.3)]"
+                    : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                }`}
+              >
+                {/* Badge */}
+                <div className="absolute -top-2 right-3 px-1.5 py-0.5 bg-linear-to-r from-yellow-400 to-orange-500 rounded-full text-[8px] font-bold text-black shadow-sm">
+                  PRO
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`p-1.5 rounded-lg ${
+                        isPro ? "bg-yellow-400/20" : "bg-white/10"
+                      }`}
+                    >
+                      <Zap
+                        className={`h-4 w-4 ${
+                          isPro ? "text-yellow-400" : "text-white/70"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <h3
+                        className={`font-bold text-sm ${
+                          isPro ? "text-white" : "text-white/80"
+                        }`}
+                      >
+                        نانو بنانا پرو
+                      </h3>
+                      <div className="flex items-center gap-1 text-yellow-400 text-[10px] font-medium">
+                        <span className="font-bold">۲۴</span>
+                        <span>اعتبار</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Checkmark */}
+                  {isPro && (
+                    <div className="h-5 w-5 rounded-full bg-yellow-400 flex items-center justify-center">
+                      <Check className="h-3 w-3 text-black" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="grid gap-6 lg:grid-cols-5">
             {/* Image Upload Section - Takes 2 columns */}
             <div className="lg:col-span-2 space-y-3">

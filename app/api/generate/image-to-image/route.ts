@@ -7,6 +7,7 @@ import Task from "@/app/models/task";
 import { generateImage } from "@/lib/services/nanobanana";
 
 const CREDITS_PER_GENERATION = 4;
+const CREDITS_PER_GENERATION_PRO = 24;
 
 function getCallbackUrl(request: NextRequest): string {
   // Try to get from environment variable first
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { prompt, imageUrls, numImages = 1, image_size = "16:9" } = body;
+    const { prompt, imageUrls, numImages = 1, image_size = "16:9", isPro = false } = body;
 
     if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
       return NextResponse.json(
@@ -71,12 +72,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Determine credits needed based on pro mode
+    const creditsNeeded = isPro
+      ? CREDITS_PER_GENERATION_PRO
+      : CREDITS_PER_GENERATION;
+
     // Check if user has enough credits
-    if (user.credits < CREDITS_PER_GENERATION) {
+    if (user.credits < creditsNeeded) {
       return NextResponse.json(
         { 
           error: "Insufficient credits",
-          message: `اعتبار شما کافی نیست. برای تولید تصویر به حداقل ${CREDITS_PER_GENERATION} اعتبار نیاز دارید. شما ${user.credits} اعتبار دارید.`
+          message: `اعتبار شما کافی نیست. برای تولید تصویر به حداقل ${creditsNeeded} اعتبار نیاز دارید. شما ${user.credits} اعتبار دارید.`
         },
         { status: 403 }
       );
@@ -89,14 +95,17 @@ export async function POST(request: NextRequest) {
     // Call NanoBanana API
     let apiResponse;
     try {
-      apiResponse = await generateImage({
-        prompt: prompt.trim(),
-        numImages: Math.min(Math.max(1, numImages), 4), // Limit between 1-4 images
-        type: "IMAGETOIAMGE",
-        image_size,
-        callBackUrl: callbackUrl,
-        imageUrls: imageUrls, // Array of input image URLs
-      });
+      apiResponse = await generateImage(
+        {
+          prompt: prompt.trim(),
+          numImages: Math.min(Math.max(1, numImages), 4), // Limit between 1-4 images
+          type: "IMAGETOIAMGE",
+          image_size,
+          callBackUrl: callbackUrl,
+          imageUrls: imageUrls, // Array of input image URLs
+        },
+        isPro
+      );
     } catch (apiError: any) {
       // Handle API errors (400, 401, 500 from API)
       console.error("NanoBanana API error:", apiError);
@@ -127,7 +136,7 @@ export async function POST(request: NextRequest) {
       prompt: prompt.trim(),
       numImages: Math.min(Math.max(1, numImages), 4),
       status: "pending",
-      creditsReserved: CREDITS_PER_GENERATION,
+      creditsReserved: creditsNeeded,
       creditsDeducted: false,
     });
 

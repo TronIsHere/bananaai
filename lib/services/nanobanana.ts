@@ -81,6 +81,7 @@ export async function generateImage(
         callBackUrl: request.callBackUrl,
         ...(request.imageUrls && { imageUrls: request.imageUrls }),
         ...(request.watermark && { watermark: request.watermark }),
+        ...(isPro && { resolution: "2K" }),
       },
       {
         headers: {

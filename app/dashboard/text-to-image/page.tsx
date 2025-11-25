@@ -15,6 +15,7 @@ import {
   ChevronUp,
   Lightbulb,
   Settings,
+  Check,
 } from "lucide-react";
 import { demoPrompts, STYLE_PRESETS, IMAGE_SIZES } from "@/lib/data";
 import { GeneratedImage } from "@/types/dashboard-types";
@@ -28,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 
 // Icon mapping for style presets
 const iconMap = {
@@ -275,7 +275,7 @@ export default function TextToImagePage() {
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20">
             <Sparkles className="h-6 w-6 text-yellow-400" />
           </div>
           <div>
@@ -291,7 +291,7 @@ export default function TextToImagePage() {
         {/* Error Message */}
         {error && (
           <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="text-sm text-red-400 font-medium">{error}</p>
             </div>
@@ -305,6 +305,109 @@ export default function TextToImagePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+          {/* Mode Selection - Compact & Top */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-white/90 block text-right">
+              مدل انتخابی
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Standard Mode */}
+              <div
+                onClick={() => setIsPro(false)}
+                className={`cursor-pointer relative rounded-xl border p-3 transition-all duration-200 ${
+                  !isPro
+                    ? "border-cyan-500 bg-cyan-500/10"
+                    : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`p-1.5 rounded-lg ${
+                        !isPro ? "bg-cyan-500/20" : "bg-white/10"
+                      }`}
+                    >
+                      <Sparkles
+                        className={`h-4 w-4 ${
+                          !isPro ? "text-cyan-400" : "text-white/70"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <h3
+                        className={`font-bold text-sm ${
+                          !isPro ? "text-white" : "text-white/80"
+                        }`}
+                      >
+                        استاندارد
+                      </h3>
+                      <div className="flex items-center gap-1 text-cyan-300 text-[10px] font-medium">
+                        <span className="font-bold">۴</span>
+                        <span>اعتبار</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Checkmark */}
+                  {!isPro && (
+                    <div className="h-5 w-5 rounded-full bg-cyan-500 flex items-center justify-center">
+                      <Check className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Pro Mode */}
+              <div
+                onClick={() => setIsPro(true)}
+                className={`cursor-pointer relative rounded-xl border p-3 transition-all duration-200 ${
+                  isPro
+                    ? "border-yellow-400 bg-yellow-400/10 shadow-[0_0_15px_-5px_rgba(250,204,21,0.3)]"
+                    : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                }`}
+              >
+                {/* Badge */}
+                <div className="absolute -top-2 right-3 px-1.5 py-0.5 bg-linear-to-r from-yellow-400 to-orange-500 rounded-full text-[8px] font-bold text-black shadow-sm">
+                  PRO
+                </div>
+
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`p-1.5 rounded-lg ${
+                        isPro ? "bg-yellow-400/20" : "bg-white/10"
+                      }`}
+                    >
+                      <Zap
+                        className={`h-4 w-4 ${
+                          isPro ? "text-yellow-400" : "text-white/70"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <h3
+                        className={`font-bold text-sm ${
+                          isPro ? "text-white" : "text-white/80"
+                        }`}
+                      >
+                        نانو بنانا پرو
+                      </h3>
+                      <div className="flex items-center gap-1 text-yellow-400 text-[10px] font-medium">
+                        <span className="font-bold">۲۴</span>
+                        <span>اعتبار</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Checkmark */}
+                  {isPro && (
+                    <div className="h-5 w-5 rounded-full bg-yellow-400 flex items-center justify-center">
+                      <Check className="h-3 w-3 text-black" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Main Prompt Input - Prominent */}
           <div className="space-y-3">
             <div className="space-y-2">
@@ -336,7 +439,7 @@ export default function TextToImagePage() {
             {/* Quick Example Prompts - Compact */}
             {demoPrompts.length > 0 && (
               <div className="flex items-center gap-2 flex-wrap">
-                <Lightbulb className="h-4 w-4 text-yellow-400/60 flex-shrink-0" />
+                <Lightbulb className="h-4 w-4 text-yellow-400/60 shrink-0" />
                 <span className="text-xs text-slate-400">مثال‌های آماده:</span>
                 {demoPrompts.slice(0, 2).map((example, index) => (
                   <button
@@ -352,33 +455,7 @@ export default function TextToImagePage() {
             )}
           </div>
 
-          {/* Pro Mode Toggle */}
-          <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-yellow-400/20 to-orange-400/20">
-                <Zap className="h-5 w-5 text-yellow-400" />
-              </div>
-              <div className="text-right">
-                <label
-                  htmlFor="pro-mode"
-                  className="text-sm font-semibold text-white cursor-pointer block"
-                >
-                  نانو بنانا پرو
-                </label>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  کیفیت بالاتر برای ۲۴ اعتباری برای هر تصویر
-                </p>
-              </div>
-            </div>
-            <div dir="ltr">
-              <Switch
-                id="pro-mode"
-                checked={isPro}
-                onCheckedChange={setIsPro}
-                className="data-[state=checked]:bg-yellow-400"
-              />
-            </div>
-          </div>
+          {/* Mode Selection has been moved to top */}
 
           {/* Advanced Options - Collapsible */}
           <div className="border-t border-white/10 pt-4">
@@ -422,7 +499,7 @@ export default function TextToImagePage() {
                               : "border-white/10 bg-white/5 text-white/70 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
                           }`}
                         >
-                          <Icon className="h-4 w-4 flex-shrink-0" />
+                          <Icon className="h-4 w-4 shrink-0" />
                           <span className="truncate w-full text-center">
                             {preset.name}
                           </span>
