@@ -2,6 +2,8 @@ import axios from "axios";
 
 const NANOBANANA_API_URL =
   "https://api.nanobananaapi.ai/api/v1/nanobanana/generate";
+const NANOBANANA_API_URL_PRO =
+  "https://api.nanobananaapi.ai/api/v1/nanobanana/generate-pro";
 
 export interface NanoBananaGenerateRequest {
   prompt: string;
@@ -52,7 +54,8 @@ export interface NanoBananaRecordInfoResponse {
 }
 
 export async function generateImage(
-  request: NanoBananaGenerateRequest
+  request: NanoBananaGenerateRequest,
+  isPro: boolean = false
 ): Promise<NanoBananaGenerateResponse> {
   const apiKey = process.env.NANOBANANAAPI_KEY;
 
@@ -64,9 +67,12 @@ export async function generateImage(
     throw new Error("callBackUrl is required");
   }
 
+  // Use pro endpoint if isPro is true
+  const apiUrl = isPro ? NANOBANANA_API_URL_PRO : NANOBANANA_API_URL;
+
   try {
     const response = await axios.post<NanoBananaGenerateResponse>(
-      NANOBANANA_API_URL,
+      apiUrl,
       {
         prompt: request.prompt,
         numImages: request.numImages,

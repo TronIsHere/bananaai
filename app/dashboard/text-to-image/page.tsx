@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Sparkles, 
-  Download, 
-  Loader2, 
+import {
+  Sparkles,
+  Download,
+  Loader2,
   Palette,
   Wand2,
   Zap,
@@ -14,9 +14,9 @@ import {
   ChevronDown,
   ChevronUp,
   Lightbulb,
-  Settings
+  Settings,
 } from "lucide-react";
-import { demoPrompts } from "@/lib/data";
+import { demoPrompts, STYLE_PRESETS, IMAGE_SIZES } from "@/lib/data";
 import { GeneratedImage } from "@/types/dashboard-types";
 import { GeneratedImageDisplay } from "@/components/dashboard/generated-image-display";
 import { LoadingState } from "@/components/dashboard/loading-state";
@@ -28,28 +28,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
-const STYLE_PRESETS = [
-  { id: "realistic", name: "واقع‌گرایانه", icon: ImageIcon, prompt: "ultra realistic, high detail, professional photography" },
-  { id: "oil-painting", name: "نقاشی رنگ روغن", icon: Palette, prompt: "oil painting style, artistic brushstrokes, classical art" },
-  { id: "cartoon", name: "کارتونی", icon: Sparkles, prompt: "cartoon style, animated, vibrant colors, playful" },
-  { id: "sketch", name: "طراحی", icon: Wand2, prompt: "pencil sketch, hand-drawn, artistic, monochrome" },
-  { id: "vintage", name: "قدیمی", icon: Zap, prompt: "vintage style, retro, aged photo effect, nostalgic" },
-  { id: "cyberpunk", name: "سایبرپانک", icon: Zap, prompt: "cyberpunk style, neon lights, futuristic, dark atmosphere" },
-];
-
-const IMAGE_SIZES = [
-  { value: "1:1", label: "مربع (1:1)" },
-  { value: "9:16", label: "عمودی موبایل (9:16)" },
-  { value: "16:9", label: "افقی واید (16:9)" },
-  { value: "3:4", label: "عمودی (3:4)" },
-  { value: "4:3", label: "افقی کلاسیک (4:3)" },
-  { value: "3:2", label: "افقی عکس (3:2)" },
-  { value: "2:3", label: "عمودی عکس (2:3)" },
-  { value: "5:4", label: "عمودی نزدیک به مربع (5:4)" },
-  { value: "4:5", label: "عمودی نزدیک به مربع (4:5)" },
-  { value: "21:9", label: "افقی اولترا واید (21:9)" },
-];
+// Icon mapping for style presets
+const iconMap = {
+  ImageIcon,
+  Palette,
+  Sparkles,
+  Wand2,
+  Zap,
+} as const;
 
 export default function TextToImagePage() {
   const [prompt, setPrompt] = useState("");
@@ -57,23 +45,26 @@ export default function TextToImagePage() {
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [selectedGenerated, setSelectedGenerated] = useState<GeneratedImage | null>(null);
+  const [selectedGenerated, setSelectedGenerated] =
+    useState<GeneratedImage | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingProgress, setLoadingProgress] = useState<{
     attempts: number;
     elapsedSeconds: number;
     estimatedTimeRemaining: number;
   } | null>(null);
-  
+
   const { user, refreshUserData } = useUser();
   const [numOutputs] = useState(1);
   const [imageSize, setImageSize] = useState("16:9");
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isPro, setIsPro] = useState(false);
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
-  
+
   // Check if user has access to image size selection (creator or studio plans)
-  const canSelectImageSize = user.currentPlan === "creator" || user.currentPlan === "studio";
+  const canSelectImageSize =
+    user.currentPlan === "creator" || user.currentPlan === "studio";
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -92,16 +83,22 @@ export default function TextToImagePage() {
     setError(null);
     setGeneratedImages([]);
     setSelectedGenerated(null);
-    setLoadingProgress({ attempts: 0, elapsedSeconds: 0, estimatedTimeRemaining: 120 });
+    setLoadingProgress({
+      attempts: 0,
+      elapsedSeconds: 0,
+      estimatedTimeRemaining: 120,
+    });
     startTimeRef.current = Date.now();
-    
+
     try {
       // Construct final prompt with style
       let finalPrompt = prompt.trim();
 
       // Add selected style
       if (selectedStyleId) {
-        const selectedStyle = STYLE_PRESETS.find(s => s.id === selectedStyleId);
+        const selectedStyle = STYLE_PRESETS.find(
+          (s) => s.id === selectedStyleId
+        );
         if (selectedStyle) {
           finalPrompt += `\n${selectedStyle.prompt}`;
         }
@@ -117,13 +114,16 @@ export default function TextToImagePage() {
           prompt: finalPrompt,
           numImages: numOutputs,
           image_size: imageSize,
+          isPro: isPro,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || data.error || "Failed to generate image");
+        throw new Error(
+          data.message || data.error || "Failed to generate image"
+        );
       }
 
       if (!data.success || !data.taskId) {
@@ -140,37 +140,43 @@ export default function TextToImagePage() {
       const pollTaskStatus = async (): Promise<void> => {
         try {
           attempts++;
-          const elapsedSeconds = startTimeRef.current 
-            ? Math.floor((Date.now() - startTimeRef.current) / 1000) 
+          const elapsedSeconds = startTimeRef.current
+            ? Math.floor((Date.now() - startTimeRef.current) / 1000)
             : 0;
           const estimatedTimeRemaining = Math.max(0, 120 - elapsedSeconds);
-          
+
           setLoadingProgress({
             attempts,
             elapsedSeconds,
             estimatedTimeRemaining,
           });
 
-          const statusResponse = await fetch(`/api/generate/task-status/${taskId}`);
+          const statusResponse = await fetch(
+            `/api/generate/task-status/${taskId}`
+          );
           const statusData = await statusResponse.json();
 
           if (!statusResponse.ok) {
-            throw new Error(statusData.message || statusData.error || "خطا در بررسی وضعیت");
+            throw new Error(
+              statusData.message || statusData.error || "خطا در بررسی وضعیت"
+            );
           }
 
           if (statusData.status === "completed") {
             // Task completed successfully
             if (statusData.images && statusData.images.length > 0) {
-              const newImages: GeneratedImage[] = statusData.images.map((url: string, index: number) => ({
-                id: `${Date.now()}-${index}`,
-                url,
-                timestamp: new Date(),
-                prompt: prompt.trim(),
-              }));
+              const newImages: GeneratedImage[] = statusData.images.map(
+                (url: string, index: number) => ({
+                  id: `${Date.now()}-${index}`,
+                  url,
+                  timestamp: new Date(),
+                  prompt: prompt.trim(),
+                })
+              );
 
               setGeneratedImages(newImages);
               setSelectedGenerated(newImages[0]);
-              
+
               // Refresh user data to update credits
               await refreshUserData();
             } else {
@@ -193,7 +199,10 @@ export default function TextToImagePage() {
               pollingTimeoutRef.current = null;
             }
             throw new Error(statusData.error || "تولید تصویر با خطا مواجه شد");
-          } else if (statusData.status === "pending" || statusData.status === "processing") {
+          } else if (
+            statusData.status === "pending" ||
+            statusData.status === "processing"
+          ) {
             // Still processing, continue polling
             if (attempts >= maxAttempts) {
               setIsLoading(false);
@@ -201,9 +210,14 @@ export default function TextToImagePage() {
                 clearTimeout(pollingTimeoutRef.current);
                 pollingTimeoutRef.current = null;
               }
-              throw new Error("زمان انتظار به پایان رسید. لطفاً دوباره تلاش کنید.");
+              throw new Error(
+                "زمان انتظار به پایان رسید. لطفاً دوباره تلاش کنید."
+              );
             } else {
-              pollingTimeoutRef.current = setTimeout(pollTaskStatus, pollInterval);
+              pollingTimeoutRef.current = setTimeout(
+                pollTaskStatus,
+                pollInterval
+              );
             }
           }
         } catch (err: any) {
@@ -249,7 +263,7 @@ export default function TextToImagePage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const applyPreset = (preset: typeof STYLE_PRESETS[0]) => {
+  const applyPreset = (preset: (typeof STYLE_PRESETS)[number]) => {
     if (selectedStyleId === preset.id) {
       setSelectedStyleId(null);
     } else {
@@ -266,7 +280,9 @@ export default function TextToImagePage() {
           </div>
           <div>
             <h1 className="text-3xl font-black text-white">متن به تصویر</h1>
-            <p className="text-sm text-slate-400 mt-1">ایده‌هایتان را به تصویر تبدیل کنید</p>
+            <p className="text-sm text-slate-400 mt-1">
+              ایده‌هایتان را به تصویر تبدیل کنید
+            </p>
           </div>
         </div>
       </div>
@@ -336,6 +352,34 @@ export default function TextToImagePage() {
             )}
           </div>
 
+          {/* Pro Mode Toggle */}
+          <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-yellow-400/20 to-orange-400/20">
+                <Zap className="h-5 w-5 text-yellow-400" />
+              </div>
+              <div className="text-right">
+                <label
+                  htmlFor="pro-mode"
+                  className="text-sm font-semibold text-white cursor-pointer block"
+                >
+                  نانو بنانا پرو
+                </label>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  کیفیت بالاتر برای ۲۴ اعتباری برای هر تصویر
+                </p>
+              </div>
+            </div>
+            <div dir="ltr">
+              <Switch
+                id="pro-mode"
+                checked={isPro}
+                onCheckedChange={setIsPro}
+                className="data-[state=checked]:bg-yellow-400"
+              />
+            </div>
+          </div>
+
           {/* Advanced Options - Collapsible */}
           <div className="border-t border-white/10 pt-4">
             <button
@@ -363,7 +407,10 @@ export default function TextToImagePage() {
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {STYLE_PRESETS.map((preset) => {
-                      const Icon = preset.icon;
+                      const Icon =
+                        (iconMap[
+                          preset.icon as keyof typeof iconMap
+                        ] as typeof ImageIcon) || ImageIcon;
                       return (
                         <button
                           key={preset.id}
@@ -376,7 +423,9 @@ export default function TextToImagePage() {
                           }`}
                         >
                           <Icon className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate w-full text-center">{preset.name}</span>
+                          <span className="truncate w-full text-center">
+                            {preset.name}
+                          </span>
                         </button>
                       );
                     })}
@@ -432,7 +481,7 @@ export default function TextToImagePage() {
 
         {/* Loading State */}
         {isLoading && (
-          <LoadingState 
+          <LoadingState
             message="در حال آماده‌سازی عکس هستیم"
             subMessage={
               loadingProgress

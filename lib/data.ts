@@ -129,3 +129,55 @@ export const demoPrompts = [
   "یک گربه فضانورد در حال رانندگی با موتورسیکلت در مریخ، نور طلایی، سبک علمی تخیلی",
   "منظره کوهستان با دریاچه آینه‌ای، غروب خورشید، ابرهای دراماتیک، سبک عکاسی طبیعت",
 ];
+
+export const STYLE_PRESETS = [
+  {
+    id: "realistic",
+    name: "واقع‌گرایانه",
+    icon: "ImageIcon",
+    prompt: "ultra realistic, high detail, professional photography",
+  },
+  {
+    id: "oil-painting",
+    name: "نقاشی رنگ روغن",
+    icon: "Palette",
+    prompt: "oil painting style, artistic brushstrokes, classical art",
+  },
+  {
+    id: "cartoon",
+    name: "کارتونی",
+    icon: "Sparkles",
+    prompt: "cartoon style, animated, vibrant colors, playful",
+  },
+  {
+    id: "sketch",
+    name: "طراحی",
+    icon: "Wand2",
+    prompt: "pencil sketch, hand-drawn, artistic, monochrome",
+  },
+  {
+    id: "vintage",
+    name: "قدیمی",
+    icon: "Zap",
+    prompt: "vintage style, retro, aged photo effect, nostalgic",
+  },
+  {
+    id: "cyberpunk",
+    name: "سایبرپانک",
+    icon: "Zap",
+    prompt: "cyberpunk style, neon lights, futuristic, dark atmosphere",
+  },
+] as const;
+
+export const IMAGE_SIZES = [
+  { value: "1:1", label: "مربع (1:1)" },
+  { value: "9:16", label: "عمودی موبایل (9:16)" },
+  { value: "16:9", label: "افقی واید (16:9)" },
+  { value: "3:4", label: "عمودی (3:4)" },
+  { value: "4:3", label: "افقی کلاسیک (4:3)" },
+  { value: "3:2", label: "افقی عکس (3:2)" },
+  { value: "2:3", label: "عمودی عکس (2:3)" },
+  { value: "5:4", label: "عمودی نزدیک به مربع (5:4)" },
+  { value: "4:5", label: "عمودی نزدیک به مربع (4:5)" },
+  { value: "21:9", label: "افقی اولترا واید (21:9)" },
+] as const;
