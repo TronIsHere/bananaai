@@ -97,16 +97,15 @@ export function Footer() {
               <a
                 referrerPolicy="origin"
                 target="_blank"
-                rel="noopener noreferrer"
                 href="https://trustseal.enamad.ir/?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
-                className="transition-opacity hover:opacity-80"
+                className="inline-block"
               >
                 <img
                   referrerPolicy="origin"
-                  src="https://trustseal.enamad.ir/logo.aspx?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
-                  alt="eNamad Trust Seal"
-                  className="h-32 w-auto cursor-pointer"
-                  loading="lazy"
+                  src="https://trustseal.enamad.ir/?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
+                  alt="نماد اعتماد الکترونیکی"
+                  style={{ cursor: "pointer" }}
+                  {...{ code: "k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx" }}
                 />
               </a>
             </div>
