@@ -16,6 +16,7 @@ import {
   ChevronUp,
   Settings,
   Check,
+  Plus,
 } from "lucide-react";
 import { GeneratedImage } from "@/types/dashboard-types";
 import { GeneratedImageDisplay } from "@/components/dashboard/generated-image-display";
@@ -81,14 +82,25 @@ const IMAGE_SIZES = [
   { value: "21:9", label: "افقی اولترا واید (21:9)" },
 ];
 
+interface ImageSlot {
+  file: File | null;
+  preview: string | null;
+}
+
 export default function ImageToImagePage() {
   const [prompt, setPrompt] = useState("");
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+
+  // Manage two image slots
+  const [imageSlots, setImageSlots] = useState<[ImageSlot, ImageSlot]>([
+    { file: null, preview: null },
+    { file: null, preview: null },
+  ]);
+
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  // Dragging state for each slot: 0, 1, or -1 (none)
+  const [draggingSlot, setDraggingSlot] = useState<number>(-1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedGenerated, setSelectedGenerated] =
     useState<GeneratedImage | null>(null);
@@ -105,7 +117,7 @@ export default function ImageToImagePage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isPro, setIsPro] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRefs = useRef<(HTMLInputElement | null)[]>([null, null]);
 
   // Check if user has access to image size selection (creator or studio plans)
   const canSelectImageSize =
@@ -122,7 +134,7 @@ export default function ImageToImagePage() {
     };
   }, []);
 
-  const handleImageSelect = (file: File) => {
+  const handleImageSelect = (file: File, index: number) => {
     if (file && file.type.startsWith("image/")) {
       // Validate file size (10MB max)
       const maxSize = 10 * 1024 * 1024; // 10MB
@@ -131,10 +143,16 @@ export default function ImageToImagePage() {
         return;
       }
 
-      setSelectedImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
+        setImageSlots((prev) => {
+          const newSlots = [...prev] as [ImageSlot, ImageSlot];
+          newSlots[index] = {
+            file: file,
+            preview: reader.result as string,
+          };
+          return newSlots;
+        });
         setGeneratedImages([]);
         setSelectedGenerated(null);
         setError(null);
@@ -143,42 +161,55 @@ export default function ImageToImagePage() {
     }
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    index: number
+  ) => {
     const file = e.target.files?.[0];
-    if (file) handleImageSelect(file);
+    if (file) handleImageSelect(file, index);
   };
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent, index: number) => {
     e.preventDefault();
-    setIsDragging(false);
+    setDraggingSlot(-1);
     const file = e.dataTransfer.files?.[0];
-    if (file) handleImageSelect(file);
+    if (file) handleImageSelect(file, index);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
     e.preventDefault();
-    setIsDragging(true);
+    setDraggingSlot(index);
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(false);
+    setDraggingSlot(-1);
   }, []);
 
-  const handleRemoveImage = () => {
-    setSelectedImage(null);
-    setSelectedImageFile(null);
+  const handleRemoveImage = (index: number) => {
+    setImageSlots((prev) => {
+      const newSlots = [...prev] as [ImageSlot, ImageSlot];
+      newSlots[index] = { file: null, preview: null };
+      return newSlots;
+    });
     setGeneratedImages([]);
     setSelectedGenerated(null);
     setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    if (fileInputRefs.current[index]) {
+      fileInputRefs.current[index]!.value = "";
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedImageFile || !prompt.trim()) return;
+
+    // Check if at least one image is selected
+    const activeImages = imageSlots.filter((slot) => slot.file !== null);
+
+    if (activeImages.length === 0 || !prompt.trim()) {
+      setError("لطفاً حداقل یک تصویر و متن توصیفی را وارد کنید");
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -192,28 +223,34 @@ export default function ImageToImagePage() {
     startTimeRef.current = Date.now();
 
     try {
-      // Step 1: Upload image to get public URL
-      const formData = new FormData();
-      formData.append("image", selectedImageFile);
+      // Step 1: Upload images to get public URLs
+      const uploadedUrls: string[] = [];
 
-      const uploadResponse = await fetch("/api/upload/image", {
-        method: "POST",
-        body: formData,
-      });
+      for (const slot of activeImages) {
+        if (!slot.file) continue;
 
-      const uploadData = await uploadResponse.json();
+        const formData = new FormData();
+        formData.append("image", slot.file);
 
-      if (!uploadResponse.ok) {
-        throw new Error(
-          uploadData.message || uploadData.error || "Failed to upload image"
-        );
+        const uploadResponse = await fetch("/api/upload/image", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          throw new Error(
+            uploadData.message || uploadData.error || "Failed to upload image"
+          );
+        }
+
+        if (!uploadData.success || !uploadData.url) {
+          throw new Error("خطا در آپلود تصویر");
+        }
+
+        uploadedUrls.push(uploadData.url);
       }
-
-      if (!uploadData.success || !uploadData.url) {
-        throw new Error("خطا در آپلود تصویر");
-      }
-
-      const imageUrl = uploadData.url;
 
       // Construct final prompt with style
       let finalPrompt = prompt.trim();
@@ -236,7 +273,7 @@ export default function ImageToImagePage() {
         },
         body: JSON.stringify({
           prompt: finalPrompt,
-          imageUrls: [imageUrl], // Array of input image URLs
+          imageUrls: uploadedUrls, // Array of input image URLs
           numImages: numOutputs,
           image_size: imageSize,
           isPro: isPro,
@@ -259,7 +296,7 @@ export default function ImageToImagePage() {
 
       // Step 3: Poll for task completion
       const pollInterval = 1500; // Poll every 1.5 seconds
-      const maxAttempts = 80; // Maximum 2 minutes
+      const maxAttempts = 120; // Maximum 2 minutes (80 * 1.5 seconds)
       let attempts = 0;
 
       const pollTaskStatus = async (): Promise<void> => {
@@ -387,9 +424,34 @@ export default function ImageToImagePage() {
   };
 
   const handleReuse = (imageUrl: string) => {
-    setSelectedImage(imageUrl);
-    setGeneratedImages([]);
-    setSelectedGenerated(null);
+    // Set reuse image to the first empty slot or replace the first one
+    setImageSlots((prev) => {
+      const newSlots = [...prev] as [ImageSlot, ImageSlot];
+      if (!newSlots[0].file) {
+        // If slot 1 is empty (or we just want to use URL), we can't easily convert URL to File
+        // for re-upload. But 'handleReuse' usually implies using the generated image as input.
+        // Since we need a File object for upload in the current flow (to get URL via our upload API),
+        // OR we can change the logic to support direct URLs.
+        // For now, we can fetch the image and convert to blob/file to reuse it.
+        // But simpler approach for now: just warn or try to fetch.
+        // Let's try to fetch the image blob.
+        return newSlots;
+      }
+      return newSlots;
+    });
+
+    // Implementation of handleReuse needs to fetch the blob to populate the file input
+    // or we update the logic to accept URLs directly.
+    // For now, let's implement a fetch to blob.
+    fetch(imageUrl)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const file = new File([blob], "generated-image.png", {
+          type: "image/png",
+        });
+        handleImageSelect(file, 0);
+      })
+      .catch((err) => console.error("Failed to load image for reuse", err));
   };
 
   const applyPreset = (preset: (typeof STYLE_PRESETS)[0]) => {
@@ -399,6 +461,8 @@ export default function ImageToImagePage() {
       setSelectedStyleId(preset.id);
     }
   };
+
+  const activeImagesCount = imageSlots.filter((s) => s.file).length;
 
   return (
     <div className="max-w-5xl mx-auto ">
@@ -410,7 +474,7 @@ export default function ImageToImagePage() {
           <div>
             <h1 className="text-3xl font-black text-white">تصویر به تصویر</h1>
             <p className="text-sm text-slate-400 mt-1">
-              تصاویر خود را به سبک‌های مختلف تبدیل کنید
+              تصاویر خود را با استفاده از هوش مصنوعی ترکیب یا ویرایش کنید
             </p>
           </div>
         </div>
@@ -540,69 +604,81 @@ export default function ImageToImagePage() {
           <div className="grid gap-6 lg:grid-cols-5">
             {/* Image Upload Section - Takes 2 columns */}
             <div className="lg:col-span-2 space-y-3">
-              <label className="text-sm font-semibold text-white/90 block text-right">
-                تصویر اولیه
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-white/90 text-right">
+                  تصاویر ورودی
+                </label>
+                <span className="text-xs text-slate-400 bg-white/5 px-2 py-0.5 rounded-full">
+                  {activeImagesCount}/2
+                </span>
+              </div>
 
-              {!selectedImage ? (
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all h-[280px] active:scale-[0.98] md:h-[400px] ${
-                    isDragging
-                      ? "border-yellow-400 bg-yellow-400/10 scale-[1.02]"
-                      : "border-white/20 bg-white/5 hover:border-yellow-400/50 hover:bg-white/10"
-                  }`}
-                >
-                  <div className="text-center p-6 md:p-8">
-                    <Upload
-                      className={`mx-auto mb-4 h-14 w-14 transition-all md:h-16 md:w-16 ${
-                        isDragging
-                          ? "text-yellow-400 scale-110"
-                          : "text-slate-400"
-                      }`}
-                    />
-                    <p className="mb-2 text-base font-semibold text-white md:text-lg">
-                      {isDragging ? "رها کنید!" : "کلیک کنید یا تصویر را بکشید"}
-                    </p>
-                    <p className="text-xs text-slate-400 mb-4 md:text-sm">
-                      JPG, PNG, GIF, WEBP
-                    </p>
-                    <div className="inline-flex items-center gap-2 rounded-lg bg-yellow-400/10 px-3 py-1.5 text-xs text-yellow-400">
-                      <Zap className="h-3 w-3" />
-                      حداکثر 10 مگابایت
-                    </div>
+              <div className="grid grid-cols-1 gap-3">
+                {[0, 1].map((index) => (
+                  <div key={index} className="relative">
+                    {!imageSlots[index].preview ? (
+                      <div
+                        onDrop={(e) => handleDrop(e, index)}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragLeave={handleDragLeave}
+                        onClick={() => fileInputRefs.current[index]?.click()}
+                        className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all h-[140px] active:scale-[0.98] ${
+                          draggingSlot === index
+                            ? "border-yellow-400 bg-yellow-400/10 scale-[1.02]"
+                            : "border-white/20 bg-white/5 hover:border-yellow-400/50 hover:bg-white/10"
+                        }`}
+                      >
+                        <div className="text-center p-2">
+                          <Upload
+                            className={`mx-auto mb-2 h-8 w-8 transition-all ${
+                              draggingSlot === index
+                                ? "text-yellow-400 scale-110"
+                                : "text-slate-400"
+                            }`}
+                          />
+                          <p className="text-xs font-semibold text-white/80">
+                            {index === 0 ? "تصویر اصلی" : "تصویر دوم (اختیاری)"}
+                          </p>
+                        </div>
+                        <input
+                          ref={(el) => {
+                            fileInputRefs.current[index] = el;
+                          }}
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileInputChange(e, index)}
+                          className="hidden"
+                        />
+                      </div>
+                    ) : (
+                      <div className="relative group h-[140px]">
+                        <div className="relative overflow-hidden rounded-xl border-2 border-white/10 bg-slate-900/50 w-full h-full">
+                          <img
+                            src={imageSlots[index].preview!}
+                            alt={`Upload ${index + 1}`}
+                            className="w-full h-full object-contain"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(index)}
+                            className="absolute left-2 top-2 rounded-full bg-red-500/90 p-1.5 text-white transition hover:bg-red-500 hover:scale-110"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                          <div className="absolute bottom-2 right-2 rounded-lg bg-slate-950/90 px-2 py-1 text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+                            {index === 0 ? "تصویر اصلی" : "تصویر دوم"}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileInputChange}
-                    className="hidden"
-                  />
-                </div>
-              ) : (
-                <div className="relative group">
-                  <div className="relative overflow-hidden rounded-xl border-2 border-white/10 bg-slate-900/50">
-                    <img
-                      src={selectedImage}
-                      alt="Selected"
-                      className="w-full object-contain h-[280px] md:h-[400px]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <button
-                      type="button"
-                      onClick={handleRemoveImage}
-                      className="absolute left-3 top-3 rounded-full bg-red-500/90 p-2 text-white transition hover:bg-red-500 hover:scale-110"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                    <div className="absolute bottom-3 right-3 rounded-lg bg-slate-950/90 px-3 py-1.5 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity font-medium">
-                      تصویر اصلی
-                    </div>
-                  </div>
+                ))}
+              </div>
+
+              {activeImagesCount === 0 && (
+                <div className="text-xs text-slate-400 text-center bg-blue-500/5 border border-blue-500/10 p-3 rounded-lg">
+                  <p>برای شروع حداقل یک تصویر انتخاب کنید</p>
                 </div>
               )}
             </div>
@@ -621,7 +697,7 @@ export default function ImageToImagePage() {
                   id="prompt"
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="مثلاً: به سبک نقاشی رنگ روغن، افزودن نور غروب، تبدیل به سیاه و سفید..."
+                  placeholder="مثلاً: به سبک نقاشی رنگ روغن، افزودن نور غروب، ترکیب دو تصویر..."
                   className="w-full rounded-xl border-2 border-white/10 bg-white/5 p-4 text-right text-base text-white placeholder:text-white/30 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 min-h-[160px] resize-none transition-all md:min-h-[180px] md:text-lg"
                   dir="rtl"
                   autoFocus
@@ -644,8 +720,14 @@ export default function ImageToImagePage() {
                   className="flex items-center justify-between w-full text-sm font-medium text-white/80 hover:text-white transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <Settings className="h-4 w-4" />
-                    <span>تنظیمات پیشرفته</span>
+                    <div className="flex items-center gap-1">
+                      <Settings className="h-4 w-4" />
+                      <span>تنظیمات پیشرفته</span>
+                    </div>
+                    {(selectedStyleId ||
+                      (canSelectImageSize && imageSize !== "16:9")) && (
+                      <span className="flex h-2 w-2 rounded-full bg-yellow-400 animate-pulse" />
+                    )}
                   </div>
                   {showAdvanced ? (
                     <ChevronUp className="h-4 w-4" />
@@ -717,18 +799,18 @@ export default function ImageToImagePage() {
 
           <Button
             type="submit"
-            disabled={isLoading || !selectedImage || !prompt.trim()}
+            disabled={isLoading || activeImagesCount === 0 || !prompt.trim()}
             className="w-full bg-yellow-500 font-bold text-slate-950 hover:bg-yellow-600 h-10 text-sm px-4 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all"
           >
             {isLoading ? (
               <>
                 <Loader2 className="h-5 w-5 ml-2 animate-spin" />
-                در حال پردازش تصویر...
+                در حال پردازش {activeImagesCount} تصویر...
               </>
             ) : (
               <>
                 <Sparkles className="h-5 w-5 ml-2" />
-                تبدیل تصویر
+                تبدیل تصاویر
               </>
             )}
           </Button>
@@ -737,7 +819,7 @@ export default function ImageToImagePage() {
         {/* Loading State */}
         {isLoading && (
           <LoadingState
-            message="در حال آماده‌سازی عکس هستیم"
+            message="در حال آماده‌سازی عکس‌ها هستیم"
             subMessage={
               loadingProgress
                 ? `زمان سپری شده: ${loadingProgress.elapsedSeconds} ثانیه`
