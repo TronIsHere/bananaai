@@ -16,7 +16,7 @@ export function Footer() {
       <div className="absolute -right-1/4 bottom-0 h-[500px] w-[500px] rounded-full bg-yellow-500/5 blur-[100px]" />
 
       <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:py-16">
-        <div className="grid gap-12 lg:grid-cols-3 lg:gap-8">
+        <div className="grid gap-12 lg:grid-cols-4 lg:gap-8">
           {/* Brand Section */}
           <div className="flex flex-col gap-6 lg:col-span-1">
             <Link href="/" className="flex items-center gap-3 w-fit">
@@ -90,6 +90,27 @@ export function Footer() {
               </nav>
             </div>
           </div>
+
+          {/* eNamad Trust Seal */}
+          <div className="flex justify-center ">
+            <div className="">
+              <a
+                referrerPolicy="origin"
+                target="_blank"
+                rel="noopener noreferrer"
+                href="https://trustseal.enamad.ir/?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
+                className="transition-opacity hover:opacity-80"
+              >
+                <img
+                  referrerPolicy="origin"
+                  src="https://trustseal.enamad.ir/logo.aspx?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
+                  alt="eNamad Trust Seal"
+                  className="h-12 w-auto cursor-pointer"
+                  loading="lazy"
+                />
+              </a>
+            </div>
+          </div>
         </div>
 
         {/* Separator */}
@@ -100,24 +121,6 @@ export function Footer() {
           <p>© {currentYear} BananaAI — تمامی حقوق محفوظ است.</p>
 
           <div className="flex items-center gap-4">
-            {/* eNamad Trust Seal */}
-
-            <a
-              referrerPolicy="origin"
-              target="_blank"
-              rel="noopener noreferrer"
-              href="https://trustseal.enamad.ir/?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
-              className="transition-opacity hover:opacity-80"
-            >
-              <img
-                referrerPolicy="origin"
-                src="https://trustseal.enamad.ir/logo.aspx?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
-                alt="eNamad Trust Seal"
-                className="h-12 w-auto cursor-pointer"
-                loading="lazy"
-              />
-            </a>
-
             <Link
               href="https://whitediv.ir"
               target="_blank"
