@@ -24,15 +24,16 @@ export async function GET(request: NextRequest) {
     // Return billing history sorted by date (newest first)
     // Handle empty or undefined billingHistory gracefully
     const billingHistory = user.billingHistory || [];
-    
+
     // Only sort if there are items and they have valid dates
-    const sortedHistory = billingHistory.length > 0
-      ? [...billingHistory].sort((a, b) => {
-          const dateA = a?.date ? new Date(a.date).getTime() : 0;
-          const dateB = b?.date ? new Date(b.date).getTime() : 0;
-          return dateB - dateA;
-        })
-      : [];
+    const sortedHistory =
+      billingHistory.length > 0
+        ? [...billingHistory].sort((a, b) => {
+            const dateA = a?.date ? new Date(a.date).getTime() : 0;
+            const dateB = b?.date ? new Date(b.date).getTime() : 0;
+            return dateB - dateA;
+          })
+        : [];
 
     return NextResponse.json(sortedHistory);
   } catch (error) {
@@ -43,4 +44,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
