@@ -105,7 +105,7 @@ export function Footer() {
                   referrerPolicy="origin"
                   src="https://trustseal.enamad.ir/logo.aspx?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
                   alt="eNamad Trust Seal"
-                  className="h-12 w-auto cursor-pointer"
+                  className="h-32 w-auto cursor-pointer"
                   loading="lazy"
                 />
               </a>
