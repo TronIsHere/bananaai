@@ -102,7 +102,7 @@ export function Footer() {
               >
                 <img
                   referrerPolicy="origin"
-                  src="https://trustseal.enamad.ir/?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
+                  src="'https://trustseal.enamad.ir/logo.aspx?id=676991&Code=k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx"
                   alt="نماد اعتماد الکترونیکی"
                   style={{ cursor: "pointer" }}
                   {...{ code: "k5usXhcVbTOWZ92lwB14ToJWOXTiRdVx" }}
