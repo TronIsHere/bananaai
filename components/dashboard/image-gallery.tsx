@@ -10,6 +10,7 @@ import {
   X,
   Calendar,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GeneratedImage } from "@/types/dashboard-types";
@@ -24,12 +25,14 @@ interface ImageGalleryProps {
   images: GeneratedImage[];
   onDelete?: (imageId: string) => void;
   onDownload?: (imageUrl: string, id: string) => void;
+  deletingImageId?: string | null;
 }
 
 export function ImageGallery({
   images,
   onDelete,
   onDownload,
+  deletingImageId,
 }: ImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(
     null
@@ -120,7 +123,9 @@ export function ImageGallery({
           <div
             key={image.id}
             onClick={() => handleImageClick(image)}
-            className="group relative cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-slate-900/50 transition-all hover:border-yellow-400/30 hover:shadow-[0_0_20px_rgba(251,191,36,0.15)]"
+            className={`group relative cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-slate-900/50 transition-all hover:border-yellow-400/30 hover:shadow-[0_0_20px_rgba(251,191,36,0.15)] ${
+              deletingImageId === image.id ? "opacity-50 pointer-events-none" : ""
+            }`}
           >
             <div className="aspect-square overflow-hidden">
               <img
@@ -144,7 +149,8 @@ export function ImageGallery({
             <div className="absolute top-2 left-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 md:opacity-0">
               <button
                 onClick={(e) => handleDownload(image.url, image.id, e)}
-                className="rounded-lg bg-slate-900/90 p-1.5 text-white transition active:scale-95 hover:bg-yellow-400 hover:text-slate-950"
+                disabled={deletingImageId === image.id}
+                className="rounded-lg bg-slate-900/90 p-1.5 text-white transition active:scale-95 hover:bg-yellow-400 hover:text-slate-950 disabled:opacity-50 disabled:cursor-not-allowed"
                 title="دانلود"
               >
                 <Download className="h-3 w-3" />
@@ -152,10 +158,15 @@ export function ImageGallery({
               {onDelete && (
                 <button
                   onClick={(e) => handleDelete(image.id, e)}
-                  className="rounded-lg bg-slate-900/90 p-1.5 text-white transition active:scale-95 hover:bg-red-500"
+                  disabled={deletingImageId === image.id}
+                  className="rounded-lg bg-slate-900/90 p-1.5 text-white transition active:scale-95 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="حذف"
                 >
-                  <Trash2 className="h-3 w-3" />
+                  {deletingImageId === image.id ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-3 w-3" />
+                  )}
                 </button>
               )}
             </div>
@@ -237,11 +248,21 @@ export function ImageGallery({
                 {onDelete && (
                   <Button
                     onClick={(e) => handleDelete(selectedImage.id, e)}
+                    disabled={deletingImageId === selectedImage.id}
                     variant="outline"
-                    className="flex-1 h-9 text-xs border-white/10 text-white/80 active:scale-95 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400"
+                    className="flex-1 h-9 text-xs border-white/10 text-white/80 active:scale-95 hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Trash2 className="h-3.5 w-3.5 ml-2" />
-                    حذف
+                    {deletingImageId === selectedImage.id ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 ml-2 animate-spin" />
+                        در حال حذف...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-3.5 w-3.5 ml-2" />
+                        حذف
+                      </>
+                    )}
                   </Button>
                 )}
               </div>

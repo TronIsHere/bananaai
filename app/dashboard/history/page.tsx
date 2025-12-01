@@ -15,6 +15,8 @@ export default function HistoryPage() {
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
+  const [isClearingAll, setIsClearingAll] = useState(false);
 
   useEffect(() => {
     fetchHistory();
@@ -64,6 +66,9 @@ export default function HistoryPage() {
 
   const handleDelete = async (imageId: string) => {
     try {
+      setDeletingImageId(imageId);
+      setError(null);
+      
       const response = await fetch(`/api/user/history/${imageId}`, {
         method: "DELETE",
       });
@@ -83,11 +88,16 @@ export default function HistoryPage() {
     } catch (err) {
       console.error("Error deleting image:", err);
       setError("خطا در حذف تصویر");
+    } finally {
+      setDeletingImageId(null);
     }
   };
 
   const handleClearAll = async () => {
     try {
+      setIsClearingAll(true);
+      setError(null);
+      
       const response = await fetch("/api/user/history", {
         method: "DELETE",
       });
@@ -102,6 +112,8 @@ export default function HistoryPage() {
     } catch (err) {
       console.error("Error clearing history:", err);
       setError("خطا در پاک کردن تاریخچه");
+    } finally {
+      setIsClearingAll(false);
     }
   };
 
@@ -156,10 +168,20 @@ export default function HistoryPage() {
             <Button
               onClick={() => setIsClearDialogOpen(true)}
               variant="outline"
-              className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500 active:scale-95 md:w-auto"
+              disabled={isClearingAll || deletingImageId !== null}
+              className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500 active:scale-95 md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Trash2 className="h-4 w-4 ml-2 md:h-5 md:w-5" />
-              پاک کردن همه
+              {isClearingAll ? (
+                <>
+                  <div className="h-4 w-4 ml-2 border-2 border-red-400 border-t-transparent rounded-full animate-spin md:h-5 md:w-5" />
+                  در حال پاک کردن...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 ml-2 md:h-5 md:w-5" />
+                  پاک کردن همه
+                </>
+              )}
             </Button>
           )}
         </div>
@@ -186,6 +208,7 @@ export default function HistoryPage() {
           images={filteredImages}
           onDelete={handleDelete}
           onDownload={handleDownload}
+          deletingImageId={deletingImageId}
         />
       ) : images.length === 0 ? (
         <div className="flex items-center justify-center min-h-[400px]">
@@ -209,14 +232,23 @@ export default function HistoryPage() {
           <DialogFooter className="flex-row-reverse gap-2">
             <Button
               onClick={handleClearAll}
-              className="bg-red-500 hover:bg-red-600 text-white"
+              disabled={isClearingAll}
+              className="bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              بله، پاک کن
+              {isClearingAll ? (
+                <>
+                  <div className="h-4 w-4 ml-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  در حال پاک کردن...
+                </>
+              ) : (
+                "بله، پاک کن"
+              )}
             </Button>
             <Button
               onClick={() => setIsClearDialogOpen(false)}
               variant="outline"
-              className="border-white/10 text-white/80 hover:border-white/30"
+              disabled={isClearingAll}
+              className="border-white/10 text-white/80 hover:border-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               انصراف
             </Button>
