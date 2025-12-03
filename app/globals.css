@@ -124,3 +124,15 @@ html {
     @apply bg-background text-foreground;
   }
 }
+.font-iran-sans-bold {
+  font-family: var(--font-iran-sans);
+  font-weight: 700;
+}
+.font-iran-sans-semi-bold {
+  font-family: var(--font-iran-sans);
+  font-weight: 600;
+}
+.font-iran-sans-light {
+  font-family: var(--font-iran-sans);
+  font-weight: 300;
+}

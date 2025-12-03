@@ -19,6 +19,7 @@ import { plans as landingPlans, creditPackages } from "@/lib/data";
 import { useUser } from "@/hooks/use-user";
 import { getPlanNamePersian, getPlanNameEnglish } from "@/lib/utils";
 import { UpgradeDialog } from "@/components/dialog/upgrade-dialog";
+import { persianToast } from "@/components/ui/persian-toaster";
 
 interface BillingHistoryItem {
   id: string;
@@ -190,7 +191,7 @@ export default function BillingPage() {
 
     // Don't allow free plan purchases
     if (planEnglish === "free") {
-      alert("نمی‌توانید پلن رایگان را خریداری کنید.");
+      persianToast.error("نمی‌توانید پلن رایگان را خریداری کنید.");
       return;
     }
 
@@ -220,10 +221,9 @@ export default function BillingPage() {
       }
     } catch (error: any) {
       console.error("Error creating payment request:", error);
-      alert(
-        `خطا در ایجاد درخواست پرداخت: ${
-          error.message || "لطفا دوباره تلاش کنید."
-        }`
+      persianToast.error(
+        "خطا در ایجاد درخواست پرداخت",
+        error.message || "لطفا دوباره تلاش کنید."
       );
       setIsPurchasing(false);
     }
@@ -260,10 +260,9 @@ export default function BillingPage() {
       }
     } catch (error: any) {
       console.error("Error creating credit purchase request:", error);
-      alert(
-        `خطا در ایجاد درخواست پرداخت: ${
-          error.message || "لطفا دوباره تلاش کنید."
-        }`
+      persianToast.error(
+        "خطا در ایجاد درخواست پرداخت",
+        error.message || "لطفا دوباره تلاش کنید."
       );
       setIsPurchasingCredits(false);
       setSelectedCreditPackage(null);
@@ -602,10 +601,10 @@ export default function BillingPage() {
                     {new Intl.NumberFormat("fa-IR").format(pkg.price)}{" "}
                     {pkg.currency}
                   </p>
-                  <p className="mt-1 text-xs text-slate-400 md:text-sm">
+                  {/* <p className="mt-1 text-xs text-slate-400 md:text-sm">
                     {new Intl.NumberFormat("fa-IR").format(pricePerCredit)}{" "}
                     تومان به ازای هر اعتبار
-                  </p>
+                  </p> */}
                 </div>
                 <div className="mb-4 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 backdrop-blur-sm">
                   <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />

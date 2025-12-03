@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { AuthSessionProvider } from "@/components/providers/session-provider";
 import { siteConfig, defaultSEO } from "@/lib/seo-config";
+import { Toaster } from "sonner";
 
 const iranSans = localFont({
   src: [
@@ -109,6 +110,7 @@ export default function RootLayout({
         className={`${iranSans.variable} antialiased font-sans bg-slate-950 text-white`}
       >
         <AuthSessionProvider>{children}</AuthSessionProvider>
+        <Toaster position="top-center" />
       </body>
     </html>
   );

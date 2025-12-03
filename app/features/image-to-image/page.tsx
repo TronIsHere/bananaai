@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   Image as ImageIcon,
   ArrowRight,
@@ -172,28 +173,38 @@ export default function ImageToImageFeaturePage() {
                 <div className="absolute -inset-2 bg-gradient-to-r from-fuchsia-500 to-purple-600 opacity-20 blur-2xl -z-10 rounded-2xl" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   {/* Before Image */}
-                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-800 border border-white/10">
+                  <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-800 border border-white/10">
                     <div className="absolute top-3 right-3 z-10 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/20">
                       قبل
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
                       <ImageIcon className="h-12 w-12 text-slate-600 opacity-50" />
                     </div>
-                    <div className="absolute inset-0 bg-[url('/img/proshir.jpg')] bg-cover bg-center opacity-70 grayscale" />
+                    <Image
+                      src="/img/proshir.jpg"
+                      alt="Before transformation"
+                      fill
+                      className="object-cover opacity-70 grayscale z-0"
+                    />
                   </div>
 
                   {/* After Image */}
-                  <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-slate-800 border border-fuchsia-500/30">
-                    <div className="absolute top-3 left-3 z-10 bg-fuchsia-500/30 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-semibold border border-fuchsia-500/50 text-fuchsia-200">
+                  <div className="relative aspect-square rounded-xl overflow-hidden bg-slate-800 border border-fuchsia-500/30">
+                    <div className="absolute top-3 left-3 z-10 bg-fuchsia-500/30 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-semibold border border-fuchsia-500/50 text-fuchsia-500">
                       بعد
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-900/50 to-purple-900/50 flex items-center justify-center">
                       <Sparkles className="h-12 w-12 text-fuchsia-500 opacity-50" />
                     </div>
-                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop')] bg-cover bg-center opacity-90" />
+                    <Image
+                      src="/img/proshir-gemini.png"
+                      alt="After transformation"
+                      fill
+                      className="object-cover "
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-transparent to-transparent flex items-end p-4">
                       <p className="text-white text-sm font-medium">
-                        تبدیل شده به سبک سایبرپانک
+                        تبدیل شده به سبک تبلیغاتی
                       </p>
                     </div>
                   </div>
