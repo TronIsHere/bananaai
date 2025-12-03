@@ -11,11 +11,13 @@ import {
   FaCrown,
   FaShieldAlt,
   FaTimesCircle,
+  FaCoins,
 } from "react-icons/fa";
 import { useUser } from "@/hooks/use-user";
 import { LoginDialog } from "@/components/dialog/login-dialog";
 
 const featureIcons: Record<string, any> = {
+  اعتبار: FaCoins,
   تصویر: FaImage,
   "متن به تصویر": FaImage,
   "تصویر به تصویر": FaImage,

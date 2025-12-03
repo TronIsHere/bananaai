@@ -27,6 +27,8 @@ interface BillingHistoryItem {
   plan: string;
   status: "paid" | "pending" | "failed";
   invoiceUrl?: string;
+  authority?: string;
+  refId?: number;
 }
 
 // Map plan names (English) to icons
@@ -45,6 +47,7 @@ export default function BillingPage() {
     []
   );
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
   const { user, refreshUserData } = useUser();
 
   // Map landing plans to billing page format
@@ -64,12 +67,12 @@ export default function BillingPage() {
   const currentPlan = plans.find((p) => p.current);
 
   // Calculate usage based on current plan
-  const getImageLimit = (planName: string) => {
+  const getCreditsLimit = (planName: string) => {
     const plan = landingPlans.find((p) => p.name === planName);
     if (!plan) return 0;
-    const imageMatch = plan.highlights.find((h) => h.includes("تصویر"));
-    if (!imageMatch) return 0;
-    const match = imageMatch.match(/(\d+)/);
+    const creditsMatch = plan.highlights.find((h) => h.includes("اعتبار"));
+    if (!creditsMatch) return 0;
+    const match = creditsMatch.match(/(\d+)/);
     return match ? parseInt(match[1], 10) : 0;
   };
 
@@ -103,7 +106,7 @@ export default function BillingPage() {
 
   const usage = {
     imagesGenerated: user.imagesGeneratedThisMonth,
-    imagesLimit: currentPlan ? getImageLimit(currentPlan.name) : 0,
+    creditsLimit: currentPlan ? getCreditsLimit(currentPlan.name) : 0,
     resetDate: formatDate(user.monthlyResetDate),
   };
 
@@ -137,6 +140,36 @@ export default function BillingPage() {
     fetchBillingHistory();
   }, [fetchBillingHistory]);
 
+  // Handle payment status from query params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+
+    if (payment) {
+      setPaymentStatus(payment);
+
+      // Remove payment param from URL
+      params.delete("payment");
+      const newUrl =
+        window.location.pathname +
+        (params.toString() ? `?${params.toString()}` : "");
+      window.history.replaceState({}, "", newUrl);
+
+      // Refresh data if payment was successful
+      if (payment === "success") {
+        refreshUserData();
+        fetchBillingHistory();
+      }
+
+      // Auto-hide message after 5 seconds
+      const timer = setTimeout(() => {
+        setPaymentStatus(null);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [refreshUserData, fetchBillingHistory]);
+
   const handleUpgrade = (planName: string) => {
     setSelectedPlan(planName);
     setIsUpgradeDialogOpen(true);
@@ -148,9 +181,16 @@ export default function BillingPage() {
     const planEnglish = getPlanNameEnglish(selectedPlan);
     if (!planEnglish) return;
 
+    // Don't allow free plan purchases
+    if (planEnglish === "free") {
+      alert("نمی‌توانید پلن رایگان را خریداری کنید.");
+      return;
+    }
+
     setIsPurchasing(true);
     try {
-      const response = await fetch("/api/user/plan", {
+      // Call payment request API
+      const response = await fetch("/api/payment/zarinpal/request", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -160,22 +200,24 @@ export default function BillingPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update plan");
+        throw new Error(error.error || "Failed to create payment request");
       }
 
-      // Refresh user data
-      await refreshUserData();
+      const data = await response.json();
 
-      // Refresh billing history to show the new purchase
-      await fetchBillingHistory();
-
-      // Close dialog
-      setIsUpgradeDialogOpen(false);
-      setSelectedPlan(null);
-    } catch (error) {
-      console.error("Error purchasing plan:", error);
-      alert("خطا در خرید پلن. لطفا دوباره تلاش کنید.");
-    } finally {
+      if (data.paymentUrl) {
+        // Redirect to Zarinpal payment gateway
+        window.location.href = data.paymentUrl;
+      } else {
+        throw new Error("Payment URL not received");
+      }
+    } catch (error: any) {
+      console.error("Error creating payment request:", error);
+      alert(
+        `خطا در ایجاد درخواست پرداخت: ${
+          error.message || "لطفا دوباره تلاش کنید."
+        }`
+      );
       setIsPurchasing(false);
     }
   };
@@ -206,6 +248,42 @@ export default function BillingPage() {
     );
   };
 
+  const getPaymentStatusMessage = () => {
+    if (!paymentStatus) return null;
+
+    const messages: Record<string, { text: string; className: string }> = {
+      success: {
+        text: "پرداخت با موفقیت انجام شد! پلن شما فعال شد.",
+        className: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+      },
+      failed: {
+        text: "پرداخت ناموفق بود. لطفا دوباره تلاش کنید.",
+        className: "bg-red-500/20 text-red-400 border-red-500/30",
+      },
+      verify_failed: {
+        text: "خطا در تایید پرداخت. لطفا با پشتیبانی تماس بگیرید.",
+        className: "bg-red-500/20 text-red-400 border-red-500/30",
+      },
+      notfound: {
+        text: "درخواست پرداخت یافت نشد.",
+        className: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+      },
+      error: {
+        text: "خطایی رخ داد. لطفا دوباره تلاش کنید.",
+        className: "bg-red-500/20 text-red-400 border-red-500/30",
+      },
+    };
+
+    const message = messages[paymentStatus];
+    if (!message) return null;
+
+    return (
+      <div className={`mb-4 rounded-xl border p-4 ${message.className}`}>
+        <p className="text-sm font-medium md:text-base">{message.text}</p>
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 pb-10">
       <div className="mb-6 md:mb-8">
@@ -223,6 +301,9 @@ export default function BillingPage() {
           </div>
         </div>
       </div>
+
+      {/* Payment Status Message */}
+      {getPaymentStatusMessage()}
 
       {/* Current Plan & Usage */}
       <div className="mb-6 md:mb-8 grid gap-4 md:grid-cols-2">
@@ -296,21 +377,21 @@ export default function BillingPage() {
                   اعتبار
                 </span>
               </div>
-              {usage.imagesLimit > 0 && (
+              {usage.creditsLimit > 0 && (
                 <p className="mt-2 text-xs text-slate-400 md:text-sm">
-                  از {new Intl.NumberFormat("fa-IR").format(usage.imagesLimit)}{" "}
+                  از {new Intl.NumberFormat("fa-IR").format(usage.creditsLimit)}{" "}
                   اعتبار کل
                 </p>
               )}
             </div>
 
             {/* Progress bar */}
-            {usage.imagesLimit > 0 && (
+            {usage.creditsLimit > 0 && (
               <div className="mb-6">
                 <div className="mb-2 flex items-center justify-between text-xs text-slate-400 md:text-sm">
                   <span>میزان استفاده</span>
                   <span className="font-semibold text-white">
-                    {Math.round((user.credits / usage.imagesLimit) * 100)}%
+                    {Math.round((user.credits / usage.creditsLimit) * 100)}%
                   </span>
                 </div>
                 <div className="relative h-3 w-full overflow-hidden rounded-full bg-white/10 backdrop-blur-sm">
@@ -318,7 +399,7 @@ export default function BillingPage() {
                     className="h-full rounded-full bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-500 shadow-lg shadow-yellow-400/30 transition-all duration-500"
                     style={{
                       width: `${Math.min(
-                        (user.credits / usage.imagesLimit) * 100,
+                        (user.credits / usage.creditsLimit) * 100,
                         100
                       )}%`,
                     }}
@@ -348,6 +429,10 @@ export default function BillingPage() {
           {plans.map((plan) => {
             const Icon = plan.icon;
             const isCurrent = plan.current;
+            const isFreePlan = plan.name === "رایگان";
+            // Free plan should always allow upgrade, even if current (since users fall back to it)
+            // But don't show upgrade button for free plan itself - users upgrade TO other plans
+
             return (
               <div
                 key={plan.name}
@@ -403,18 +488,23 @@ export default function BillingPage() {
                     );
                   })}
                 </ul>
-                <Button
-                  onClick={() => !isCurrent && handleUpgrade(plan.name)}
-                  disabled={isCurrent}
-                  variant={isCurrent ? "outline" : "default"}
-                  className={`w-full h-8 text-xs md:h-9 md:text-sm mt-auto ${
-                    isCurrent
-                      ? "border-white/10 text-white/80"
-                      : "bg-gradient-to-r from-yellow-400 to-orange-400 text-white hover:from-yellow-500 hover:to-orange-500"
-                  }`}
-                >
-                  {isCurrent ? "اشتراک فعلی" : "ارتقا به " + plan.name}
-                </Button>
+                {isFreePlan && !isCurrent ? (
+                  // Free plan is automatic - don't show upgrade button when not current
+                  <div className="w-full h-8 flex items-center justify-center text-xs text-slate-400 md:h-9 md:text-sm mt-auto"></div>
+                ) : (
+                  <Button
+                    onClick={() => !isCurrent && handleUpgrade(plan.name)}
+                    disabled={isCurrent}
+                    variant={isCurrent ? "outline" : "default"}
+                    className={`w-full h-8 text-xs md:h-9 md:text-sm mt-auto ${
+                      isCurrent
+                        ? "border-white/10 text-white/80"
+                        : "bg-gradient-to-r from-yellow-400 to-orange-400 text-white hover:from-yellow-500 hover:to-orange-500"
+                    }`}
+                  >
+                    {isCurrent ? "اشتراک فعلی" : "ارتقا به " + plan.name}
+                  </Button>
+                )}
               </div>
             );
           })}
@@ -515,9 +605,6 @@ export default function BillingPage() {
                     <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
                       وضعیت
                     </th>
-                    <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
-                      عملیات
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -540,16 +627,6 @@ export default function BillingPage() {
                       </td>
                       <td className="px-6 py-3">
                         {getStatusBadge(item.status)}
-                      </td>
-                      <td className="px-6 py-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-slate-400 hover:text-white"
-                        >
-                          <Download className="h-4 w-4 ml-1" />
-                          دانلود
-                        </Button>
                       </td>
                     </tr>
                   ))}

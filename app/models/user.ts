@@ -9,6 +9,8 @@ export interface IBillingHistory {
   plan: string; // Stored as English: "free", "explorer", "creator", "studio"
   status: "paid" | "pending" | "failed";
   invoiceUrl?: string;
+  authority?: string; // Zarinpal payment authority
+  refId?: number; // Zarinpal reference ID after successful payment
 }
 
 const BillingHistorySchema = new Schema<IBillingHistory>(
@@ -40,6 +42,14 @@ const BillingHistorySchema = new Schema<IBillingHistory>(
     },
     invoiceUrl: {
       type: String,
+      default: undefined,
+    },
+    authority: {
+      type: String,
+      default: undefined,
+    },
+    refId: {
+      type: Number,
       default: undefined,
     },
   },
