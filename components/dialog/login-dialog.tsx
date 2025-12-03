@@ -230,9 +230,15 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
           console.error("Error fetching user data:", error);
         }
 
-        // Login successful, redirect to dashboard
+        // Login successful, redirect based on user role
         onOpenChange(false);
-        router.push("/dashboard");
+        // Check if user is admin (09306613683)
+        const ADMIN_MOBILE_NUMBER = "09306613683";
+        if (normalizedMobile === ADMIN_MOBILE_NUMBER) {
+          router.push("/admin");
+        } else {
+          router.push("/dashboard");
+        }
         // Reset form
         setStep("mobile");
         setMobileNumber("");
@@ -345,9 +351,15 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
         console.error("Error fetching user data:", error);
       }
 
-      // Login successful, redirect to dashboard
+      // Registration successful, redirect based on user role
       onOpenChange(false);
-      router.push("/dashboard");
+      // Check if user is admin (09306613683)
+      const ADMIN_MOBILE_NUMBER = "09306613683";
+      if (normalizedMobile === ADMIN_MOBILE_NUMBER) {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
       // Reset form
       setStep("mobile");
       setMobileNumber("");

@@ -3,62 +3,24 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  Sparkles,
-  Image,
-  History,
-  CreditCard,
-  Settings,
-  MessageSquare,
-} from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 const menuItems = [
   {
-    href: "/dashboard",
-    label: "داشبورد",
-    icon: LayoutDashboard,
-  },
-  {
-    href: "/dashboard/text-to-image",
-    label: "متن به تصویر",
-    icon: Sparkles,
-  },
-  {
-    href: "/dashboard/image-to-image",
-    label: "تصویر به تصویر",
-    icon: Image,
-  },
-  {
-    href: "/dashboard/history",
-    label: "تاریخچه",
-    icon: History,
-  },
-  {
-    href: "/dashboard/billing",
-    label: "صورتحساب",
-    icon: CreditCard,
-  },
-  {
-    href: "/dashboard/support",
-    label: "پشتیبانی",
+    href: "/admin",
+    label: "تیکت‌ها",
     icon: MessageSquare,
-  },
-  {
-    href: "/dashboard/settings",
-    label: "تنظیمات",
-    icon: Settings,
   },
 ];
 
-interface DashboardSidebarProps {
+interface AdminSidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
+export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname();
   const lastPathRef = useRef(pathname);
 
@@ -93,7 +55,7 @@ export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
 
             <div>
               <p className="text-[10px] font-semibold text-slate-400 sm:text-xs">
-                آزمایشگاه هوش مصنوعی
+                پنل مدیریت
               </p>
               <p className="bg-gradient-to-r from-white to-slate-300 bg-clip-text text-lg font-black text-transparent sm:text-xl md:text-2xl">
                 بنانا
@@ -158,3 +120,6 @@ export function DashboardSidebar({ isOpen, onClose }: DashboardSidebarProps) {
     </>
   );
 }
+
+
+
