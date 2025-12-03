@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       id: `inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       date: new Date(),
       amount: planPrices[plan] || 0,
+      type: "plan" as const,
       plan: plan,
       status: "paid" as const,
     };
