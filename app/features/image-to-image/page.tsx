@@ -179,7 +179,7 @@ export default function ImageToImageFeaturePage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
                       <ImageIcon className="h-12 w-12 text-slate-600 opacity-50" />
                     </div>
-                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=800&auto=format&fit=crop')] bg-cover bg-center opacity-70 grayscale" />
+                    <div className="absolute inset-0 bg-[url('/img/proshir.jpg')] bg-cover bg-center opacity-70 grayscale" />
                   </div>
 
                   {/* After Image */}

@@ -6,7 +6,9 @@ export interface IBillingHistory {
   id: string;
   date: Date;
   amount: number;
-  plan: string; // Stored as English: "free", "explorer", "creator", "studio"
+  type: "plan" | "credits"; // Type of purchase
+  plan?: string; // Stored as English: "free", "explorer", "creator", "studio" (only for plan purchases)
+  credits?: number; // Number of credits purchased (only for credit purchases)
   status: "paid" | "pending" | "failed";
   invoiceUrl?: string;
   authority?: string; // Zarinpal payment authority
@@ -29,10 +31,21 @@ const BillingHistorySchema = new Schema<IBillingHistory>(
       required: true,
       min: 0,
     },
-    plan: {
+    type: {
       type: String,
       required: true,
+      enum: ["plan", "credits"],
+      default: "plan",
+    },
+    plan: {
+      type: String,
+      required: false,
       enum: ["free", "explorer", "creator", "studio"],
+    },
+    credits: {
+      type: Number,
+      required: false,
+      min: 0,
     },
     status: {
       type: String,

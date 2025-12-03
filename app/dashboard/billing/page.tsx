@@ -15,7 +15,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { plans as landingPlans } from "@/lib/data";
+import { plans as landingPlans, creditPackages } from "@/lib/data";
 import { useUser } from "@/hooks/use-user";
 import { getPlanNamePersian, getPlanNameEnglish } from "@/lib/utils";
 import { UpgradeDialog } from "@/components/dialog/upgrade-dialog";
@@ -24,7 +24,9 @@ interface BillingHistoryItem {
   id: string;
   date: string;
   amount: number;
-  plan: string;
+  type?: "plan" | "credits";
+  plan?: string;
+  credits?: number;
   status: "paid" | "pending" | "failed";
   invoiceUrl?: string;
   authority?: string;
@@ -43,6 +45,10 @@ export default function BillingPage() {
   const [isUpgradeDialogOpen, setIsUpgradeDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [selectedCreditPackage, setSelectedCreditPackage] = useState<
+    string | null
+  >(null);
+  const [isPurchasingCredits, setIsPurchasingCredits] = useState(false);
   const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>(
     []
   );
@@ -124,6 +130,7 @@ export default function BillingPage() {
         (item: any) => ({
           ...item,
           date: formatDate(item.date),
+          type: item.type || "plan", // Default to "plan" for backward compatibility
         })
       );
       setBillingHistory(formattedHistory);
@@ -195,7 +202,7 @@ export default function BillingPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ plan: planEnglish }),
+        body: JSON.stringify({ plan: planEnglish, type: "plan" }),
       });
 
       if (!response.ok) {
@@ -222,6 +229,47 @@ export default function BillingPage() {
     }
   };
 
+  const handleCreditPurchase = async (creditPackageId: string) => {
+    setIsPurchasingCredits(true);
+    setSelectedCreditPackage(creditPackageId);
+    try {
+      // Call payment request API for credits
+      const response = await fetch("/api/payment/zarinpal/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "credits",
+          creditPackageId: creditPackageId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create payment request");
+      }
+
+      const data = await response.json();
+
+      if (data.paymentUrl) {
+        // Redirect to Zarinpal payment gateway
+        window.location.href = data.paymentUrl;
+      } else {
+        throw new Error("Payment URL not received");
+      }
+    } catch (error: any) {
+      console.error("Error creating credit purchase request:", error);
+      alert(
+        `خطا در ایجاد درخواست پرداخت: ${
+          error.message || "لطفا دوباره تلاش کنید."
+        }`
+      );
+      setIsPurchasingCredits(false);
+      setSelectedCreditPackage(null);
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("fa-IR").format(amount) + " تومان";
   };
@@ -229,12 +277,12 @@ export default function BillingPage() {
   const getStatusBadge = (status: string) => {
     const styles = {
       paid: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-      pending: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+      cancelled: "bg-slate-500/20 text-slate-400 border-slate-500/30",
       failed: "bg-red-500/20 text-red-400 border-red-500/30",
     };
     const labels = {
       paid: "پرداخت شده",
-      pending: "در انتظار",
+      cancelled: "لغو شده",
       failed: "ناموفق",
     };
     return (
@@ -334,7 +382,7 @@ export default function BillingPage() {
             <div className="mb-4 flex items-center gap-2 text-xs text-slate-400 md:text-sm">
               <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0" />
               <span className="break-words">
-                تجدید خودکار در {formatDate(user.planEndDate)}
+                اتمام اشتراک در {formatDate(user.planEndDate)}
               </span>
             </div>
           )}
@@ -423,7 +471,7 @@ export default function BillingPage() {
       {/* Plans Section */}
       <div className="mb-6 md:mb-8">
         <h2 className="mb-4 text-lg font-bold text-white md:text-2xl">
-          پلن‌های موجود
+          پلن‌های ماهانه
         </h2>
         <div className="grid gap-3 md:grid-cols-4">
           {plans.map((plan) => {
@@ -511,6 +559,74 @@ export default function BillingPage() {
         </div>
       </div>
 
+      {/* Credit Packages Section */}
+      <div className="mb-6 md:mb-8">
+        <h2 className="mb-4 text-lg font-bold text-white md:text-2xl">
+          خرید اعتبار اضافی
+        </h2>
+        <div className="grid gap-3 md:grid-cols-4">
+          {creditPackages.map((pkg) => {
+            const isPurchasing =
+              isPurchasingCredits && selectedCreditPackage === pkg.id;
+            const pricePerCredit = Math.round(pkg.price / pkg.credits);
+
+            return (
+              <div
+                key={pkg.id}
+                className={`relative flex flex-col overflow-hidden rounded-xl border p-4 transition-all md:p-6 ${
+                  pkg.popular
+                    ? "border-yellow-400/50 bg-gradient-to-br from-yellow-400/10 via-orange-400/10 to-pink-500/10 shadow-[0_0_30px_rgba(251,191,36,0.2)]"
+                    : "border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 hover:border-yellow-400/30"
+                }`}
+              >
+                {pkg.popular && (
+                  <div className="absolute left-3 top-3 md:left-4 md:top-4 rounded-lg bg-yellow-400/20 px-2 py-1 text-[10px] font-semibold text-yellow-400 md:text-xs">
+                    پیشنهاد ویژه
+                  </div>
+                )}
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 md:h-12 md:w-12 flex-shrink-0">
+                    <Coins className="h-5 w-5 text-yellow-400 md:h-6 md:w-6" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-bold text-white md:text-lg">
+                      {pkg.name}
+                    </h3>
+                    <p className="text-xs text-slate-400 md:text-sm">
+                      {pkg.description}
+                    </p>
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <p className="text-2xl font-black text-white md:text-3xl">
+                    {new Intl.NumberFormat("fa-IR").format(pkg.price)}{" "}
+                    {pkg.currency}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400 md:text-sm">
+                    {new Intl.NumberFormat("fa-IR").format(pricePerCredit)}{" "}
+                    تومان به ازای هر اعتبار
+                  </p>
+                </div>
+                <div className="mb-4 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 backdrop-blur-sm">
+                  <Check className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                  <span className="text-xs text-slate-300 md:text-sm">
+                    {new Intl.NumberFormat("fa-IR").format(pkg.credits)} اعتبار
+                    اضافه می‌شود
+                  </span>
+                </div>
+                <Button
+                  onClick={() => handleCreditPurchase(pkg.id)}
+                  disabled={isPurchasing}
+                  className="w-full h-9 text-sm md:h-10 md:text-base bg-gradient-to-r from-yellow-400 to-orange-400 text-white hover:from-yellow-500 hover:to-orange-500 disabled:opacity-50"
+                >
+                  {isPurchasing ? "در حال پردازش..." : "خرید اعتبار"}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Billing History */}
       <div>
         <h2 className="mb-4 text-lg font-bold text-white md:text-2xl">
@@ -548,9 +664,19 @@ export default function BillingPage() {
                     <span className="text-sm text-slate-300">{item.date}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">پلن</span>
+                    <span className="text-xs text-slate-400">نوع</span>
                     <span className="text-sm text-slate-300">
-                      {getPlanNamePersian(item.plan as any)}
+                      {item.type === "credits" ? (
+                        <span className="flex items-center gap-1">
+                          <Coins className="h-3.5 w-3.5 text-yellow-400" />
+                          {new Intl.NumberFormat("fa-IR").format(
+                            item.credits || 0
+                          )}{" "}
+                          اعتبار
+                        </span>
+                      ) : (
+                        getPlanNamePersian(item.plan as any)
+                      )}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
@@ -597,7 +723,7 @@ export default function BillingPage() {
                       تاریخ
                     </th>
                     <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
-                      پلن
+                      نوع
                     </th>
                     <th className="px-6 py-3 text-right text-sm font-semibold text-slate-400">
                       مبلغ
@@ -620,7 +746,17 @@ export default function BillingPage() {
                         {item.date}
                       </td>
                       <td className="px-6 py-3 text-sm text-slate-300">
-                        {getPlanNamePersian(item.plan as any)}
+                        {item.type === "credits" ? (
+                          <span className="flex items-center gap-2">
+                            <Coins className="h-4 w-4 text-yellow-400" />
+                            {new Intl.NumberFormat("fa-IR").format(
+                              item.credits || 0
+                            )}{" "}
+                            اعتبار
+                          </span>
+                        ) : (
+                          getPlanNamePersian(item.plan as any)
+                        )}
                       </td>
                       <td className="px-6 py-3 text-sm font-semibold text-white">
                         {formatCurrency(item.amount)}

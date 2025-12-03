@@ -180,3 +180,43 @@ export const IMAGE_SIZES = [
   { value: "4:5", label: "عمودی نزدیک به مربع (4:5)" },
   { value: "21:9", label: "افقی اولترا واید (21:9)" },
 ] as const;
+
+// Credit packages for additional credit purchases
+export const creditPackages = [
+  {
+    id: "credits_100",
+    credits: 100,
+    price: 200000,
+    currency: "تومان",
+    name: "۱۰۰ اعتبار",
+    description: "مناسب برای استفاده محدود",
+    popular: false,
+  },
+  {
+    id: "credits_300",
+    credits: 300,
+    price: 550000,
+    currency: "تومان",
+    name: "۳۰۰ اعتبار",
+    description: "گزینه متعادل",
+    popular: false,
+  },
+  {
+    id: "credits_500",
+    credits: 500,
+    price: 900000,
+    currency: "تومان",
+    name: "۵۰۰ اعتبار",
+    description: "پیشنهاد ویژه",
+    popular: true,
+  },
+  {
+    id: "credits_1000",
+    credits: 1000,
+    price: 1700000,
+    currency: "تومان",
+    name: "۱۰۰۰ اعتبار",
+    description: "بهترین قیمت",
+    popular: false,
+  },
+];

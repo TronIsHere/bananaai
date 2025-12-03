@@ -5,6 +5,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/app/models/user";
 import axios from "axios";
 import { PlanType } from "@/lib/utils";
+import { creditPackages } from "@/lib/data";
 
 // Plan prices in Toman
 const planPrices: Record<string, number> = {
@@ -43,26 +44,80 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { plan } = body;
+    const { plan, type, creditPackageId } = body;
 
-    if (!plan || !["free", "explorer", "creator", "studio"].includes(plan)) {
-      return NextResponse.json({ error: "Invalid plan name" }, { status: 400 });
-    }
+    // Determine purchase type
+    const purchaseType = type || "plan"; // Default to "plan" for backward compatibility
 
-    // Don't allow free plan purchases
-    if (plan === "free") {
-      return NextResponse.json(
-        { error: "Cannot purchase free plan" },
-        { status: 400 }
+    let amount: number;
+    let description: string;
+    let billingEntry: any;
+
+    if (purchaseType === "credits") {
+      // Handle credit purchase
+      if (!creditPackageId) {
+        return NextResponse.json(
+          { error: "Credit package ID is required" },
+          { status: 400 }
+        );
+      }
+
+      const creditPackage = creditPackages.find(
+        (pkg) => pkg.id === creditPackageId
       );
-    }
+      if (!creditPackage) {
+        return NextResponse.json(
+          { error: "Invalid credit package ID" },
+          { status: 400 }
+        );
+      }
 
-    const amount = planPrices[plan];
-    if (!amount || amount === 0) {
-      return NextResponse.json(
-        { error: "Invalid plan price" },
-        { status: 400 }
-      );
+      amount = creditPackage.price;
+      description = `خرید ${creditPackage.credits} اعتبار`;
+
+      billingEntry = {
+        id: `inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        date: new Date(),
+        amount: amount,
+        type: "credits",
+        credits: creditPackage.credits,
+        status: "pending" as const,
+      };
+    } else {
+      // Handle plan purchase (existing logic)
+      if (!plan || !["free", "explorer", "creator", "studio"].includes(plan)) {
+        return NextResponse.json(
+          { error: "Invalid plan name" },
+          { status: 400 }
+        );
+      }
+
+      // Don't allow free plan purchases
+      if (plan === "free") {
+        return NextResponse.json(
+          { error: "Cannot purchase free plan" },
+          { status: 400 }
+        );
+      }
+
+      amount = planPrices[plan];
+      if (!amount || amount === 0) {
+        return NextResponse.json(
+          { error: "Invalid plan price" },
+          { status: 400 }
+        );
+      }
+
+      description = `خرید پلن ${plan}`;
+
+      billingEntry = {
+        id: `inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        date: new Date(),
+        amount: amount,
+        type: "plan",
+        plan: plan,
+        status: "pending" as const,
+      };
     }
 
     await connectDB();
@@ -73,8 +128,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check if user already has this plan
-    if (user.currentPlan === plan) {
+    // Check if user already has this plan (only for plan purchases)
+    if (purchaseType === "plan" && user.currentPlan === plan) {
       return NextResponse.json(
         { error: "You already have this plan" },
         { status: 400 }
@@ -93,7 +148,6 @@ export async function POST(request: NextRequest) {
     }
 
     const callbackUrl = getCallbackUrl(request);
-    const description = `خرید پلن ${plan}`;
 
     // Use sandbox or production endpoint based on environment
     const zarinpalApiUrl = useSandbox
@@ -191,15 +245,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create pending billing entry
-    const billingEntry = {
-      id: `inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      date: new Date(),
-      amount: amount,
-      plan: plan,
-      status: "pending" as const,
-      authority: authority,
-    };
+    // Add authority to billing entry
+    billingEntry.authority = authority;
 
     user.billingHistory.push(billingEntry);
     await user.save();

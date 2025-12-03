@@ -6,10 +6,7 @@ export async function DELETE(req: Request) {
     const { key } = await req.json();
 
     if (!key) {
-      return Response.json(
-        { error: "Key is required" },
-        { status: 400 }
-      );
+      return Response.json({ error: "Key is required" }, { status: 400 });
     }
 
     const command = new DeleteObjectCommand({
@@ -28,5 +25,3 @@ export async function DELETE(req: Request) {
     );
   }
 }
-
-

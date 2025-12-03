@@ -82,20 +82,33 @@ export async function GET(request: NextRequest) {
     }
 
     const amount = billingEntry.amount;
-    const planRaw = billingEntry.plan as PlanType;
+    const purchaseType = billingEntry.type || "plan"; // Default to "plan" for backward compatibility
 
-    // Validate plan is not null and is a valid paid plan
-    if (!planRaw || !["explorer", "creator", "studio"].includes(planRaw)) {
-      console.error("Invalid plan in billing entry:", planRaw);
-      const baseUrl =
-        process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || "";
-      return NextResponse.redirect(
-        `${baseUrl}/dashboard/billing?payment=error`
-      );
+    // Handle credit purchases
+    if (purchaseType === "credits") {
+      const credits = billingEntry.credits;
+      if (!credits || credits <= 0) {
+        console.error("Invalid credits in billing entry:", credits);
+        const baseUrl =
+          process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || "";
+        return NextResponse.redirect(
+          `${baseUrl}/dashboard/billing?payment=error`
+        );
+      }
+    } else {
+      // Handle plan purchases (existing logic)
+      const planRaw = billingEntry.plan as PlanType;
+
+      // Validate plan is not null and is a valid paid plan
+      if (!planRaw || !["explorer", "creator", "studio"].includes(planRaw)) {
+        console.error("Invalid plan in billing entry:", planRaw);
+        const baseUrl =
+          process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || "";
+        return NextResponse.redirect(
+          `${baseUrl}/dashboard/billing?payment=error`
+        );
+      }
     }
-
-    // TypeScript now knows plan is non-null
-    const plan = planRaw as "explorer" | "creator" | "studio";
 
     // Use sandbox or production endpoint based on environment
     const zarinpalVerifyUrl = useSandbox
@@ -174,33 +187,48 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // Code 100 - First successful verification, update user plan
-      // Calculate plan end date (30 days from now)
-      const planStartDate = new Date();
-      const planEndDate = new Date();
-      planEndDate.setDate(planEndDate.getDate() + 30);
+      // Code 100 - First successful verification
+      if (purchaseType === "credits") {
+        // Handle credit purchase - add credits to user's account
+        const creditsToAdd = billingEntry.credits || 0;
+        user.credits = (user.credits || 0) + creditsToAdd;
 
-      // Update user plan
-      user.currentPlan = plan;
-      user.planStartDate = planStartDate;
-      user.planEndDate = planEndDate;
+        // Update billing entry
+        billingEntry.status = "paid";
+        billingEntry.refId = refId;
 
-      // Set credits based on plan (plan is guaranteed to be non-null at this point)
-      user.credits = planCredits[plan] || 0;
+        await user.save();
+      } else {
+        // Handle plan purchase - update user plan
+        const plan = billingEntry.plan as "explorer" | "creator" | "studio";
 
-      // Reset monthly usage
-      user.imagesGeneratedThisMonth = 0;
+        // Calculate plan end date (30 days from now)
+        const planStartDate = new Date();
+        const planEndDate = new Date();
+        planEndDate.setDate(planEndDate.getDate() + 30);
 
-      // Set monthly reset date (30 days from now)
-      const monthlyResetDate = new Date();
-      monthlyResetDate.setDate(monthlyResetDate.getDate() + 30);
-      user.monthlyResetDate = monthlyResetDate;
+        // Update user plan
+        user.currentPlan = plan;
+        user.planStartDate = planStartDate;
+        user.planEndDate = planEndDate;
 
-      // Update billing entry
-      billingEntry.status = "paid";
-      billingEntry.refId = refId;
+        // Set credits based on plan
+        user.credits = planCredits[plan] || 0;
 
-      await user.save();
+        // Reset monthly usage
+        user.imagesGeneratedThisMonth = 0;
+
+        // Set monthly reset date (30 days from now)
+        const monthlyResetDate = new Date();
+        monthlyResetDate.setDate(monthlyResetDate.getDate() + 30);
+        user.monthlyResetDate = monthlyResetDate;
+
+        // Update billing entry
+        billingEntry.status = "paid";
+        billingEntry.refId = refId;
+
+        await user.save();
+      }
 
       const baseUrl =
         process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || "";
