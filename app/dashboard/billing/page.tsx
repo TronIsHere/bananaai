@@ -274,23 +274,19 @@ export default function BillingPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const styles = {
-      paid: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-      cancelled: "bg-slate-500/20 text-slate-400 border-slate-500/30",
-      failed: "bg-red-500/20 text-red-400 border-red-500/30",
-    };
-    const labels = {
-      paid: "پرداخت شده",
-      cancelled: "لغو شده",
-      failed: "ناموفق",
-    };
+    // If not paid, show as cancelled
+    if (status !== "paid") {
+      return (
+        <span className="rounded-lg border px-2 py-1 text-xs font-semibold bg-slate-500/20 text-slate-400 border-slate-500/30">
+          لغو شده
+        </span>
+      );
+    }
+
+    // If paid, show as paid
     return (
-      <span
-        className={`rounded-lg border px-2 py-1 text-xs font-semibold ${
-          styles[status as keyof typeof styles]
-        }`}
-      >
-        {labels[status as keyof typeof labels]}
+      <span className="rounded-lg border px-2 py-1 text-xs font-semibold bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+        پرداخت شده
       </span>
     );
   };
