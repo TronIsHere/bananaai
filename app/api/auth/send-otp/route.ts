@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { mobileNumberSchema } from "@/lib/validations";
-
-const HARDCODED_OTP = "123456";
+import { sendOTP } from "@/lib/otp-service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,25 +16,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In a real app, you would send OTP via SMS here
-    // For now, we just return success
-    // The OTP is hardcoded as 123456
+    // Send OTP via Kave Negar
+    const result = await sendOTP(mobileNumber);
+
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          error: result.error || "خطا در ارسال کد تأیید",
+          message: result.error || "خطا در ارسال کد تأیید",
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       {
         success: true,
-        message: "OTP sent successfully",
-        // In development, you might want to return the OTP for testing
-        // otp: HARDCODED_OTP
+        message: "کد تأیید با موفقیت ارسال شد",
+        expiresAt: result.expiresAt,
       },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error sending OTP:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error.message || "خطای داخلی سرور" },
       { status: 500 }
     );
   }
 }
-

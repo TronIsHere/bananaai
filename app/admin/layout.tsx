@@ -21,24 +21,11 @@ export default function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-white" dir="rtl">
-      <AdminSidebar 
-        isOpen={isMobileMenuOpen} 
-        onClose={closeMenu} 
-      />
+      <AdminSidebar isOpen={isMobileMenuOpen} onClose={closeMenu} />
       <div className="mr-0 flex-1 md:mr-64">
-        <AdminHeader 
-          onMenuClick={toggleMenu}
-          isMenuOpen={isMobileMenuOpen}
-        />
-        <main className="w-full p-4 pb-6 md:p-8 md:pb-8">
-          {children}
-        </main>
+        <AdminHeader onMenuClick={toggleMenu} isMenuOpen={isMobileMenuOpen} />
+        <main className="w-full p-4 pb-6 md:p-8 md:pb-8">{children}</main>
       </div>
     </div>
   );
 }
-
-
-
-
-

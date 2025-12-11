@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth-config";
 import connectDB from "@/lib/mongodb";
 import User from "@/app/models/user";
 import axios from "axios";
-import { PlanType } from "@/lib/utils";
+import { PlanType, getPlanNameEnglish } from "@/lib/utils";
 import { creditPackages } from "@/lib/data";
 
 // Plan prices in Toman
@@ -247,6 +247,14 @@ export async function POST(request: NextRequest) {
 
     // Add authority to billing entry
     billingEntry.authority = authority;
+
+    // Normalize currentPlan if it contains Persian text (defensive measure)
+    if (user.currentPlan && typeof user.currentPlan === "string") {
+      const normalizedPlan = getPlanNameEnglish(user.currentPlan);
+      if (normalizedPlan !== user.currentPlan) {
+        user.currentPlan = normalizedPlan;
+      }
+    }
 
     user.billingHistory.push(billingEntry);
     await user.save();

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { otpSchema, mobileNumberSchema } from "@/lib/validations";
 import connectDB from "@/lib/mongodb";
 import User from "@/app/models/user";
-
-const HARDCODED_OTP = "123456";
+import { verifyOTP, normalizePhoneNumber } from "@/lib/otp-service";
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,10 +27,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify OTP (hardcoded for now)
-    if (otp !== HARDCODED_OTP) {
+    // Verify OTP (keep it valid - don't delete yet)
+    // The OTP will be deleted by NextAuth during signIn, or during registration if user doesn't exist
+    const verificationResult = await verifyOTP(mobileNumber, otp, false);
+
+    if (!verificationResult.valid) {
       return NextResponse.json(
-        { error: "کد تأیید نامعتبر است" },
+        {
+          error: verificationResult.error || "کد تأیید نامعتبر است",
+          attemptsRemaining: verificationResult.attemptsRemaining,
+        },
         { status: 400 }
       );
     }
@@ -40,7 +45,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     // Normalize mobile number (trim whitespace and ensure consistent format)
-    const normalizedMobileNumber = mobileNumber.trim().replace(/\s+/g, "");
+    const normalizedMobileNumber = normalizePhoneNumber(mobileNumber);
 
     // Check if user exists
     const user = await User.findOne({ mobileNumber: normalizedMobileNumber });
@@ -70,12 +75,11 @@ export async function POST(request: NextRequest) {
         { status: 200 }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error verifying OTP:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error.message || "خطای داخلی سرور" },
       { status: 500 }
     );
   }
 }
-

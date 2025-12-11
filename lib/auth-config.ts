@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import connectDB from "@/lib/mongodb";
 import User from "@/app/models/user";
+import { verifyOTP, normalizePhoneNumber } from "@/lib/otp-service";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -19,16 +20,30 @@ export const authOptions: NextAuthOptions = {
         try {
           await connectDB();
 
-          // Verify OTP (hardcoded for now)
-          const HARDCODED_OTP = "123456";
-          if (credentials.otp !== HARDCODED_OTP) {
+          // Verify OTP (delete on success since this is the final authentication step)
+          const verificationResult = await verifyOTP(
+            credentials.mobileNumber,
+            credentials.otp,
+            true // Delete OTP after successful verification
+          );
+
+          if (!verificationResult.valid) {
+            console.error("OTP verification failed:", verificationResult.error);
             return null;
           }
 
+          // Normalize mobile number
+          const normalizedMobileNumber = normalizePhoneNumber(
+            credentials.mobileNumber
+          );
+
           // Find user by mobile number
-          const user = await User.findOne({ mobileNumber: credentials.mobileNumber });
+          const user = await User.findOne({
+            mobileNumber: normalizedMobileNumber,
+          });
 
           if (!user) {
+            console.error(`User not found for mobile number: ${normalizedMobileNumber}`);
             return null;
           }
 
@@ -73,4 +88,3 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
-

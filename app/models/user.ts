@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
-import { PlanType } from "@/lib/utils";
+import { PlanType, getPlanNameEnglish } from "@/lib/utils";
 
 // Billing History Schema
 export interface IBillingHistory {
@@ -187,6 +187,18 @@ const UserSchema: Schema = new Schema(
     timestamps: true,
   }
 );
+
+// Pre-save hook to normalize currentPlan (convert Persian to English)
+UserSchema.pre("save", function (next) {
+  if (this.currentPlan && typeof this.currentPlan === "string") {
+    // Normalize Persian plan names to English
+    const normalizedPlan = getPlanNameEnglish(this.currentPlan);
+    if (normalizedPlan !== this.currentPlan) {
+      this.currentPlan = normalizedPlan;
+    }
+  }
+  next();
+});
 
 // Index for faster queries
 // Note: mobileNumber already has an index from unique: true, so we don't need to add it again
