@@ -7,15 +7,13 @@ import {
 } from "@/lib/validations";
 import connectDB from "@/lib/mongodb";
 import User from "@/app/models/user";
-
-const HARDCODED_OTP = "123456";
+import { verifyOTP, normalizePhoneNumber } from "@/lib/otp-service";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const { mobileNumber, otp, firstName, lastName } = body;
-  
-  try {
 
+  try {
     // Validate all inputs
     const mobileValidation = mobileNumberSchema.safeParse(mobileNumber);
     const otpValidation = otpSchema.safeParse(otp);
@@ -50,10 +48,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify OTP (hardcoded for now)
-    if (otp !== HARDCODED_OTP) {
+    // Verify OTP
+    const verificationResult = await verifyOTP(mobileNumber, otp);
+
+    if (!verificationResult.valid) {
       return NextResponse.json(
-        { error: "کد تأیید نامعتبر است" },
+        {
+          error: verificationResult.error || "کد تأیید نامعتبر است",
+          attemptsRemaining: verificationResult.attemptsRemaining,
+        },
         { status: 400 }
       );
     }
@@ -69,15 +72,20 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
       // Index doesn't exist or already dropped, ignore error
       if (error.code !== 27 && error.codeName !== "IndexNotFound") {
-        console.warn("Could not drop billingHistory.id_1 index:", error.message);
+        console.warn(
+          "Could not drop billingHistory.id_1 index:",
+          error.message
+        );
       }
     }
 
     // Normalize mobile number (trim whitespace and ensure consistent format)
-    const normalizedMobileNumber = mobileNumber.trim().replace(/\s+/g, "");
+    const normalizedMobileNumber = normalizePhoneNumber(mobileNumber);
 
     // Check if user already exists
-    const existingUser = await User.findOne({ mobileNumber: normalizedMobileNumber });
+    const existingUser = await User.findOne({
+      mobileNumber: normalizedMobileNumber,
+    });
 
     if (existingUser) {
       return NextResponse.json(
@@ -90,7 +98,7 @@ export async function POST(request: NextRequest) {
     const now = new Date();
     const monthlyResetDate = new Date(now);
     monthlyResetDate.setMonth(monthlyResetDate.getMonth() + 1);
-    
+
     const newUser = await User.create({
       mobileNumber: normalizedMobileNumber,
       firstName,
@@ -117,7 +125,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error: any) {
     console.error("Error registering user:", error);
-    
+
     // Handle duplicate key error
     if (error.code === 11000) {
       // Check if it's the billingHistory.id index issue
@@ -125,14 +133,16 @@ export async function POST(request: NextRequest) {
         // Try to drop the problematic index and retry once
         try {
           await User.collection.dropIndex("billingHistory.id_1");
-          console.log("Dropped problematic billingHistory.id_1 index and retrying");
-          
+          console.log(
+            "Dropped problematic billingHistory.id_1 index and retrying"
+          );
+
           // Retry user creation with stored values
-          const normalizedMobileNumber = mobileNumber.trim().replace(/\s+/g, "");
+          const normalizedMobileNumber = normalizePhoneNumber(mobileNumber);
           const now = new Date();
           const monthlyResetDate = new Date(now);
           monthlyResetDate.setMonth(monthlyResetDate.getMonth() + 1);
-          
+
           const newUser = await User.create({
             mobileNumber: normalizedMobileNumber,
             firstName,
@@ -162,7 +172,7 @@ export async function POST(request: NextRequest) {
           console.error("Retry after dropping index also failed:", retryError);
         }
       }
-      
+
       // Mobile number duplicate or other duplicate key error
       return NextResponse.json(
         { error: "کاربر با این شماره موبایل قبلاً ثبت‌نام کرده است" },
@@ -176,4 +186,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
