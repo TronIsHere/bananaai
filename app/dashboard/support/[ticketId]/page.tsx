@@ -3,15 +3,35 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Send, Clock, CheckCircle, XCircle, User, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  Send,
+  Clock,
+  CheckCircle,
+  XCircle,
+  User,
+  ShieldCheck,
+  Image as ImageIcon,
+  X,
+  Upload,
+  Loader2,
+  Sparkles,
+  Download,
+  Copy,
+  Check,
+  Wand2,
+} from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Message {
   content: string;
-  sender: "user" | "admin";
+  sender: "user" | "admin" | "assistant";
   senderId?: string;
   senderMobile?: string;
+  images?: string[];
+  generatedImages?: string[];
+  messageType?: "text" | "image_generation" | "image_to_image";
   createdAt: string;
 }
 
@@ -20,6 +40,11 @@ interface Ticket {
   subject: string;
   status: "pending" | "responded" | "closed";
   createdAt: string;
+}
+
+interface ImageFile {
+  file: File;
+  preview: string;
 }
 
 export default function TicketDetailPage() {
@@ -31,11 +56,15 @@ export default function TicketDetailPage() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [attachedImages, setAttachedImages] = useState<ImageFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isPro, setIsPro] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -49,7 +78,8 @@ export default function TicketDetailPage() {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+      textareaRef.current.style.height =
+        textareaRef.current.scrollHeight + "px";
     }
   }, [newMessage]);
 
@@ -87,10 +117,11 @@ export default function TicketDetailPage() {
     if (!ticketId || isLoading) return;
 
     const interval = setInterval(() => {
-      // We only want to fetch silently without setting loading state
       const fetchSilent = async () => {
         try {
-          const response = await fetch(`/api/support/tickets/${ticketId}/messages`);
+          const response = await fetch(
+            `/api/support/tickets/${ticketId}/messages`
+          );
           if (response.ok) {
             const data = await response.json();
             setMessages(data.messages || []);
@@ -106,21 +137,98 @@ export default function TicketDetailPage() {
     return () => clearInterval(interval);
   }, [ticketId, isLoading]);
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach((file) => {
+      if (file.type.startsWith("image/")) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          setError("حجم فایل نباید بیشتر از 10 مگابایت باشد");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setAttachedImages((prev) => [
+            ...prev,
+            { file, preview: reader.result as string },
+          ]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setAttachedImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || isSending) return;
+    if (
+      (!newMessage.trim() && attachedImages.length === 0) ||
+      isSending ||
+      isGenerating
+    )
+      return;
 
     setIsSending(true);
     setError("");
 
     try {
-      const response = await fetch(`/api/support/tickets/${ticketId}/messages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content: newMessage }),
-      });
+      // Upload images first if any
+      const uploadedImageUrls: string[] = [];
+
+      for (const img of attachedImages) {
+        const formData = new FormData();
+        formData.append("image", img.file);
+
+        const uploadResponse = await fetch("/api/upload/image", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          throw new Error(
+            uploadData.message || uploadData.error || "Failed to upload image"
+          );
+        }
+
+        if (uploadData.success && uploadData.url) {
+          uploadedImageUrls.push(uploadData.url);
+        }
+      }
+
+      // Determine message type
+      const hasImages = uploadedImageUrls.length > 0;
+      const hasPrompt = newMessage.trim().length > 0;
+      const messageType =
+        hasImages && hasPrompt
+          ? "image_to_image"
+          : hasImages
+          ? "text"
+          : "image_generation";
+
+      // Send message with images
+      const response = await fetch(
+        `/api/support/tickets/${ticketId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: newMessage.trim() || (hasImages ? "تصویر آپلود شده" : ""),
+            images: uploadedImageUrls,
+            messageType: messageType,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -130,21 +238,176 @@ export default function TicketDetailPage() {
         return;
       }
 
-      // Add new message to list
-      setMessages((prev) => [...prev, data.messageData]);
+      // Add user message to UI immediately
+      const userMessage: Message = {
+        content: newMessage.trim() || (hasImages ? "تصویر آپلود شده" : ""),
+        sender: "user",
+        senderId: user?.id || undefined,
+        images: uploadedImageUrls,
+        messageType: messageType as any,
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
       setNewMessage("");
-      // Reset height
+      setAttachedImages([]);
+
       if (textareaRef.current) {
-         textareaRef.current.style.height = "auto";
+        textareaRef.current.style.height = "auto";
       }
-      
-      // Update ticket status visually if needed (though backend handles it)
-    } catch (error) {
+
+      // If this is an image generation request, generate the image
+      if (
+        messageType === "image_generation" ||
+        messageType === "image_to_image"
+      ) {
+        setIsGenerating(true);
+        await generateImage(newMessage.trim(), uploadedImageUrls, messageType);
+      }
+    } catch (error: any) {
       console.error("Error sending message:", error);
-      setError("خطا در ارتباط با سرور");
+      setError(error.message || "خطا در ارتباط با سرور");
     } finally {
       setIsSending(false);
     }
+  };
+
+  const generateImage = async (
+    prompt: string,
+    inputImageUrls: string[] = [],
+    messageType: string
+  ) => {
+    try {
+      const isImageToImage =
+        messageType === "image_to_image" && inputImageUrls.length > 0;
+      const endpoint = isImageToImage
+        ? "/api/generate/image-to-image"
+        : "/api/generate/text-to-image";
+
+      const requestBody = isImageToImage
+        ? {
+            prompt: prompt || "تصویر آپلود شده",
+            imageUrls: inputImageUrls,
+            numImages: 1,
+            image_size: "16:9",
+            isPro: isPro,
+          }
+        : {
+            prompt: prompt,
+            numImages: 1,
+            image_size: "16:9",
+            isPro: isPro,
+          };
+
+      // Step 1: Submit generation request
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || data.error || "Failed to generate image"
+        );
+      }
+
+      if (!data.success || !data.taskId) {
+        throw new Error(data.message || "خطا در ثبت درخواست تولید تصویر");
+      }
+
+      const taskId = data.taskId;
+
+      // Step 2: Poll for task completion
+      const pollInterval = 1500;
+      const maxAttempts = 80;
+      let attempts = 0;
+
+      const pollTaskStatus = async (): Promise<void> => {
+        try {
+          attempts++;
+
+          const statusResponse = await fetch(
+            `/api/generate/task-status/${taskId}`
+          );
+          const statusData = await statusResponse.json();
+
+          if (!statusResponse.ok) {
+            throw new Error(
+              statusData.message || statusData.error || "خطا در بررسی وضعیت"
+            );
+          }
+
+          if (statusData.status === "completed") {
+            if (statusData.images && statusData.images.length > 0) {
+              // Add assistant message with generated images
+              const assistantMessage: Message = {
+                content: "تصویر شما آماده است!",
+                sender: "assistant",
+                generatedImages: statusData.images,
+                messageType: messageType as any,
+                createdAt: new Date().toISOString(),
+              };
+
+              setMessages((prev) => [...prev, assistantMessage]);
+
+              // Update the last user message in the backend
+              await fetch(`/api/support/tickets/${ticketId}/messages`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  content: prompt || "تصویر آپلود شده",
+                  images: inputImageUrls,
+                  messageType: messageType,
+                }),
+              });
+            } else {
+              throw new Error("هیچ تصویری تولید نشد");
+            }
+            setIsGenerating(false);
+          } else if (statusData.status === "failed") {
+            setIsGenerating(false);
+            throw new Error(statusData.error || "تولید تصویر با خطا مواجه شد");
+          } else if (
+            statusData.status === "pending" ||
+            statusData.status === "processing"
+          ) {
+            if (attempts >= maxAttempts) {
+              setIsGenerating(false);
+              throw new Error(
+                "زمان انتظار به پایان رسید. لطفاً دوباره تلاش کنید."
+              );
+            } else {
+              setTimeout(pollTaskStatus, pollInterval);
+            }
+          }
+        } catch (err: any) {
+          console.error("Error polling task status:", err);
+          setIsGenerating(false);
+          setError(err.message || "خطا در بررسی وضعیت تولید تصویر");
+        }
+      };
+
+      pollTaskStatus();
+    } catch (err: any) {
+      console.error("Error generating image:", err);
+      setError(err.message || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.");
+      setIsGenerating(false);
+    }
+  };
+
+  const handleDownload = (imageUrl: string) => {
+    const link = document.createElement("a");
+    link.href = imageUrl;
+    link.download = `bananaai-${Date.now()}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getStatusBadge = (status: string) => {
@@ -194,7 +457,7 @@ export default function TicketDetailPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-100px)]">
-         <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/20 border-t-white" />
       </div>
     );
   }
@@ -207,7 +470,7 @@ export default function TicketDetailPage() {
         </div>
         <Button
           onClick={() => {
-            window.scrollTo({ top: 0, behavior: 'instant' });
+            window.scrollTo({ top: 0, behavior: "instant" });
             router.push("/dashboard/support");
           }}
           variant="outline"
@@ -227,7 +490,7 @@ export default function TicketDetailPage() {
         <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
           <Button
             onClick={() => {
-              window.scrollTo({ top: 0, behavior: 'instant' });
+              window.scrollTo({ top: 0, behavior: "instant" });
               router.push("/dashboard/support");
             }}
             size="icon"
@@ -241,11 +504,13 @@ export default function TicketDetailPage() {
               {ticket?.subject}
             </h1>
             <div className="flex items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2 flex-wrap">
-               <span className="text-[10px] sm:text-xs text-slate-400 font-medium">#{ticket?.id.slice(-6)}</span>
-               {ticket && getStatusBadge(ticket.status)}
-               <span className="text-[10px] sm:text-xs text-slate-500 hidden sm:inline">
-                 ایجاد شده: {ticket && formatDate(ticket.createdAt)}
-               </span>
+              <span className="text-[10px] sm:text-xs text-slate-400 font-medium">
+                #{ticket?.id.slice(-6)}
+              </span>
+              {ticket && getStatusBadge(ticket.status)}
+              <span className="text-[10px] sm:text-xs text-slate-500 hidden sm:inline">
+                ایجاد شده: {ticket && formatDate(ticket.createdAt)}
+              </span>
             </div>
           </div>
         </div>
@@ -256,24 +521,35 @@ export default function TicketDetailPage() {
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 px-4">
             <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-4 shadow-lg">
-                <Send className="h-8 w-8 sm:h-10 sm:w-10 opacity-50" />
+              <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 opacity-50" />
             </div>
-            <p className="text-sm sm:text-base font-semibold">پیامی وجود ندارد</p>
-            <p className="text-xs sm:text-sm mt-2 opacity-70 text-center">اولین پیام خود را ارسال کنید</p>
+            <p className="text-sm sm:text-base font-semibold">
+              پیامی وجود ندارد
+            </p>
+            <p className="text-xs sm:text-sm mt-2 opacity-70 text-center">
+              اولین پیام خود را ارسال کنید یا تصویری تولید کنید
+            </p>
           </div>
         ) : (
           messages.map((message, index) => {
             const isUser = message.sender === "user";
+            const isAssistant = message.sender === "assistant";
             const showDate =
               index === 0 ||
               new Date(message.createdAt).toDateString() !==
                 new Date(messages[index - 1].createdAt).toDateString();
-            const isConsecutive = index > 0 && 
+            const isConsecutive =
+              index > 0 &&
               messages[index - 1].sender === message.sender &&
-              new Date(message.createdAt).getTime() - new Date(messages[index - 1].createdAt).getTime() < 5 * 60 * 1000;
+              new Date(message.createdAt).getTime() -
+                new Date(messages[index - 1].createdAt).getTime() <
+                5 * 60 * 1000;
 
             return (
-              <div key={index} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+              <div
+                key={index}
+                className="animate-in fade-in slide-in-from-bottom-2 duration-300"
+              >
                 {showDate && (
                   <div className="flex justify-center my-6 sm:my-8">
                     <span className="text-[10px] sm:text-xs font-semibold text-slate-500 bg-white/10 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-white/10 backdrop-blur-sm">
@@ -282,39 +558,149 @@ export default function TicketDetailPage() {
                   </div>
                 )}
                 <div
-                  className={`flex items-end gap-2 sm:gap-3 ${
+                  className={`flex items-start gap-2 sm:gap-3 ${
                     isUser ? "flex-row-reverse" : "flex-row"
                   }`}
                 >
-                  <Avatar className={`h-8 w-8 sm:h-10 sm:w-10 border-2 shrink-0 ${isUser ? "border-indigo-500/30" : "border-orange-500/30"} shadow-lg`}>
-                     {isUser ? (
-                        <AvatarImage src={user?.image || ""} />
-                     ) : (
-                        <AvatarImage src="/img/proshir.jpg" />
-                     )}
-                    <AvatarFallback className={`${isUser ? "bg-gradient-to-br from-indigo-500 to-indigo-600" : "bg-gradient-to-br from-orange-500 to-orange-600"} text-white text-xs sm:text-sm font-bold`}>
-                        {isUser ? <User className="h-4 w-4 sm:h-5 sm:w-5" /> : <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5" />}
+                  <Avatar
+                    className={`h-8 w-8 sm:h-10 sm:w-10 border-2 shrink-0 ${
+                      isUser
+                        ? "border-indigo-500/30"
+                        : isAssistant
+                        ? "border-purple-500/30"
+                        : "border-orange-500/30"
+                    } shadow-lg`}
+                  >
+                    {isUser ? (
+                      <AvatarImage src={undefined} />
+                    ) : isAssistant ? (
+                      <AvatarImage src="/img/proshir.jpg" />
+                    ) : (
+                      <AvatarImage src="/img/proshir.jpg" />
+                    )}
+                    <AvatarFallback
+                      className={`${
+                        isUser
+                          ? "bg-gradient-to-br from-indigo-500 to-indigo-600"
+                          : isAssistant
+                          ? "bg-gradient-to-br from-purple-500 to-purple-600"
+                          : "bg-gradient-to-br from-orange-500 to-orange-600"
+                      } text-white text-xs sm:text-sm font-bold`}
+                    >
+                      {isUser ? (
+                        <User className="h-4 w-4 sm:h-5 sm:w-5" />
+                      ) : isAssistant ? (
+                        <Wand2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                      ) : (
+                        <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5" />
+                      )}
                     </AvatarFallback>
                   </Avatar>
-                  
+
                   <div
                     className={`max-w-[75%] sm:max-w-[80%] md:max-w-[70%] rounded-xl sm:rounded-2xl px-3 sm:px-5 py-2.5 sm:py-3.5 shadow-lg backdrop-blur-sm transition-all hover:scale-[1.01] ${
                       isUser
                         ? "bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-bl-md rounded-br-xl sm:rounded-br-2xl"
+                        : isAssistant
+                        ? "bg-gradient-to-br from-purple-600/80 to-purple-700/80 text-white rounded-bl-xl sm:rounded-bl-2xl rounded-br-md"
                         : "bg-gradient-to-br from-white/15 to-white/10 text-slate-100 rounded-bl-xl sm:rounded-bl-2xl rounded-br-md border border-white/10"
                     }`}
                   >
                     {!isConsecutive && (
-                      <div className={`text-[10px] sm:text-xs font-semibold mb-1 sm:mb-1.5 ${isUser ? "text-indigo-200" : "text-slate-400"}`}>
-                        {isUser ? "شما" : "پشتیبانی"}
+                      <div
+                        className={`text-[10px] sm:text-xs font-semibold mb-1 sm:mb-1.5 ${
+                          isUser
+                            ? "text-indigo-200"
+                            : isAssistant
+                            ? "text-purple-200"
+                            : "text-slate-400"
+                        }`}
+                      >
+                        {isUser
+                          ? "شما"
+                          : isAssistant
+                          ? "هوش مصنوعی"
+                          : "پشتیبانی"}
                       </div>
                     )}
-                    <p className="whitespace-pre-wrap break-words text-xs sm:text-sm leading-relaxed">
-                      {message.content}
-                    </p>
-                    <div className={`flex items-center gap-1 sm:gap-1.5 mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] ${isUser ? "text-indigo-200" : "text-slate-400"} justify-end`}>
+
+                    {/* Message Content */}
+                    {message.content && (
+                      <p className="whitespace-pre-wrap break-words text-xs sm:text-sm leading-relaxed mb-2">
+                        {message.content}
+                      </p>
+                    )}
+
+                    {/* User Uploaded Images */}
+                    {message.images && message.images.length > 0 && (
+                      <div className="grid grid-cols-2 gap-2 mb-2">
+                        {message.images.map((imgUrl, imgIndex) => (
+                          <div
+                            key={imgIndex}
+                            className="relative group rounded-lg overflow-hidden border border-white/20"
+                          >
+                            <img
+                              src={imgUrl}
+                              alt={`Uploaded ${imgIndex + 1}`}
+                              className="w-full h-32 object-cover"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Generated Images */}
+                    {message.generatedImages &&
+                      message.generatedImages.length > 0 && (
+                        <div className="space-y-2 mb-2">
+                          {message.generatedImages.map((imgUrl, imgIndex) => (
+                            <div
+                              key={imgIndex}
+                              className="relative group rounded-lg overflow-hidden border-2 border-purple-400/30"
+                            >
+                              <img
+                                src={imgUrl}
+                                alt={`Generated ${imgIndex + 1}`}
+                                className="w-full h-auto max-h-96 object-contain bg-slate-900/50"
+                              />
+                              <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button
+                                  size="icon"
+                                  variant="secondary"
+                                  className="h-8 w-8 bg-white/90 hover:bg-white"
+                                  onClick={() => handleDownload(imgUrl)}
+                                >
+                                  <Download className="h-4 w-4 text-slate-900" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                    {/* Loading indicator for generating images */}
+                    {isGenerating &&
+                      index === messages.length - 1 &&
+                      isUser && (
+                        <div className="flex items-center gap-2 mt-2 text-purple-200 text-xs">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>در حال تولید تصویر...</span>
+                        </div>
+                      )}
+
+                    <div
+                      className={`flex items-center gap-1 sm:gap-1.5 mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] ${
+                        isUser
+                          ? "text-indigo-200"
+                          : isAssistant
+                          ? "text-purple-200"
+                          : "text-slate-400"
+                      } justify-end`}
+                    >
                       <span>{formatTime(message.createdAt)}</span>
-                      {isUser && <CheckCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 opacity-80" />}
+                      {isUser && (
+                        <CheckCircle className="h-2.5 w-2.5 sm:h-3 sm:w-3 opacity-80" />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -325,44 +711,138 @@ export default function TicketDetailPage() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="px-3 sm:px-4 md:px-6 pt-2">
+          <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-3 flex items-start gap-2">
+            <XCircle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-red-400 flex-1">{error}</p>
+            <button
+              onClick={() => setError("")}
+              className="text-red-400 hover:text-red-300"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Message Input */}
       <div className="p-3 sm:p-4 md:p-6 bg-gradient-to-r from-white/10 to-white/5 border-t border-white/10 backdrop-blur-sm">
         {ticket?.status !== "closed" ? (
-          <form onSubmit={handleSendMessage} className="flex items-end gap-2 sm:gap-3 relative">
-            <div className="relative flex-1 rounded-xl sm:rounded-2xl bg-white/10 border-2 border-white/20 focus-within:border-indigo-500/50 focus-within:bg-white/15 transition-all shadow-lg">
-                <textarea
-                ref={textareaRef}
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="پیام خود را بنویسید..."
-                rows={1}
-                className="w-full bg-transparent px-3 sm:px-4 py-2.5 sm:py-3.5 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none resize-none max-h-32 min-h-[44px] sm:min-h-[52px]"
-                disabled={isSending}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage(e);
-                    }
-                }}
-                />
+          <form onSubmit={handleSendMessage} className="space-y-3">
+            {/* Model Selection */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsPro(false)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  !isPro
+                    ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
+                    : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                }`}
+              >
+                استاندارد
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPro(true)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  isPro
+                    ? "bg-yellow-400/20 text-yellow-400 border border-yellow-400/30"
+                    : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+                }`}
+              >
+                PRO
+              </button>
             </div>
-            <Button
-              type="submit"
-              disabled={!newMessage.trim() || isSending}
-              size="icon"
-              className="h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-xl shadow-indigo-500/30 hover:from-indigo-500 hover:to-indigo-600 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 disabled:shadow-none disabled:cursor-not-allowed shrink-0"
-            >
-              {isSending ? (
-                  <div className="h-4 w-4 sm:h-5 sm:w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              ) : (
+
+            {/* Attached Images Preview */}
+            {attachedImages.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {attachedImages.map((img, index) => (
+                  <div key={index} className="relative shrink-0">
+                    <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-indigo-500/30">
+                      <img
+                        src={img.preview}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Input Area */}
+            <div className="flex items-end gap-2 sm:gap-3 relative">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                size="icon"
+                variant="ghost"
+                className="rounded-xl text-slate-400 hover:bg-white/10 hover:text-white shrink-0 h-[44px] w-[44px] sm:h-[52px] sm:w-[52px]"
+              >
+                <ImageIcon className="h-5 w-5" />
+              </Button>
+
+              <div className="relative flex-1 rounded-xl sm:rounded-2xl bg-white/10 border-2 border-white/20 focus-within:border-indigo-500/50 focus-within:bg-white/15 transition-all shadow-lg">
+                <textarea
+                  ref={textareaRef}
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder="پیام خود را بنویسید یا تصویری تولید کنید..."
+                  rows={1}
+                  className="w-full bg-transparent px-3 sm:px-4 py-2.5 sm:py-3.5 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none resize-none max-h-32 min-h-[44px] sm:min-h-[52px]"
+                  disabled={isSending || isGenerating}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage(e);
+                    }
+                  }}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={
+                  (!newMessage.trim() && attachedImages.length === 0) ||
+                  isSending ||
+                  isGenerating
+                }
+                size="icon"
+                className="h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-xl shadow-indigo-500/30 hover:from-indigo-500 hover:to-indigo-600 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 disabled:shadow-none disabled:cursor-not-allowed shrink-0"
+              >
+                {isSending || isGenerating ? (
+                  <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
+                ) : (
                   <Send className="h-4 w-4 sm:h-5 sm:w-5 ml-0.5" />
-              )}
-            </Button>
+                )}
+              </Button>
+            </div>
           </form>
         ) : (
           <div className="flex items-center justify-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-slate-500/10 to-slate-500/5 border border-slate-500/20 p-3 sm:p-4 text-xs sm:text-sm text-slate-400 backdrop-blur-sm">
             <XCircle className="h-4 w-4 sm:h-5 sm:w-5 shrink-0" />
-            <span className="text-center">این تیکت بسته شده است و امکان ارسال پیام جدید وجود ندارد</span>
+            <span className="text-center">
+              این تیکت بسته شده است و امکان ارسال پیام جدید وجود ندارد
+            </span>
           </div>
         )}
       </div>

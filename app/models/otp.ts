@@ -45,3 +45,4 @@ const OTP: Model<IOTP> =
   mongoose.models.OTP || mongoose.model<IOTP>("OTP", OTPSchema);
 
 export default OTP;
+

@@ -6,7 +6,16 @@ import Contact from "@/app/models/contact";
 import { z } from "zod";
 
 const messageSchema = z.object({
-  content: z.string().min(1, "پیام نمی‌تواند خالی باشد").max(5000, "پیام نمی‌تواند بیشتر از ۵۰۰۰ کاراکتر باشد"),
+  content: z
+    .string()
+    .min(0)
+    .max(5000, "پیام نمی‌تواند بیشتر از ۵۰۰۰ کاراکتر باشد"),
+  images: z.array(z.string().url()).optional(),
+  generatedImages: z.array(z.string().url()).optional(),
+  messageType: z
+    .enum(["text", "image_generation", "image_to_image"])
+    .optional()
+    .default("text"),
 });
 
 // GET - Get all messages for a ticket
@@ -18,10 +27,7 @@ export async function GET(
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { ticketId } = await params;
@@ -37,30 +43,33 @@ export async function GET(
     });
 
     if (!ticket) {
-      return NextResponse.json(
-        { error: "تیکت یافت نشد" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "تیکت یافت نشد" }, { status: 404 });
     }
 
     // Return messages (if empty, return initial message as first message)
-    const messages = ticket.messages && ticket.messages.length > 0
-      ? ticket.messages
-      : [{
-          content: ticket.message,
-          sender: "user" as const,
-          senderId: ticket.userId,
-          createdAt: ticket.createdAt,
-        }];
+    const messages =
+      ticket.messages && ticket.messages.length > 0
+        ? ticket.messages
+        : [
+            {
+              content: ticket.message,
+              sender: "user" as const,
+              senderId: ticket.userId,
+              createdAt: ticket.createdAt,
+            },
+          ];
 
     return NextResponse.json(
       {
         success: true,
-        messages: messages.map((msg) => ({
+        messages: messages.map((msg: any) => ({
           content: msg.content,
           sender: msg.sender,
           senderId: msg.senderId,
           senderMobile: msg.senderMobile,
+          images: msg.images || [],
+          generatedImages: msg.generatedImages || [],
+          messageType: msg.messageType || "text",
           createdAt: msg.createdAt,
         })),
         ticket: {
@@ -90,16 +99,13 @@ export async function POST(
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { ticketId } = await params;
     const body = await request.json();
 
-    // Validate input
+    // Validate input - allow empty content if images are provided
     const validation = messageSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(
@@ -108,7 +114,19 @@ export async function POST(
       );
     }
 
-    const { content } = validation.data;
+    const { content, images, generatedImages, messageType } = validation.data;
+
+    // Ensure at least content or images are provided
+    if (
+      !content?.trim() &&
+      (!images || images.length === 0) &&
+      (!generatedImages || generatedImages.length === 0)
+    ) {
+      return NextResponse.json(
+        { error: "پیام یا تصویر باید وارد شود" },
+        { status: 400 }
+      );
+    }
 
     // Connect to database
     await connectDB();
@@ -121,10 +139,7 @@ export async function POST(
     });
 
     if (!ticket) {
-      return NextResponse.json(
-        { error: "تیکت یافت نشد" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "تیکت یافت نشد" }, { status: 404 });
     }
 
     if (ticket.status === "closed") {
@@ -136,24 +151,32 @@ export async function POST(
 
     // Initialize messages array if empty (migrate initial message)
     if (!ticket.messages || ticket.messages.length === 0) {
-      ticket.messages = [{
-        content: ticket.message,
-        sender: "user" as const,
-        senderId: ticket.userId,
-        createdAt: ticket.createdAt,
-      }];
+      ticket.messages = [
+        {
+          content: ticket.message,
+          sender: "user" as const,
+          senderId: ticket.userId,
+          createdAt: ticket.createdAt,
+        },
+      ];
     }
 
     // Add new message
-    const newMessage = {
-      content,
-      sender: "user" as const,
+    const newMessage: any = {
+      content: content || "",
+      sender:
+        generatedImages && generatedImages.length > 0
+          ? ("assistant" as const)
+          : ("user" as const),
       senderId: session.user.id,
+      images: images || [],
+      generatedImages: generatedImages || [],
+      messageType: messageType || "text",
       createdAt: new Date(),
     };
 
     ticket.messages.push(newMessage);
-    
+
     // Update status if it was pending
     if (ticket.status === "pending") {
       ticket.status = "responded"; // User responded, waiting for admin
@@ -169,6 +192,9 @@ export async function POST(
           content: newMessage.content,
           sender: newMessage.sender,
           senderId: newMessage.senderId,
+          images: newMessage.images,
+          generatedImages: newMessage.generatedImages,
+          messageType: newMessage.messageType,
           createdAt: newMessage.createdAt,
         },
       },
@@ -176,14 +202,6 @@ export async function POST(
     );
   } catch (error) {
     console.error("Error sending message:", error);
-    return NextResponse.json(
-      { error: "خطا در ارسال پیام" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "خطا در ارسال پیام" }, { status: 500 });
   }
 }
-
-
-
-
-

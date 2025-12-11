@@ -2,9 +2,12 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IMessage {
   content: string;
-  sender: "user" | "admin";
+  sender: "user" | "admin" | "assistant";
   senderId?: string; // User ID for user messages
   senderMobile?: string; // Admin mobile number for admin messages
+  images?: string[]; // Array of image URLs
+  generatedImages?: string[]; // Array of generated image URLs (for AI responses)
+  messageType?: "text" | "image_generation" | "image_to_image"; // Type of message
   createdAt: Date;
 }
 
@@ -91,7 +94,7 @@ const ContactSchema: Schema = new Schema(
           },
           sender: {
             type: String,
-            enum: ["user", "admin"],
+            enum: ["user", "admin", "assistant"],
             required: true,
           },
           senderId: {
@@ -101,6 +104,19 @@ const ContactSchema: Schema = new Schema(
           senderMobile: {
             type: String,
             trim: true,
+          },
+          images: {
+            type: [String],
+            default: [],
+          },
+          generatedImages: {
+            type: [String],
+            default: [],
+          },
+          messageType: {
+            type: String,
+            enum: ["text", "image_generation", "image_to_image"],
+            default: "text",
           },
           createdAt: {
             type: Date,
@@ -127,4 +143,3 @@ const Contact: Model<IContact> =
   mongoose.models.Contact || mongoose.model<IContact>("Contact", ContactSchema);
 
 export default Contact;
-
