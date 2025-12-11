@@ -8,7 +8,10 @@ import { z } from "zod";
 const ADMIN_MOBILE_NUMBER = "09306613683";
 
 const messageSchema = z.object({
-  content: z.string().min(1, "پیام نمی‌تواند خالی باشد").max(5000, "پیام نمی‌تواند بیشتر از ۵۰۰۰ کاراکتر باشد"),
+  content: z
+    .string()
+    .min(1, "پیام نمی‌تواند خالی باشد")
+    .max(5000, "پیام نمی‌تواند بیشتر از ۵۰۰۰ کاراکتر باشد"),
 });
 
 // GET - Get all messages for a ticket (admin)
@@ -20,14 +23,13 @@ export async function GET(
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.mobileNumber) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is admin
-    const normalizedMobile = session.user.mobileNumber.trim().replace(/\s+/g, "");
+    const normalizedMobile = session.user.mobileNumber
+      .trim()
+      .replace(/\s+/g, "");
     if (normalizedMobile !== ADMIN_MOBILE_NUMBER) {
       return NextResponse.json(
         { error: "Forbidden - Admin access required" },
@@ -44,21 +46,21 @@ export async function GET(
     const ticket = await Contact.findById(ticketId);
 
     if (!ticket) {
-      return NextResponse.json(
-        { error: "تیکت یافت نشد" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "تیکت یافت نشد" }, { status: 404 });
     }
 
     // Return messages (if empty, return initial message as first message)
-    const messages = ticket.messages && ticket.messages.length > 0
-      ? ticket.messages
-      : [{
-          content: ticket.message,
-          sender: (ticket.userId ? "user" : "user") as const,
-          senderId: ticket.userId,
-          createdAt: ticket.createdAt,
-        }];
+    const messages =
+      ticket.messages && ticket.messages.length > 0
+        ? ticket.messages
+        : [
+            {
+              content: ticket.message,
+              sender: "user" as const,
+              senderId: ticket.userId,
+              createdAt: ticket.createdAt,
+            },
+          ];
 
     return NextResponse.json(
       {
@@ -101,14 +103,13 @@ export async function POST(
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.mobileNumber) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is admin
-    const normalizedMobile = session.user.mobileNumber.trim().replace(/\s+/g, "");
+    const normalizedMobile = session.user.mobileNumber
+      .trim()
+      .replace(/\s+/g, "");
     if (normalizedMobile !== ADMIN_MOBILE_NUMBER) {
       return NextResponse.json(
         { error: "Forbidden - Admin access required" },
@@ -137,10 +138,7 @@ export async function POST(
     const ticket = await Contact.findById(ticketId);
 
     if (!ticket) {
-      return NextResponse.json(
-        { error: "تیکت یافت نشد" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "تیکت یافت نشد" }, { status: 404 });
     }
 
     if (ticket.status === "closed") {
@@ -152,13 +150,15 @@ export async function POST(
 
     // Initialize messages array if empty (migrate initial message and response)
     if (!ticket.messages || ticket.messages.length === 0) {
-      ticket.messages = [{
-        content: ticket.message,
-        sender: ticket.userId ? "user" as const : "user" as const,
-        senderId: ticket.userId,
-        createdAt: ticket.createdAt,
-      }];
-      
+      ticket.messages = [
+        {
+          content: ticket.message,
+          sender: "user" as const,
+          senderId: ticket.userId,
+          createdAt: ticket.createdAt,
+        },
+      ];
+
       // Add existing response if it exists
       if (ticket.response) {
         ticket.messages.push({
@@ -179,12 +179,12 @@ export async function POST(
     };
 
     ticket.messages.push(newMessage);
-    
+
     // Update legacy fields for backward compatibility
     ticket.response = content;
     ticket.respondedAt = new Date();
     ticket.respondedBy = normalizedMobile;
-    
+
     // Update status
     ticket.status = "responded";
 
@@ -205,15 +205,6 @@ export async function POST(
     );
   } catch (error) {
     console.error("Error sending message:", error);
-    return NextResponse.json(
-      { error: "خطا در ارسال پیام" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "خطا در ارسال پیام" }, { status: 500 });
   }
 }
-
-
-
-
-
-
