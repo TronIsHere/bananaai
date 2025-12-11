@@ -66,6 +66,15 @@ export default function TextToImagePage() {
   const canSelectImageSize =
     user.currentPlan === "creator" || user.currentPlan === "studio";
 
+  // Set prompt from URL parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlPrompt = params.get("prompt");
+    if (urlPrompt) {
+      setPrompt(decodeURIComponent(urlPrompt));
+    }
+  }, []);
+
   // Cleanup polling on unmount
   useEffect(() => {
     return () => {

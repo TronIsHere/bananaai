@@ -125,6 +125,15 @@ export default function ImageToImagePage() {
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
+  // Set prompt from URL parameter on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlPrompt = params.get("prompt");
+    if (urlPrompt) {
+      setPrompt(decodeURIComponent(urlPrompt));
+    }
+  }, []);
+
   // Cleanup polling on unmount
   useEffect(() => {
     return () => {
