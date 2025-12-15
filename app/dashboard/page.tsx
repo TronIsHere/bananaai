@@ -54,6 +54,84 @@ function UseCaseCard({
   );
 }
 
+interface StyleCardProps {
+  href: string;
+  title: string;
+  beforeImage?: string;
+  afterImage?: string;
+  gradient?: string;
+}
+
+function StyleCard({
+  href,
+  title,
+  beforeImage,
+  afterImage,
+  gradient = "from-yellow-400/20 via-orange-400/20 to-pink-500/20",
+}: StyleCardProps) {
+  // Determine if we have both images or just one
+  const hasBothImages = beforeImage && afterImage;
+  const singleImage = beforeImage || afterImage;
+
+  return (
+    <Link href={href}>
+      <div className="group relative overflow-hidden rounded-xl border border-white/10 transition-all active:scale-[0.98] hover:border-yellow-400/30 hover:shadow-[0_0_30px_rgba(251,191,36,0.2)] md:rounded-2xl">
+        {/* Images Container */}
+        <div className="absolute inset-0 flex flex-col">
+          {hasBothImages ? (
+            <>
+              {/* Before Image - Top Half */}
+              <div className="w-full h-1/2 overflow-hidden">
+                <div
+                  className="w-full h-full bg-cover bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-110"
+                  style={{ backgroundImage: `url(${beforeImage})` }}
+                />
+              </div>
+              {/* After Image - Bottom Half */}
+              <div className="w-full h-1/2 overflow-hidden">
+                <div
+                  className="w-full h-full bg-cover bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-110"
+                  style={{ backgroundImage: `url(${afterImage})` }}
+                />
+              </div>
+            </>
+          ) : singleImage ? (
+            /* Single Image - Full Height */
+            <div className="w-full h-full overflow-hidden">
+              <div
+                className="w-full h-full bg-cover bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-110"
+                style={{ backgroundImage: `url(${singleImage})` }}
+              />
+            </div>
+          ) : (
+            /* No Images - Gradient Full Height */
+            <div className={`w-full h-full bg-gradient-to-br ${gradient}`} />
+          )}
+        </div>
+        {/* Bottom Shadow Gradient for text readability */}
+        <div className="absolute bottom-0 left-0 right-0 h-[30%] bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none" />
+        {/* Content */}
+        <div className="relative flex h-full min-h-[400px] flex-col justify-end p-6 md:min-h-[480px] lg:min-h-[520px] md:p-8">
+          <div className="mt-auto">
+            <h3 className="mb-3 text-2xl font-bold text-white drop-shadow-lg md:text-3xl">
+              {title}
+            </h3>
+            <div className="flex justify-end ">
+              <Button
+                variant="outline"
+                className="border-white/20 bg-white/10 text-white backdrop-blur-sm transition-all hover:border-yellow-400/50 hover:bg-yellow-400/20 hover:text-yellow-400 w-auto"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                مثل این بساز
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export default function DashboardPage() {
   return (
     <div className="max-w-7xl">
@@ -127,59 +205,59 @@ export default function DashboardPage() {
           ویژگی‌های پیشرفته
         </h2>
         <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <UseCaseCard
-            href="/dashboard/image-to-image?prompt=تغییر+پس‌زمینه+،+حذف+پس‌زمینه+قدیمی+و+جایگزینی+با+پس‌زمینه+جدید+و+زیبا"
-            icon={<Layers className="h-6 w-6 text-indigo-400 md:h-8 md:w-8" />}
+          <StyleCard
+            href="/dashboard/text-to-image?prompt=تغییر+پس‌زمینه+تصویر+،+حذف+پس‌زمینه+قدیمی+و+جایگزینی+با+پس‌زمینه+جدید+و+زیبا+در+محیط+دشت+طبیعی+با+نمای+باشکوه+کوه+دماوند+در+پس‌زمینه+،+نور+طبیعی+واقع‌گرایانه+،+کیفیت+بالا+،+جزئیات+دقیق+،+فضای+سینمایی+و+چشم‌نواز"
             title="تغییر پس‌زمینه"
-            description="تغییر یا حذف پس‌زمینه تصاویر"
+            beforeImage="/img/styles/background-change-before.jpg"
+            afterImage="/img/styles/background-change-after.png"
             gradient="from-indigo-400/20 via-violet-400/20 to-purple-500/20"
           />
-          <UseCaseCard
-            href="/dashboard/text-to-image?prompt=تصویر+محصول+حرفه‌ای+،+نور+استودیو+،+پس‌زمینه+ساده+،+کیفیت+بالا+،+نمایش+بهترین+زاویه"
-            icon={<Image className="h-6 w-6 text-emerald-400 md:h-8 md:w-8" />}
+          <StyleCard
+            href="/dashboard/text-to-image?prompt=A+professional+studio+product+shot+of+the+product+suspended+mid-air%2C+perfectly+centered%2C+with+elegant+flowing+luxury+silk+fabric+wrapping+and+floating+around+it%2E"
             title="تصاویر محصول"
-            description="ایجاد تصاویر حرفه‌ای برای محصولات"
+            beforeImage="/img/styles/product-images-before.jpg"
+            afterImage="/img/styles/product-images-after.png"
             gradient="from-emerald-400/20 via-green-400/20 to-lime-500/20"
           />
-          <UseCaseCard
+          <StyleCard
             href="/dashboard/image-to-image?prompt=بازسازی+و+ترمیم+تصویر+،+بهبود+کیفیت+،+حذف+نویز+و+خطوط+،+افزایش+وضوح+و+جزئیات"
-            icon={<Sparkles className="h-6 w-6 text-rose-400 md:h-8 md:w-8" />}
             title="بازسازی تصویر"
-            description="بازسازی و ترمیم تصاویر قدیمی یا آسیب‌دیده"
+            beforeImage="/img/styles/image-restoration-before.jpg"
+            afterImage="/img/styles/image-restoration-after.png"
             gradient="from-rose-400/20 via-pink-400/20 to-fuchsia-500/20"
+          />
+          <StyleCard
+            href="/dashboard/text-to-image?prompt=A+hyper-realistic+black-and-white+cinematic+street+portrait+featuring+the+reference+man+walking+through+a+crowded+urban+street%2E+The+camera+captures+him+at+medium+distance%2C+sharply+focused+on+his+face+while+the+surrounding+crowd+is+motion-blurred%2E+He+has+a+strong+jawline%2C+short+styled+hair%2C+and+an+intense%2C+serious+expression%2E+He+wears+a+dark+tailored+coat+over+a+fitted+shirt%2C+giving+him+a+modern%2C+masculine%2C+high-fashion+look%2E+The+background+is+a+busy+city+street+with+people+passing+by%2C+storefront+reflections%2C+and+soft+natural+daylight+bouncing+between+buildings%2E+Depth+of+field+is+shallow%2C+isolating+the+subject+dramatically+from+the+environment%2E+Lighting+is+soft%2C+diffused%2C+and+realistic%2C+emphasizing+facial+structure+and+texture%2E+The+mood+is+stylish%2C+moody%2C+and+cinematic%2C+reminiscent+of+luxury+fashion+editorials%2E+Shot+on+a+high-end+telephoto+lens%2C+85mm+to+135mm%2C+f%2F1%2E8+to+f%2F2%2E8%2C+capturing+crisp+detail+on+the+subject+with+creamy+blurred+surroundings%2E+Ultra-sharp%2C+high+contrast%2C+rich+monochrome+tones%2C+premium+magazine-style+aesthetic%2E"
+            title="تغییر استایل"
+            beforeImage="/img/styles/style-change.png"
+            gradient="from-yellow-400/20 via-amber-400/20 to-orange-500/20"
           />
         </div>
       </div>
 
       {/* Creative Tools Section */}
-      <div>
+      {/* <div>
         <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
           ابزارهای خلاقانه
         </h2>
         <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <UseCaseCard
+          <StyleCard
             href="/dashboard/text-to-image?prompt=آثار+هنری+و+طراحی+خلاقانه+،+سبک+هنری+منحصر+به+فرد+،+رنگ‌های+زنده+و+زیبا"
-            icon={<Palette className="h-6 w-6 text-green-400 md:h-8 md:w-8" />}
             title="هنر و طراحی"
-            description="ایجاد آثار هنری و طراحی‌های خلاقانه"
+            beforeImage="/img/styles/art-design-before.jpg"
+            afterImage="/img/styles/art-design-after.jpg"
             gradient="from-green-400/20 via-emerald-400/20 to-teal-500/20"
           />
-          <UseCaseCard
+          <StyleCard
             href="/dashboard/image-to-image?prompt=بهبود+کیفیت+تصویر+،+افزایش+وضوح+،+حذف+نویز+،+بهبود+رنگ+و+روشنایی"
-            icon={<Wand2 className="h-6 w-6 text-cyan-400 md:h-8 md:w-8" />}
             title="بهبود تصویر"
-            description="بهبود کیفیت و وضوح تصاویر موجود"
+            beforeImage="/img/styles/image-enhancement-before.jpg"
+            afterImage="/img/styles/image-enhancement-after.png"
             gradient="from-cyan-400/20 via-blue-400/20 to-indigo-500/20"
           />
-          <UseCaseCard
-            href="/dashboard/image-to-image?prompt=تغییر+استایل+تصویر+،+اعمال+فیلتر+هنری+،+تغییر+رنگ+و+بافت+،+سبک+خلاقانه"
-            icon={<Sparkle className="h-6 w-6 text-yellow-400 md:h-8 md:w-8" />}
-            title="تغییر استایل"
-            description="تغییر استایل و ظاهر تصاویر"
-            gradient="from-yellow-400/20 via-amber-400/20 to-orange-500/20"
-          />
+
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

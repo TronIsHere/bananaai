@@ -13,12 +13,8 @@ import {
   ShieldCheck,
   Image as ImageIcon,
   X,
-  Upload,
   Loader2,
   Sparkles,
-  Download,
-  Copy,
-  Check,
   Wand2,
 } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
@@ -59,12 +55,10 @@ export default function TicketDetailPage() {
   const [attachedImages, setAttachedImages] = useState<ImageFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isPro, setIsPro] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -112,31 +106,6 @@ export default function TicketDetailPage() {
     fetchTicket();
   }, [fetchTicket]);
 
-  // Poll for new messages every 30 seconds
-  useEffect(() => {
-    if (!ticketId || isLoading) return;
-
-    const interval = setInterval(() => {
-      const fetchSilent = async () => {
-        try {
-          const response = await fetch(
-            `/api/support/tickets/${ticketId}/messages`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            setMessages(data.messages || []);
-            setTicket(data.ticket);
-          }
-        } catch (e) {
-          console.error("Silent fetch error", e);
-        }
-      };
-      fetchSilent();
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [ticketId, isLoading]);
-
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     files.forEach((file) => {
@@ -168,11 +137,7 @@ export default function TicketDetailPage() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      (!newMessage.trim() && attachedImages.length === 0) ||
-      isSending ||
-      isGenerating
-    )
+    if ((!newMessage.trim() && attachedImages.length === 0) || isSending)
       return;
 
     setIsSending(true);
@@ -204,16 +169,6 @@ export default function TicketDetailPage() {
         }
       }
 
-      // Determine message type
-      const hasImages = uploadedImageUrls.length > 0;
-      const hasPrompt = newMessage.trim().length > 0;
-      const messageType =
-        hasImages && hasPrompt
-          ? "image_to_image"
-          : hasImages
-          ? "text"
-          : "image_generation";
-
       // Send message with images
       const response = await fetch(
         `/api/support/tickets/${ticketId}/messages`,
@@ -223,9 +178,11 @@ export default function TicketDetailPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            content: newMessage.trim() || (hasImages ? "تصویر آپلود شده" : ""),
+            content:
+              newMessage.trim() ||
+              (uploadedImageUrls.length > 0 ? "تصویر آپلود شده" : ""),
             images: uploadedImageUrls,
-            messageType: messageType,
+            messageType: "text",
           }),
         }
       );
@@ -238,30 +195,14 @@ export default function TicketDetailPage() {
         return;
       }
 
-      // Add user message to UI immediately
-      const userMessage: Message = {
-        content: newMessage.trim() || (hasImages ? "تصویر آپلود شده" : ""),
-        sender: "user",
-        senderId: user?.id || undefined,
-        images: uploadedImageUrls,
-        messageType: messageType as any,
-        createdAt: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, userMessage]);
+      // Refresh messages to get latest from server
+      await fetchTicket();
+
       setNewMessage("");
       setAttachedImages([]);
 
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
-      }
-
-      // If this is an image generation request, generate the image
-      if (
-        messageType === "image_generation" ||
-        messageType === "image_to_image"
-      ) {
-        setIsGenerating(true);
-        await generateImage(newMessage.trim(), uploadedImageUrls, messageType);
       }
     } catch (error: any) {
       console.error("Error sending message:", error);
@@ -269,145 +210,6 @@ export default function TicketDetailPage() {
     } finally {
       setIsSending(false);
     }
-  };
-
-  const generateImage = async (
-    prompt: string,
-    inputImageUrls: string[] = [],
-    messageType: string
-  ) => {
-    try {
-      const isImageToImage =
-        messageType === "image_to_image" && inputImageUrls.length > 0;
-      const endpoint = isImageToImage
-        ? "/api/generate/image-to-image"
-        : "/api/generate/text-to-image";
-
-      const requestBody = isImageToImage
-        ? {
-            prompt: prompt || "تصویر آپلود شده",
-            imageUrls: inputImageUrls,
-            numImages: 1,
-            image_size: "16:9",
-            isPro: isPro,
-          }
-        : {
-            prompt: prompt,
-            numImages: 1,
-            image_size: "16:9",
-            isPro: isPro,
-          };
-
-      // Step 1: Submit generation request
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          data.message || data.error || "Failed to generate image"
-        );
-      }
-
-      if (!data.success || !data.taskId) {
-        throw new Error(data.message || "خطا در ثبت درخواست تولید تصویر");
-      }
-
-      const taskId = data.taskId;
-
-      // Step 2: Poll for task completion
-      const pollInterval = 1500;
-      const maxAttempts = 80;
-      let attempts = 0;
-
-      const pollTaskStatus = async (): Promise<void> => {
-        try {
-          attempts++;
-
-          const statusResponse = await fetch(
-            `/api/generate/task-status/${taskId}`
-          );
-          const statusData = await statusResponse.json();
-
-          if (!statusResponse.ok) {
-            throw new Error(
-              statusData.message || statusData.error || "خطا در بررسی وضعیت"
-            );
-          }
-
-          if (statusData.status === "completed") {
-            if (statusData.images && statusData.images.length > 0) {
-              // Add assistant message with generated images
-              const assistantMessage: Message = {
-                content: "تصویر شما آماده است!",
-                sender: "assistant",
-                generatedImages: statusData.images,
-                messageType: messageType as any,
-                createdAt: new Date().toISOString(),
-              };
-
-              setMessages((prev) => [...prev, assistantMessage]);
-
-              // Update the last user message in the backend
-              await fetch(`/api/support/tickets/${ticketId}/messages`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  content: prompt || "تصویر آپلود شده",
-                  images: inputImageUrls,
-                  messageType: messageType,
-                }),
-              });
-            } else {
-              throw new Error("هیچ تصویری تولید نشد");
-            }
-            setIsGenerating(false);
-          } else if (statusData.status === "failed") {
-            setIsGenerating(false);
-            throw new Error(statusData.error || "تولید تصویر با خطا مواجه شد");
-          } else if (
-            statusData.status === "pending" ||
-            statusData.status === "processing"
-          ) {
-            if (attempts >= maxAttempts) {
-              setIsGenerating(false);
-              throw new Error(
-                "زمان انتظار به پایان رسید. لطفاً دوباره تلاش کنید."
-              );
-            } else {
-              setTimeout(pollTaskStatus, pollInterval);
-            }
-          }
-        } catch (err: any) {
-          console.error("Error polling task status:", err);
-          setIsGenerating(false);
-          setError(err.message || "خطا در بررسی وضعیت تولید تصویر");
-        }
-      };
-
-      pollTaskStatus();
-    } catch (err: any) {
-      console.error("Error generating image:", err);
-      setError(err.message || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.");
-      setIsGenerating(false);
-    }
-  };
-
-  const handleDownload = (imageUrl: string) => {
-    const link = document.createElement("a");
-    link.href = imageUrl;
-    link.download = `bananaai-${Date.now()}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const getStatusBadge = (status: string) => {
@@ -484,9 +286,9 @@ export default function TicketDetailPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] md:h-[calc(100vh-140px)] max-w-7xl mx-auto overflow-hidden rounded-xl sm:rounded-2xl border border-white/10 bg-gradient-to-br from-[#0f172a] to-[#1e293b] shadow-2xl backdrop-blur-sm">
+    <div className="flex flex-col h-[calc(100vh-80px)] md:h-[calc(100vh-140px)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-white/10 to-white/5 p-3 sm:p-4 md:p-6 backdrop-blur-sm z-10">
+      <div className="flex items-center justify-between border-b border-white/5 p-3 sm:p-4 md:p-6 z-10">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
           <Button
             onClick={() => {
@@ -517,7 +319,7 @@ export default function TicketDetailPage() {
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 bg-gradient-to-b from-[#0f172a] to-[#1e293b]">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-500 px-4">
             <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center mb-4 shadow-lg">
@@ -527,7 +329,7 @@ export default function TicketDetailPage() {
               پیامی وجود ندارد
             </p>
             <p className="text-xs sm:text-sm mt-2 opacity-70 text-center">
-              اولین پیام خود را ارسال کنید یا تصویری تولید کنید
+              اولین پیام خود را ارسال کنید
             </p>
           </div>
         ) : (
@@ -649,45 +451,6 @@ export default function TicketDetailPage() {
                       </div>
                     )}
 
-                    {/* Generated Images */}
-                    {message.generatedImages &&
-                      message.generatedImages.length > 0 && (
-                        <div className="space-y-2 mb-2">
-                          {message.generatedImages.map((imgUrl, imgIndex) => (
-                            <div
-                              key={imgIndex}
-                              className="relative group rounded-lg overflow-hidden border-2 border-purple-400/30"
-                            >
-                              <img
-                                src={imgUrl}
-                                alt={`Generated ${imgIndex + 1}`}
-                                className="w-full h-auto max-h-96 object-contain bg-slate-900/50"
-                              />
-                              <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  size="icon"
-                                  variant="secondary"
-                                  className="h-8 w-8 bg-white/90 hover:bg-white"
-                                  onClick={() => handleDownload(imgUrl)}
-                                >
-                                  <Download className="h-4 w-4 text-slate-900" />
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                    {/* Loading indicator for generating images */}
-                    {isGenerating &&
-                      index === messages.length - 1 &&
-                      isUser && (
-                        <div className="flex items-center gap-2 mt-2 text-purple-200 text-xs">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span>در حال تولید تصویر...</span>
-                        </div>
-                      )}
-
                     <div
                       className={`flex items-center gap-1 sm:gap-1.5 mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] ${
                         isUser
@@ -728,35 +491,9 @@ export default function TicketDetailPage() {
       )}
 
       {/* Message Input */}
-      <div className="p-3 sm:p-4 md:p-6 bg-gradient-to-r from-white/10 to-white/5 border-t border-white/10 backdrop-blur-sm">
+      <div className="p-3 sm:p-4 md:p-6 border-t border-white/5">
         {ticket?.status !== "closed" ? (
           <form onSubmit={handleSendMessage} className="space-y-3">
-            {/* Model Selection */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setIsPro(false)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  !isPro
-                    ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
-                    : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
-                }`}
-              >
-                استاندارد
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsPro(true)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  isPro
-                    ? "bg-yellow-400/20 text-yellow-400 border border-yellow-400/30"
-                    : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
-                }`}
-              >
-                PRO
-              </button>
-            </div>
-
             {/* Attached Images Preview */}
             {attachedImages.length > 0 && (
               <div className="flex gap-2 overflow-x-auto pb-2">
@@ -806,10 +543,10 @@ export default function TicketDetailPage() {
                   ref={textareaRef}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  placeholder="پیام خود را بنویسید یا تصویری تولید کنید..."
+                  placeholder="پیام خود را بنویسید..."
                   rows={1}
                   className="w-full bg-transparent px-3 sm:px-4 py-2.5 sm:py-3.5 text-xs sm:text-sm text-white placeholder:text-slate-400 focus:outline-none resize-none max-h-32 min-h-[44px] sm:min-h-[52px]"
-                  disabled={isSending || isGenerating}
+                  disabled={isSending}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -823,13 +560,12 @@ export default function TicketDetailPage() {
                 type="submit"
                 disabled={
                   (!newMessage.trim() && attachedImages.length === 0) ||
-                  isSending ||
-                  isGenerating
+                  isSending
                 }
                 size="icon"
                 className="h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] rounded-xl sm:rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 text-white shadow-xl shadow-indigo-500/30 hover:from-indigo-500 hover:to-indigo-600 hover:scale-105 transition-all disabled:opacity-50 disabled:scale-100 disabled:shadow-none disabled:cursor-not-allowed shrink-0"
               >
-                {isSending || isGenerating ? (
+                {isSending ? (
                   <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                 ) : (
                   <Send className="h-4 w-4 sm:h-5 sm:w-5 ml-0.5" />
