@@ -9,19 +9,22 @@ const CREDITS_PER_GENERATION = 4;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Log the callback payload for debugging (remove in production if sensitive)
     console.log("NanoBanana callback received:", JSON.stringify(body, null, 2));
-    
+
     const { code, msg, data } = body as NanoBananaCallbackPayload;
-    
+
     // Extract taskId from data.taskId (according to callback docs)
     const taskId = data?.taskId;
 
     if (!taskId) {
       console.error("Callback missing taskId in data. Payload:", body);
       return NextResponse.json(
-        { error: "taskId is required in data" },
+        {
+          error: "شناسه وظیفه در داده‌ها الزامی است",
+          message: "شناسه وظیفه در داده‌ها الزامی است",
+        },
         { status: 400 }
       );
     }
@@ -34,7 +37,7 @@ export async function POST(request: NextRequest) {
     if (!task) {
       console.error(`Task not found for taskId: ${taskId}`);
       return NextResponse.json(
-        { error: "Task not found" },
+        { error: "وظیفه یافت نشد", message: "وظیفه یافت نشد" },
         { status: 404 }
       );
     }
@@ -52,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (code === 200 && data?.info?.resultImageUrl) {
       // Task succeeded - extract image URL from data.info.resultImageUrl
       const resultImageUrl = data.info.resultImageUrl;
-      
+
       if (resultImageUrl && resultImageUrl.trim().length > 0) {
         // Task succeeded
         task.status = "completed";
@@ -63,7 +66,7 @@ export async function POST(request: NextRequest) {
         const user = await User.findById(task.userId);
         if (user && !task.creditsDeducted) {
           user.credits = Math.max(0, user.credits - task.creditsReserved);
-          
+
           // Save generated image to history (skip for free plan)
           if (user.currentPlan !== "free") {
             const generatedImage = {
@@ -86,7 +89,8 @@ export async function POST(request: NextRequest) {
           }
 
           // Increment images generated counter
-          user.imagesGeneratedThisMonth = (user.imagesGeneratedThisMonth || 0) + 1;
+          user.imagesGeneratedThisMonth =
+            (user.imagesGeneratedThisMonth || 0) + 1;
 
           await user.save();
           task.creditsDeducted = true;
@@ -94,27 +98,38 @@ export async function POST(request: NextRequest) {
       } else {
         // Success code but no image URL
         task.status = "failed";
-        task.error = "No image URL returned from API";
+        task.error = "تصویری دریافت نشد لطفا دوباره تلاش کنید";
         task.completedAt = new Date();
         // Don't deduct credits if no image was returned
       }
     } else {
       // Task failed (400, 500, 501, or 200 but no image)
       task.status = "failed";
-      
+
       // Set appropriate error message based on code
+      let errorMsg = "";
       if (code === 400) {
-        task.error = msg || "Content policy violation - your prompt was flagged";
+        errorMsg = msg || "نقض سیاست محتوا - متن شما رد شده است";
       } else if (code === 500) {
-        task.error = msg || "Internal error - please try again later";
+        errorMsg = msg || "خطای داخلی - لطفاً بعداً دوباره تلاش کنید";
       } else if (code === 501) {
-        task.error = msg || "Image generation task failed";
+        errorMsg = msg || "تولید تصویر با خطا مواجه شد";
       } else if (code === 200) {
-        task.error = msg || "No image URL in response";
+        errorMsg = msg || "هیچ آدرس تصویری در پاسخ وجود ندارد";
       } else {
-        task.error = msg || "Unknown error";
+        errorMsg = msg || "خطای نامشخص";
       }
-      
+
+      // Check for pattern matching error and replace with user-friendly message
+      if (
+        errorMsg.toLowerCase().includes("string") &&
+        (errorMsg.toLowerCase().includes("pattern") ||
+          errorMsg.toLowerCase().includes("matched"))
+      ) {
+        errorMsg = "مشکلی پیش امده لطفا دوباره امتحان کنید";
+      }
+
+      task.error = errorMsg;
       task.completedAt = new Date();
 
       // Don't deduct credits for failed tasks
@@ -130,14 +145,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error("Error processing callback:", error);
-    
+
     return NextResponse.json(
-      { 
-        error: "Internal server error",
-        message: error.message || "Failed to process callback"
+      {
+        error: "خطای سرور",
+        message: error.message || "خطا در پردازش بازگشت",
       },
       { status: 500 }
     );
   }
 }
-

@@ -16,7 +16,7 @@ export async function GET(
     if (!session?.user?.id) {
       return NextResponse.json(
         {
-          error: "Unauthorized",
+          error: "عدم دسترسی",
           message: "لطفاً ابتدا وارد حساب کاربری خود شوید",
         },
         { status: 401 }
@@ -63,7 +63,7 @@ export async function GET(
 
     if (!task) {
       return NextResponse.json(
-        { error: "Task not found", message: "وظیفه یافت نشد" },
+        { error: "وظیفه یافت نشد", message: "وظیفه یافت نشد" },
         { status: 404 }
       );
     }
@@ -123,17 +123,35 @@ export async function GET(
           await task.save();
         } else if (statusData?.successFlag === 2) {
           task.status = "failed";
-          task.error =
+          let errorMsg =
             statusData.errorMessage ||
-            "Create task failed (reported by NanoBanana)";
+            "ایجاد وظیفه با خطا مواجه شد (گزارش شده توسط NanoBanana)";
+          // Check for pattern matching error and replace with user-friendly message
+          if (
+            errorMsg.toLowerCase().includes("string") &&
+            (errorMsg.toLowerCase().includes("pattern") ||
+              errorMsg.toLowerCase().includes("matched"))
+          ) {
+            errorMsg = "مشکلی پیش امده لطفا دوباره امتحان کنید";
+          }
+          task.error = errorMsg;
           task.completedAt = new Date();
           task.creditsDeducted = false; // Don't deduct credits for failed tasks
           await task.save();
         } else if (statusData?.successFlag === 3) {
           task.status = "failed";
-          task.error =
+          let errorMsg =
             statusData.errorMessage ||
-            "Generation failed (reported by NanoBanana)";
+            "تولید تصویر با خطا مواجه شد (گزارش شده توسط NanoBanana)";
+          // Check for pattern matching error and replace with user-friendly message
+          if (
+            errorMsg.toLowerCase().includes("string") &&
+            (errorMsg.toLowerCase().includes("pattern") ||
+              errorMsg.toLowerCase().includes("matched"))
+          ) {
+            errorMsg = "مشکلی پیش امده لطفا دوباره امتحان کنید";
+          }
+          task.error = errorMsg;
           task.completedAt = new Date();
           task.creditsDeducted = false; // Don't deduct credits for failed tasks
           await task.save();
@@ -163,8 +181,8 @@ export async function GET(
 
     return NextResponse.json(
       {
-        error: "Internal server error",
-        message: error.message || "Failed to fetch task status",
+        error: "خطای سرور",
+        message: error.message || "خطا در دریافت وضعیت وظیفه",
       },
       { status: 500 }
     );

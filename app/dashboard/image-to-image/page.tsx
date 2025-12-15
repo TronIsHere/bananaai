@@ -250,7 +250,7 @@ export default function ImageToImagePage() {
 
         if (!uploadResponse.ok) {
           throw new Error(
-            uploadData.message || uploadData.error || "Failed to upload image"
+            uploadData.message || uploadData.error || "خطا در آپلود تصویر"
           );
         }
 
@@ -292,9 +292,16 @@ export default function ImageToImagePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || data.error || "Failed to generate image"
-        );
+        let errorMessage = data.message || data.error || "خطا در تولید تصویر";
+        // Check for pattern matching error and replace with user-friendly message
+        if (
+          errorMessage.toLowerCase().includes("string") &&
+          (errorMessage.toLowerCase().includes("pattern") ||
+            errorMessage.toLowerCase().includes("matched"))
+        ) {
+          errorMessage = "مشکلی پیش امده لطفا دوباره امتحان کنید";
+        }
+        throw new Error(errorMessage);
       }
 
       if (!data.success || !data.taskId) {
@@ -369,7 +376,17 @@ export default function ImageToImagePage() {
               clearTimeout(pollingTimeoutRef.current);
               pollingTimeoutRef.current = null;
             }
-            throw new Error(statusData.error || "تولید تصویر با خطا مواجه شد");
+            let errorMessage =
+              statusData.error || "تولید تصویر با خطا مواجه شد";
+            // Check for pattern matching error and replace with user-friendly message
+            if (
+              errorMessage.toLowerCase().includes("string") &&
+              (errorMessage.toLowerCase().includes("pattern") ||
+                errorMessage.toLowerCase().includes("matched"))
+            ) {
+              errorMessage = "مشکلی پیش امده لطفا دوباره امتحان کنید";
+            }
+            throw new Error(errorMessage);
           } else if (
             statusData.status === "pending" ||
             statusData.status === "processing"
@@ -402,7 +419,16 @@ export default function ImageToImagePage() {
             clearTimeout(pollingTimeoutRef.current);
             pollingTimeoutRef.current = null;
           }
-          setError(err.message || "خطا در بررسی وضعیت تولید تصویر");
+          let errorMessage = err.message || "خطا در بررسی وضعیت تولید تصویر";
+          // Check for pattern matching error and replace with user-friendly message
+          if (
+            errorMessage.toLowerCase().includes("string") &&
+            (errorMessage.toLowerCase().includes("pattern") ||
+              errorMessage.toLowerCase().includes("matched"))
+          ) {
+            errorMessage = "مشکلی پیش امده لطفا دوباره امتحان کنید";
+          }
+          setError(errorMessage);
         }
       };
 
@@ -410,7 +436,17 @@ export default function ImageToImagePage() {
       pollTaskStatus();
     } catch (err: any) {
       console.error("Error generating image:", err);
-      setError(err.message || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.");
+      let errorMessage =
+        err.message || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.";
+      // Check for pattern matching error and replace with user-friendly message
+      if (
+        errorMessage.toLowerCase().includes("string") &&
+        (errorMessage.toLowerCase().includes("pattern") ||
+          errorMessage.toLowerCase().includes("matched"))
+      ) {
+        errorMessage = "مشکلی پیش امده لطفا دوباره امتحان کنید";
+      }
+      setError(errorMessage);
       setIsLoading(false);
       setLoadingProgress(null);
       startTimeRef.current = null;

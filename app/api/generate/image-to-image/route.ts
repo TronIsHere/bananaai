@@ -12,21 +12,24 @@ const CREDITS_PER_GENERATION_PRO = 24;
 function getCallbackUrl(request: NextRequest): string {
   // Try to get from environment variable first
   const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL;
-  
+
   if (baseUrl) {
     return `${baseUrl}/api/generate/callback`;
   }
-  
+
   // Fallback to constructing from request headers
   const protocol = request.headers.get("x-forwarded-proto") || "https";
-  const host = request.headers.get("host") || request.headers.get("x-forwarded-host");
-  
+  const host =
+    request.headers.get("host") || request.headers.get("x-forwarded-host");
+
   if (host) {
     return `${protocol}://${host}/api/generate/callback`;
   }
-  
+
   // Last resort - this should not happen in production
-  throw new Error("Unable to determine callback URL. Please set NEXTAUTH_URL or NEXT_PUBLIC_BASE_URL environment variable.");
+  throw new Error(
+    "Unable to determine callback URL. Please set NEXTAUTH_URL or NEXT_PUBLIC_BASE_URL environment variable."
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -36,25 +39,40 @@ export async function POST(request: NextRequest) {
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "Unauthorized", message: "لطفاً ابتدا وارد حساب کاربری خود شوید" },
+        {
+          error: "عدم دسترسی",
+          message: "لطفاً ابتدا وارد حساب کاربری خود شوید",
+        },
         { status: 401 }
       );
     }
 
     // Parse request body
     const body = await request.json();
-    const { prompt, imageUrls, numImages = 1, image_size = "16:9", isPro = false } = body;
+    const {
+      prompt,
+      imageUrls,
+      numImages = 1,
+      image_size = "16:9",
+      isPro = false,
+    } = body;
 
     if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
       return NextResponse.json(
-        { error: "Prompt is required", message: "لطفاً متن توصیفی را وارد کنید" },
+        {
+          error: "متن توصیفی الزامی است",
+          message: "لطفاً متن توصیفی را وارد کنید",
+        },
         { status: 400 }
       );
     }
 
     if (!imageUrls || !Array.isArray(imageUrls) || imageUrls.length === 0) {
       return NextResponse.json(
-        { error: "Image URLs required", message: "لطفاً تصویر اولیه را آپلود کنید" },
+        {
+          error: "آدرس تصویر الزامی است",
+          message: "لطفاً تصویر اولیه را آپلود کنید",
+        },
         { status: 400 }
       );
     }
@@ -67,7 +85,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: "User not found", message: "کاربر یافت نشد" },
+        { error: "کاربر یافت نشد", message: "کاربر یافت نشد" },
         { status: 404 }
       );
     }
@@ -80,9 +98,9 @@ export async function POST(request: NextRequest) {
     // Check if user has enough credits
     if (user.credits < creditsNeeded) {
       return NextResponse.json(
-        { 
-          error: "Insufficient credits",
-          message: `اعتبار شما کافی نیست. برای تولید تصویر به حداقل ${creditsNeeded} اعتبار نیاز دارید. شما ${user.credits} اعتبار دارید.`
+        {
+          error: "اعتبار ناکافی",
+          message: `اعتبار شما کافی نیست. برای تولید تصویر به حداقل ${creditsNeeded} اعتبار نیاز دارید. شما ${user.credits} اعتبار دارید.`,
         },
         { status: 403 }
       );
@@ -91,7 +109,7 @@ export async function POST(request: NextRequest) {
     // Reserve credits by creating a task record
     // Credits will be deducted when callback is received
     const callbackUrl = getCallbackUrl(request);
-    
+
     // Call NanoBanana API
     let apiResponse;
     try {
@@ -109,10 +127,22 @@ export async function POST(request: NextRequest) {
     } catch (apiError: any) {
       // Handle API errors (400, 401, 500 from API)
       console.error("NanoBanana API error:", apiError);
+
+      // Check for pattern matching error and replace with user-friendly message
+      let errorMessage =
+        apiError.message || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.";
+      if (
+        errorMessage.toLowerCase().includes("string") &&
+        (errorMessage.toLowerCase().includes("pattern") ||
+          errorMessage.toLowerCase().includes("matched"))
+      ) {
+        errorMessage = "مشکلی پیش امده لطفا دوباره امتحان کنید";
+      }
+
       return NextResponse.json(
-        { 
-          error: "Failed to generate image",
-          message: apiError.message || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید."
+        {
+          error: "خطا در تولید تصویر",
+          message: errorMessage,
         },
         { status: 500 }
       );
@@ -121,9 +151,10 @@ export async function POST(request: NextRequest) {
     // Double-check response (should already be validated in generateImage, but be safe)
     if (!apiResponse || apiResponse.code !== 200 || !apiResponse.data?.taskId) {
       return NextResponse.json(
-        { 
-          error: "Failed to generate image",
-          message: apiResponse?.msg || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید."
+        {
+          error: "خطا در تولید تصویر",
+          message:
+            apiResponse?.msg || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.",
         },
         { status: 500 }
       );
@@ -148,27 +179,36 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error("Error generating image:", error);
-    
+
     // Handle specific error messages
     let errorMessage = "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.";
-    
+
     if (error.message?.includes("NANOBANANAAPI_KEY")) {
       errorMessage = "خطا در پیکربندی API. لطفاً با پشتیبانی تماس بگیرید.";
     } else if (error.message?.includes("callBackUrl")) {
-      errorMessage = "خطا در پیکربندی URL بازگشتی. لطفاً با پشتیبانی تماس بگیرید.";
-    } else if (error.message?.includes("credits") || error.message?.includes("اعتبار")) {
+      errorMessage =
+        "خطا در پیکربندی URL بازگشتی. لطفاً با پشتیبانی تماس بگیرید.";
+    } else if (
+      error.message?.includes("credits") ||
+      error.message?.includes("اعتبار")
+    ) {
       errorMessage = error.message;
+    } else if (
+      error.message?.toLowerCase().includes("string") &&
+      (error.message?.toLowerCase().includes("pattern") ||
+        error.message?.toLowerCase().includes("matched"))
+    ) {
+      errorMessage = "مشکلی پیش امده لطفا دوباره امتحان کنید";
     } else if (error.message) {
       errorMessage = error.message;
     }
-    
+
     return NextResponse.json(
-      { 
-        error: "Internal server error",
-        message: errorMessage
+      {
+        error: "خطای سرور",
+        message: errorMessage,
       },
       { status: 500 }
     );
   }
 }
-
