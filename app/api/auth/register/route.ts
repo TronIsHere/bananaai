@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify OTP
-    const verificationResult = await verifyOTP(mobileNumber, otp);
+    // Verify OTP (don't delete it yet - will be deleted by NextAuth during signIn)
+    const verificationResult = await verifyOTP(mobileNumber, otp, false);
 
     if (!verificationResult.valid) {
       return NextResponse.json(
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new user with free plan (12 credits for 3 image generations)
+    // Create new user with free plan (48 credits for 12 image generations)
     const now = new Date();
     const monthlyResetDate = new Date(now);
     monthlyResetDate.setMonth(monthlyResetDate.getMonth() + 1);
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       mobileNumber: normalizedMobileNumber,
       firstName,
       lastName,
-      credits: 12, // Free plan: 3 image generations × 4 credits per generation
+      credits: 48, // Free plan: 12 image generations × 4 credits per generation
       currentPlan: "free", // Free plan
       planStartDate: now,
       planEndDate: monthlyResetDate, // Monthly reset date
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
             mobileNumber: normalizedMobileNumber,
             firstName,
             lastName,
-            credits: 12,
+            credits: 48,
             currentPlan: "free",
             planStartDate: now,
             planEndDate: monthlyResetDate,

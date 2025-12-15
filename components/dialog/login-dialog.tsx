@@ -165,7 +165,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
     try {
       // Normalize mobile number (trim whitespace)
       const normalizedMobile = mobileNumber.trim().replace(/\s+/g, "");
-      
+
       const response = await fetch("/api/auth/verify-otp", {
         method: "POST",
         headers: {
@@ -278,7 +278,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       const otpCode = otp.join("");
       // Normalize mobile number (trim whitespace)
       const normalizedMobile = mobileNumber.trim().replace(/\s+/g, "");
-      
+
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
@@ -312,7 +312,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
       setIsLoading(false);
       // Registration successful, now login with NextAuth
       const result = await signIn("credentials", {
-        mobileNumber,
+        mobileNumber: normalizedMobile,
         otp: otpCode,
         redirect: false,
       });

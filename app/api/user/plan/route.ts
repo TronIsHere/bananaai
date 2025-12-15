@@ -17,10 +17,7 @@ export async function POST(request: NextRequest) {
     const { plan } = body;
 
     if (!plan || !["free", "explorer", "creator", "studio"].includes(plan)) {
-      return NextResponse.json(
-        { error: "Invalid plan name" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid plan name" }, { status: 400 });
     }
 
     await connectDB();
@@ -43,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // Calculate credits based on plan (4 credits per image)
     const planCredits: Record<string, number> = {
-      free: 12, // 3 images * 4 credits
+      free: 48, // 12 images * 4 credits
       explorer: 200, // 50 images * 4 credits
       creator: 600, // 150 images * 4 credits
       studio: 2000, // 500 images * 4 credits
@@ -96,4 +93,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
