@@ -66,7 +66,6 @@ export default function DashboardPage() {
           به پنل کاربری بنانا خوش آمدید
         </p>
       </div>
-
       {/* Main Tools Section */}
       <div className="mb-8 md:mb-12">
         <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
@@ -89,9 +88,8 @@ export default function DashboardPage() {
           />
         </div>
       </div>
-
       {/* Photo Creation Use Cases */}
-      <div className="mb-8 md:mb-12">
+      {/* <div className="mb-8 md:mb-12">
         <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
           ساخت عکس
         </h2>
@@ -120,8 +118,8 @@ export default function DashboardPage() {
             gradient="from-pink-400/20 via-rose-400/20 to-orange-500/20"
           />
         </div>
-      </div>
-
+      </div> */}
+      {/* TODO: make these style cards later */}
       {/* Advanced Features */}
       <div className="mb-8 md:mb-12">
         <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
@@ -157,7 +155,6 @@ export default function DashboardPage() {
           />
         </div>
       </div>
-
       {/* Creative Tools Section */}
       {/* <div>
         <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
