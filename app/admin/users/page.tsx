@@ -17,6 +17,7 @@ interface User {
   firstName: string;
   lastName: string;
   createdAt: string;
+  credits: number;
 }
 
 export default function AdminUsersPage() {
@@ -132,7 +133,7 @@ export default function AdminUsersPage() {
                   تاریخ ثبت‌نام
                 </TableHead>
                 <TableHead className="text-right text-slate-300 font-semibold">
-                  شناسه
+                  اعتبارات
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -157,8 +158,8 @@ export default function AdminUsersPage() {
                       {formatDate(user.createdAt)}
                     </div>
                   </TableCell>
-                  <TableCell className="text-slate-500 font-mono text-xs">
-                    {user.id.slice(-6)}
+                  <TableCell className="text-slate-300 font-semibold">
+                    {user.credits}
                   </TableCell>
                 </TableRow>
               ))}

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch all users, sorted by creation date (newest first)
     const users = await User.find({})
-      .select("mobileNumber firstName lastName createdAt")
+      .select("mobileNumber firstName lastName createdAt credits")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
           firstName: user.firstName,
           lastName: user.lastName,
           createdAt: user.createdAt,
+          credits: user.credits,
         })),
       },
       { status: 200 }
