@@ -58,7 +58,7 @@ export default function TextToImagePage() {
   const [numOutputs] = useState(1);
   const [imageSize, setImageSize] = useState("16:9");
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(true);
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
 

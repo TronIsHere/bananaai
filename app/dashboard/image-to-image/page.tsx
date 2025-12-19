@@ -115,7 +115,7 @@ export default function ImageToImagePage() {
   const [numOutputs] = useState(1);
   const [imageSize, setImageSize] = useState("16:9");
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [isPro, setIsPro] = useState(false);
+  const [isPro, setIsPro] = useState(true);
 
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([null, null]);
 
