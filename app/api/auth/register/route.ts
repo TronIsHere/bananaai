@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new user with free plan (48 credits for 12 image generations)
+    // Create new user with free plan (24 credits for 1 pro image generation)
     const now = new Date();
     const monthlyResetDate = new Date(now);
     monthlyResetDate.setMonth(monthlyResetDate.getMonth() + 1);
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       mobileNumber: normalizedMobileNumber,
       firstName,
       lastName,
-      credits: 48, // Free plan: 12 image generations × 4 credits per generation
+      credits: 24, // Free plan: 1 pro image generation × 24 credits per generation
       currentPlan: "free", // Free plan
       planStartDate: now,
       planEndDate: monthlyResetDate, // Monthly reset date
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
             mobileNumber: normalizedMobileNumber,
             firstName,
             lastName,
-            credits: 48,
+            credits: 24,
             currentPlan: "free",
             planStartDate: now,
             planEndDate: monthlyResetDate,

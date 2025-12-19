@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // Calculate credits based on plan (4 credits per image)
     const planCredits: Record<string, number> = {
-      free: 48, // 12 images * 4 credits
+      free: 24, // 1 pro image * 24 credits
       explorer: 200, // 50 images * 4 credits
       creator: 600, // 150 images * 4 credits
       studio: 2000, // 500 images * 4 credits

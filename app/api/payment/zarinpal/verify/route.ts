@@ -16,7 +16,7 @@ const planPrices: Record<string, number> = {
 
 // Plan credits mapping
 const planCredits: Record<string, number> = {
-  free: 48,
+  free: 24,
   explorer: 200,
   creator: 600,
   studio: 2000,
