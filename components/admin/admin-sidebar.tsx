@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
@@ -12,6 +12,11 @@ const menuItems = [
     href: "/admin",
     label: "تیکت‌ها",
     icon: MessageSquare,
+  },
+  {
+    href: "/admin/users",
+    label: "کاربران",
+    icon: Users,
   },
 ];
 
@@ -120,10 +125,3 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     </>
   );
 }
-
-
-
-
-
-
-
