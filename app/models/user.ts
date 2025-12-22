@@ -13,6 +13,9 @@ export interface IBillingHistory {
   invoiceUrl?: string;
   authority?: string; // Zarinpal payment authority
   refId?: number; // Zarinpal reference ID after successful payment
+  discountCode?: string; // Discount code used
+  originalAmount?: number; // Original amount before discount
+  discountAmount?: number; // Discount amount applied
 }
 
 const BillingHistorySchema = new Schema<IBillingHistory>(
@@ -62,6 +65,18 @@ const BillingHistorySchema = new Schema<IBillingHistory>(
       default: undefined,
     },
     refId: {
+      type: Number,
+      default: undefined,
+    },
+    discountCode: {
+      type: String,
+      default: undefined,
+    },
+    originalAmount: {
+      type: Number,
+      default: undefined,
+    },
+    discountAmount: {
       type: Number,
       default: undefined,
     },

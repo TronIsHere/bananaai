@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-config";
 import connectDB from "@/lib/mongodb";
 import User from "@/app/models/user";
+import Discount from "@/app/models/discount";
 import axios from "axios";
 import { PlanType, getPlanNameEnglish } from "@/lib/utils";
 
@@ -205,6 +206,17 @@ export async function GET(request: NextRequest) {
         billingEntry.status = "paid";
         billingEntry.refId = refId;
 
+        // Increment discount code usage if discount was applied
+        if (billingEntry.discountCode) {
+          const discount = await Discount.findOne({
+            code: billingEntry.discountCode,
+          });
+          if (discount) {
+            discount.usedCount += 1;
+            await discount.save();
+          }
+        }
+
         await user.save();
       } else {
         // Handle plan purchase - update user plan
@@ -234,6 +246,17 @@ export async function GET(request: NextRequest) {
         // Update billing entry
         billingEntry.status = "paid";
         billingEntry.refId = refId;
+
+        // Increment discount code usage if discount was applied
+        if (billingEntry.discountCode) {
+          const discount = await Discount.findOne({
+            code: billingEntry.discountCode,
+          });
+          if (discount) {
+            discount.usedCount += 1;
+            await discount.save();
+          }
+        }
 
         await user.save();
       }

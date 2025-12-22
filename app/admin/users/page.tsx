@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Clock } from "lucide-react";
+import { Users, Clock, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,6 +10,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface User {
   id: string;
@@ -24,6 +33,9 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -60,6 +72,45 @@ export default function AdminUsersPage() {
       hour: "2-digit",
       minute: "2-digit",
     }).format(date);
+  };
+
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!userToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId: userToDelete.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "خطا در حذف کاربر");
+        setIsDeleting(false);
+        return;
+      }
+
+      // Remove user from list
+      setUsers(users.filter((u) => u.id !== userToDelete.id));
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      setError("");
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      setError("خطا در ارتباط با سرور");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -135,6 +186,9 @@ export default function AdminUsersPage() {
                 <TableHead className="text-right text-slate-300 font-semibold">
                   اعتبارات
                 </TableHead>
+                <TableHead className="text-right text-slate-300 font-semibold">
+                  عملیات
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -161,13 +215,63 @@ export default function AdminUsersPage() {
                   <TableCell className="text-slate-300 font-semibold">
                     {user.credits}
                   </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteClick(user)}
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="bg-slate-900 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">حذف کاربر</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              آیا مطمئن هستید که می‌خواهید کاربر{" "}
+              <span className="font-semibold text-white">
+                {userToDelete?.firstName} {userToDelete?.lastName}
+              </span>{" "}
+              را حذف کنید؟
+              <br />
+              <span className="text-red-400 mt-2 block">
+                این عمل تمام تصاویر کاربر را از سرور حذف می‌کند و قابل بازگشت
+                نیست.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setUserToDelete(null);
+              }}
+              disabled={isDeleting}
+              className="text-slate-400 hover:text-white"
+            >
+              انصراف
+            </Button>
+            <Button
+              onClick={handleDeleteConfirm}
+              disabled={isDeleting}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              {isDeleting ? "در حال حذف..." : "حذف کاربر"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-

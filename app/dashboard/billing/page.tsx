@@ -183,7 +183,7 @@ export default function BillingPage() {
     setIsUpgradeDialogOpen(true);
   };
 
-  const handlePurchase = async () => {
+  const handlePurchase = async (discountCode?: string) => {
     if (!selectedPlan) return;
 
     const planEnglish = getPlanNameEnglish(selectedPlan);
@@ -203,7 +203,11 @@ export default function BillingPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ plan: planEnglish, type: "plan" }),
+        body: JSON.stringify({ 
+          plan: planEnglish, 
+          type: "plan",
+          ...(discountCode && { discountCode }),
+        }),
       });
 
       if (!response.ok) {
