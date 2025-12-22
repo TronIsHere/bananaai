@@ -9,21 +9,39 @@ import { generateImage } from "@/lib/services/nanobanana";
 const CREDITS_PER_GENERATION = 4;
 const CREDITS_PER_GENERATION_PRO = 24;
 
+/**
+ * Get callback URL for NanoBanana API
+ * 
+ * Best Practices:
+ * - Always uses HTTPS for secure data transmission
+ * - Prefers environment variables for production stability
+ * - Falls back to request headers if needed
+ * 
+ * @param request NextRequest object
+ * @returns HTTPS callback URL
+ */
 function getCallbackUrl(request: NextRequest): string {
-  // Try to get from environment variable first
+  // Try to get from environment variable first (most reliable)
   const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL;
 
   if (baseUrl) {
-    return `${baseUrl}/api/generate/callback`;
+    // Ensure HTTPS
+    const url = baseUrl.startsWith("http")
+      ? baseUrl
+      : `https://${baseUrl}`;
+    // Force HTTPS (replace http:// with https://)
+    const httpsUrl = url.replace(/^http:\/\//, "https://");
+    return `${httpsUrl}/api/generate/callback`;
   }
 
   // Fallback to constructing from request headers
-  const protocol = request.headers.get("x-forwarded-proto") || "https";
+  // Always use HTTPS for callbacks (required by NanoBanana best practices)
   const host =
     request.headers.get("host") || request.headers.get("x-forwarded-host");
 
   if (host) {
-    return `${protocol}://${host}/api/generate/callback`;
+    // Always use HTTPS for callback URLs
+    return `https://${host}/api/generate/callback`;
   }
 
   // Last resort - this should not happen in production
