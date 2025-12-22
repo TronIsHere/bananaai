@@ -100,7 +100,8 @@ export async function POST(request: NextRequest) {
         task.status = "failed";
         task.error = "تصویری دریافت نشد لطفا دوباره تلاش کنید";
         task.completedAt = new Date();
-        // Don't deduct credits if no image was returned
+        // Don't deduct credits if no image was returned - credits remain available
+        task.creditsDeducted = false;
       }
     } else {
       // Task failed (400, 500, 501, or 200 but no image)
@@ -134,6 +135,7 @@ export async function POST(request: NextRequest) {
 
       // Don't deduct credits for failed tasks
       // Credits were reserved but not deducted, so they remain available
+      // This ensures users get their credits back when generation fails
       task.creditsDeducted = false;
     }
 

@@ -59,6 +59,9 @@ export async function GET(
 
     await connectDB();
 
+    // Timeout threshold: 15 minutes
+    const TIMEOUT_MS = 15 * 60 * 1000;
+
     let task = await Task.findOne({ taskId, userId: session.user.id });
 
     if (!task) {
@@ -66,6 +69,20 @@ export async function GET(
         { error: "وظیفه یافت نشد", message: "وظیفه یافت نشد" },
         { status: 404 }
       );
+    }
+
+    // Check for timeout: if task has been pending for more than 15 minutes, mark as failed
+    const taskAge = Date.now() - new Date(task.createdAt).getTime();
+    if (
+      (task.status === "pending" || task.status === "processing") &&
+      taskAge > TIMEOUT_MS &&
+      !task.creditsDeducted
+    ) {
+      task.status = "failed";
+      task.error = "زمان انتظار به پایان رسید. اعتبارات شما بازگردانده شد.";
+      task.completedAt = new Date();
+      task.creditsDeducted = false; // Ensure credits are not deducted for timed-out tasks
+      await task.save();
     }
 
     // If task is still pending/processing, attempt to fetch latest status directly from NanoBanana API
@@ -136,7 +153,7 @@ export async function GET(
           }
           task.error = errorMsg;
           task.completedAt = new Date();
-          task.creditsDeducted = false; // Don't deduct credits for failed tasks
+          task.creditsDeducted = false; // Don't deduct credits for failed tasks - credits remain available
           await task.save();
         } else if (statusData?.successFlag === 3) {
           task.status = "failed";
@@ -153,7 +170,7 @@ export async function GET(
           }
           task.error = errorMsg;
           task.completedAt = new Date();
-          task.creditsDeducted = false; // Don't deduct credits for failed tasks
+          task.creditsDeducted = false; // Don't deduct credits for failed tasks - credits remain available
           await task.save();
         }
       } catch (remoteError) {
@@ -161,6 +178,15 @@ export async function GET(
           "Failed to refresh task status from NanoBanana:",
           remoteError
         );
+        // If we can't reach NanoBanana and task is old, mark as failed
+        const taskAge = Date.now() - new Date(task.createdAt).getTime();
+        if (taskAge > TIMEOUT_MS && !task.creditsDeducted) {
+          task.status = "failed";
+          task.error = "خطا در ارتباط با سرویس. اعتبارات شما بازگردانده شد.";
+          task.completedAt = new Date();
+          task.creditsDeducted = false; // Ensure credits are not deducted
+          await task.save();
+        }
       }
 
       // Re-fetch task to ensure latest data
