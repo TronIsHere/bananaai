@@ -5,7 +5,7 @@ export const siteConfig = {
     "تولید تصویر با هوش مصنوعی نانوبنانا - تبدیل متن به تصویر و تصویر به تصویر با دقت بالاست. یک پلتفرم ایرانی هوش مصنوعی برای خلق تصاویر حرفه‌ای از متن فارسی و انگلیسی که مناسب برای طراحان، فریلنسرها و کسب‌وکارها است.",
   shortDescription: "پلتفرم هوش مصنوعی ایرانی برای تولید تصویر",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://bananaai.ir",
-  ogImage: "/og-image.jpg",
+  ogImage: "/icons/web-app-manifest-512x512.png", // Temporary: should be replaced with 1200x630px og-image.jpg
   logo: "/logo.png",
   locale: "fa_IR",
   language: "fa",

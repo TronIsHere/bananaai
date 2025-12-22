@@ -53,8 +53,22 @@ export const metadata: Metadata = {
   openGraph: {
     ...defaultSEO.openGraph,
     url: siteConfig.url,
+    images: [
+      {
+        url: defaultSEO.openGraph.images[0].url,
+        width: 1200,
+        height: 630,
+        alt: defaultSEO.openGraph.images[0].alt,
+      },
+    ],
   },
-  twitter: defaultSEO.twitter,
+  twitter: {
+    ...defaultSEO.twitter,
+    images: defaultSEO.twitter.images.map((img) => ({
+      url: img,
+      alt: `${siteConfig.name} - ${siteConfig.nameFa}`,
+    })),
+  },
   robots: {
     index: true,
     follow: true,
