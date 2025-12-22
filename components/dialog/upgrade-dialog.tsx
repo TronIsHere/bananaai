@@ -177,12 +177,14 @@ export function UpgradeDialog({
           {/* Discount Code Input */}
           <div className="space-y-2">
             {!discountInfo ? (
-              <div className="flex gap-2">
+              <div className="flex gap-2 pb-2">
                 <Input
                   type="text"
                   placeholder="کد تخفیف (اختیاری)"
                   value={discountCode}
-                  onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    setDiscountCode(e.target.value.toUpperCase())
+                  }
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleValidateDiscount();
@@ -193,13 +195,15 @@ export function UpgradeDialog({
                 />
                 <Button
                   onClick={handleValidateDiscount}
-                  disabled={isPurchasing || isValidatingDiscount || !discountCode.trim()}
+                  disabled={
+                    isPurchasing || isValidatingDiscount || !discountCode.trim()
+                  }
                   className="px-4 bg-slate-800 hover:bg-slate-700 text-white border border-white/10"
                 >
                   {isValidatingDiscount ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Tag className="h-4 w-4" />
+                    "اعمال"
                   )}
                 </Button>
               </div>
@@ -211,7 +215,8 @@ export function UpgradeDialog({
                     کد تخفیف {discountInfo.code} اعمال شد
                   </span>
                   <span className="text-xs text-slate-400">
-                    ({discountInfo.discountAmount.toLocaleString("fa-IR")} تومان تخفیف)
+                    ({discountInfo.discountAmount.toLocaleString("fa-IR")} تومان
+                    تخفیف)
                   </span>
                 </div>
                 <Button
@@ -226,7 +231,9 @@ export function UpgradeDialog({
               </div>
             )}
             {discountError && (
-              <p className="text-xs text-red-400 text-center">{discountError}</p>
+              <p className="text-xs text-red-400 text-center">
+                {discountError}
+              </p>
             )}
           </div>
 

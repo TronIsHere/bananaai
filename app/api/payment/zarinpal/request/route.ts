@@ -199,6 +199,36 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // For credit purchases, check that user has an active plan other than free
+    if (purchaseType === "credits") {
+      // Normalize currentPlan if it contains Persian text (defensive measure)
+      const normalizedPlan = getPlanNameEnglish(user.currentPlan || "");
+
+      // Check if user has a plan other than free
+      if (!normalizedPlan || normalizedPlan === "free") {
+        return NextResponse.json(
+          {
+            error:
+              "برای خرید اعتبار اضافی باید یک پلن فعال (غیر از رایگان) داشته باشید",
+            errorEn:
+              "You must have an active plan (other than free) to purchase extra credits",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Check if plan is still active (planEndDate should be in the future or null)
+      if (user.planEndDate && new Date(user.planEndDate) < new Date()) {
+        return NextResponse.json(
+          {
+            error: "پلن شما منقضی شده است. لطفا ابتدا یک پلن جدید خریداری کنید",
+            errorEn: "Your plan has expired. Please purchase a new plan first",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Check if user already has this plan (only for plan purchases)
     if (purchaseType === "plan" && user.currentPlan === plan) {
       return NextResponse.json(

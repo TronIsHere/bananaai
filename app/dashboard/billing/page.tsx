@@ -73,6 +73,18 @@ export default function BillingPage() {
 
   const currentPlan = plans.find((p) => p.current);
 
+  // Check if user can purchase extra credits (must have active plan other than free)
+  const canPurchaseCredits = useMemo(() => {
+    if (!user.currentPlan || user.currentPlan === "free") {
+      return false;
+    }
+    // Check if plan is still active (planEndDate should be in the future or null)
+    if (user.planEndDate && new Date(user.planEndDate) < new Date()) {
+      return false;
+    }
+    return true;
+  }, [user.currentPlan, user.planEndDate]);
+
   // Calculate usage based on current plan
   const getCreditsLimit = (planName: string) => {
     const plan = landingPlans.find((p) => p.name === planName);
@@ -250,8 +262,10 @@ export default function BillingPage() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create payment request");
+        const errorData = await response.json();
+        // Use Persian error message if available, otherwise fall back to English or default
+        const errorMessage = errorData.error || errorData.errorEn || "Failed to create payment request";
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -613,9 +627,16 @@ export default function BillingPage() {
                     اضافه می‌شود
                   </span>
                 </div>
+                {!canPurchaseCredits && (
+                  <div className="mb-3 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
+                    <p className="text-xs text-amber-400 text-center">
+                      برای خرید اعتبار اضافی باید یک پلن فعال (غیر از رایگان) داشته باشید
+                    </p>
+                  </div>
+                )}
                 <Button
                   onClick={() => handleCreditPurchase(pkg.id)}
-                  disabled={isPurchasing}
+                  disabled={isPurchasing || !canPurchaseCredits}
                   className="w-full h-9 text-sm md:h-10 md:text-base bg-gradient-to-r from-yellow-400 to-orange-400 text-white hover:from-yellow-500 hover:to-orange-500 disabled:opacity-50"
                 >
                   {isPurchasing ? "در حال پردازش..." : "خرید اعتبار"}
