@@ -125,13 +125,15 @@ export async function GET(request: NextRequest) {
       : "https://payment.zarinpal.com/pg/v4/payment/verify.json";
 
     // Verify payment with Zarinpal
+    // Convert Toman to Rial (multiply by 10) for Zarinpal
+    const amountInRial = amount * 10;
     let verifyResponse;
     try {
       verifyResponse = await axios.post(
         zarinpalVerifyUrl,
         {
           merchant_id: merchantId,
-          amount: amount,
+          amount: amountInRial,
           authority: authority,
         },
         {

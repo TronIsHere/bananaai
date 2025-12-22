@@ -256,13 +256,15 @@ export async function POST(request: NextRequest) {
       : "https://payment.zarinpal.com/pg/v4/payment/request.json";
 
     // Call Zarinpal API to create payment request
+    // Convert Toman to Rial (multiply by 10) for Zarinpal
+    const amountInRial = amount * 10;
     let zarinpalResponse;
     try {
       zarinpalResponse = await axios.post(
         zarinpalApiUrl,
         {
           merchant_id: merchantId,
-          amount: amount,
+          amount: amountInRial,
           callback_url: callbackUrl,
           description: description,
           metadata: {
