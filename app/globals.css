@@ -136,3 +136,25 @@ html {
   font-family: var(--font-iran-sans);
   font-weight: 300;
 }
+
+@keyframes scroll-up {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-33.33%); }
+}
+
+@keyframes scroll-down {
+  0% { transform: translateY(-33.33%); }
+  100% { transform: translateY(0); }
+}
+
+.animate-scroll-up {
+  animation: scroll-up 40s linear infinite;
+}
+
+.animate-scroll-down {
+  animation: scroll-down 40s linear infinite;
+}
+
+.animate-scroll-up-slow {
+  animation: scroll-up 50s linear infinite;
+}
