@@ -149,9 +149,9 @@ export default function AdminDiscountsPage() {
     }
   };
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "بدون انقضا";
-    const date = new Date(dateString);
+  const formatDate = (dateInput: Date | string | null) => {
+    if (!dateInput) return "بدون انقضا";
+    const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
     return new Intl.DateTimeFormat("fa-IR", {
       year: "numeric",
       month: "long",
@@ -210,7 +210,14 @@ export default function AdminDiscountsPage() {
                 فعال
               </p>
               <p className="text-xl sm:text-2xl font-bold text-green-400">
-                {discounts.filter((d) => d.isActive && !isExpired(d.expiresAt) && !isFull(d.usedCount, d.capacity)).length}
+                {
+                  discounts.filter(
+                    (d) =>
+                      d.isActive &&
+                      !isExpired(d.expiresAt) &&
+                      !isFull(d.usedCount, d.capacity)
+                  ).length
+                }
               </p>
             </div>
           </div>
@@ -230,7 +237,14 @@ export default function AdminDiscountsPage() {
                 غیرفعال/منقضی
               </p>
               <p className="text-xl sm:text-2xl font-bold text-red-400">
-                {discounts.filter((d) => !d.isActive || isExpired(d.expiresAt) || isFull(d.usedCount, d.capacity)).length}
+                {
+                  discounts.filter(
+                    (d) =>
+                      !d.isActive ||
+                      isExpired(d.expiresAt) ||
+                      isFull(d.usedCount, d.capacity)
+                  ).length
+                }
               </p>
             </div>
           </div>
@@ -343,7 +357,9 @@ export default function AdminDiscountsPage() {
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="bg-slate-900 border-white/10 text-white max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-white">ایجاد کد تخفیف جدید</DialogTitle>
+            <DialogTitle className="text-white">
+              ایجاد کد تخفیف جدید
+            </DialogTitle>
             <DialogDescription className="text-slate-400">
               اطلاعات کد تخفیف را وارد کنید
             </DialogDescription>
@@ -356,7 +372,10 @@ export default function AdminDiscountsPage() {
               <Input
                 value={formData.code}
                 onChange={(e) =>
-                  setFormData({ ...formData, code: e.target.value.toUpperCase() })
+                  setFormData({
+                    ...formData,
+                    code: e.target.value.toUpperCase(),
+                  })
                 }
                 placeholder="مثال: SUMMER2024"
                 className="bg-slate-800 border-white/10 text-white"
@@ -484,4 +503,3 @@ export default function AdminDiscountsPage() {
     </div>
   );
 }
-
