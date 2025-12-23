@@ -13,11 +13,28 @@ export function validateImageFileServer(file: File): ImageValidationResult {
   }
 
   // Check file type
-  const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
-  if (!allowedTypes.includes(file.type)) {
+  const allowedTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/webp",
+    "image/heic",
+    "image/heif",
+    "image/heic-sequence",
+    "image/heif-sequence",
+  ];
+  
+  // Also check file extension as fallback (browsers may not always report correct MIME type for HEIC)
+  const fileName = file.name.toLowerCase();
+  const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"];
+  const fileExtension = fileName.substring(fileName.lastIndexOf("."));
+  
+  const isValidType = allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension);
+  
+  if (!isValidType) {
     return {
       isValid: false,
-      error: "فرمت فایل نامعتبر است. فقط JPG، PNG، GIF و WEBP مجاز است",
+      error: "فرمت فایل نامعتبر است. فقط JPG، PNG، WEBP و HEIC مجاز است",
     };
   }
 

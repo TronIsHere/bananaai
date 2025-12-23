@@ -109,7 +109,21 @@ export default function TicketDetailPage() {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     files.forEach((file) => {
-      if (file.type.startsWith("image/")) {
+      // Check if file is an image by MIME type or extension (for HEIC support)
+      const fileName = file.name.toLowerCase();
+      const fileExtension = fileName.substring(fileName.lastIndexOf("."));
+      const allowedExtensions = [
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+        ".heic",
+        ".heif",
+      ];
+      const isImageByType = file.type.startsWith("image/");
+      const isImageByExtension = allowedExtensions.includes(fileExtension);
+
+      if (isImageByType || isImageByExtension) {
         const maxSize = 10 * 1024 * 1024; // 10MB
         if (file.size > maxSize) {
           setError("حجم فایل نباید بیشتر از 10 مگابایت باشد");
@@ -124,6 +138,8 @@ export default function TicketDetailPage() {
           ]);
         };
         reader.readAsDataURL(file);
+      } else {
+        setError("فرمت فایل نامعتبر است. فقط JPG، PNG، WEBP و HEIC مجاز است");
       }
     });
     if (fileInputRef.current) {

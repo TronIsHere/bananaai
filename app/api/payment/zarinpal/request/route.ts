@@ -16,6 +16,14 @@ const planPrices: Record<string, number> = {
   studio: 2990000,
 };
 
+// Plan credits mapping
+const planCredits: Record<string, number> = {
+  free: 24,
+  explorer: 200,
+  creator: 600,
+  studio: 2000,
+};
+
 function getCallbackUrl(request: NextRequest): string {
   const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -235,6 +243,76 @@ export async function POST(request: NextRequest) {
         { error: "You already have this plan" },
         { status: 400 }
       );
+    }
+
+    // If amount is 0 or less after discount, grant access directly without payment
+    if (amount <= 0) {
+      // Normalize currentPlan if it contains Persian text (defensive measure)
+      if (user.currentPlan && typeof user.currentPlan === "string") {
+        const normalizedPlan = getPlanNameEnglish(user.currentPlan);
+        if (normalizedPlan !== user.currentPlan) {
+          user.currentPlan = normalizedPlan;
+        }
+      }
+
+      // Update billing entry status to paid (no payment needed)
+      billingEntry.status = "paid";
+      billingEntry.amount = 0; // Ensure amount is 0
+
+      if (purchaseType === "credits") {
+        // Handle credit purchase - add credits to user's account
+        const creditsToAdd = billingEntry.credits || 0;
+        user.credits = (user.credits || 0) + creditsToAdd;
+      } else {
+        // Handle plan purchase - update user plan
+        const plan = billingEntry.plan as "explorer" | "creator" | "studio";
+
+        // Calculate plan end date (30 days from now)
+        const planStartDate = new Date();
+        const planEndDate = new Date();
+        planEndDate.setDate(planEndDate.getDate() + 30);
+
+        // Update user plan
+        user.currentPlan = plan;
+        user.planStartDate = planStartDate;
+        user.planEndDate = planEndDate;
+
+        // Set credits based on plan
+        user.credits = planCredits[plan] || 0;
+
+        // Reset monthly usage
+        user.imagesGeneratedThisMonth = 0;
+
+        // Set monthly reset date (30 days from now)
+        const monthlyResetDate = new Date();
+        monthlyResetDate.setDate(monthlyResetDate.getDate() + 30);
+        user.monthlyResetDate = monthlyResetDate;
+      }
+
+      // Increment discount code usage if discount was applied
+      if (billingEntry.discountCode) {
+        const discount = await Discount.findOne({
+          code: billingEntry.discountCode,
+        });
+        if (discount) {
+          discount.usedCount += 1;
+          await discount.save();
+        }
+      }
+
+      // Save user with updated billing entry
+      user.billingHistory.push(billingEntry);
+      await user.save();
+
+      // Return success response without payment URL
+      return NextResponse.json({
+        success: true,
+        free: true, // Indicate this was a free purchase
+        billingId: billingEntry.id,
+        message: purchaseType === "credits" 
+          ? "اعتبارات با موفقیت اضافه شد" 
+          : "پلن با موفقیت فعال شد",
+      });
     }
 
     const merchantId = process.env.ZARINPAL_MERCHANT_ID;

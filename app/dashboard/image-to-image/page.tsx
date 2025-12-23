@@ -144,29 +144,40 @@ export default function ImageToImagePage() {
   }, []);
 
   const handleImageSelect = (file: File, index: number) => {
-    if (file && file.type.startsWith("image/")) {
-      // Validate file size (10MB max)
-      const maxSize = 10 * 1024 * 1024; // 10MB
-      if (file.size > maxSize) {
-        setError("حجم فایل نباید بیشتر از 10 مگابایت باشد");
-        return;
-      }
+    if (file) {
+      // Check if file is an image by MIME type or extension (for HEIC support)
+      const fileName = file.name.toLowerCase();
+      const fileExtension = fileName.substring(fileName.lastIndexOf("."));
+      const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"];
+      const isImageByType = file.type.startsWith("image/");
+      const isImageByExtension = allowedExtensions.includes(fileExtension);
+      
+      if (isImageByType || isImageByExtension) {
+        // Validate file size (10MB max)
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          setError("حجم فایل نباید بیشتر از 10 مگابایت باشد");
+          return;
+        }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageSlots((prev) => {
-          const newSlots = [...prev] as [ImageSlot, ImageSlot];
-          newSlots[index] = {
-            file: file,
-            preview: reader.result as string,
-          };
-          return newSlots;
-        });
-        setGeneratedImages([]);
-        setSelectedGenerated(null);
-        setError(null);
-      };
-      reader.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImageSlots((prev) => {
+            const newSlots = [...prev] as [ImageSlot, ImageSlot];
+            newSlots[index] = {
+              file: file,
+              preview: reader.result as string,
+            };
+            return newSlots;
+          });
+          setGeneratedImages([]);
+          setSelectedGenerated(null);
+          setError(null);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        setError("فرمت فایل نامعتبر است. فقط JPG، PNG، WEBP و HEIC مجاز است");
+      }
     }
   };
 

@@ -47,15 +47,30 @@ export async function POST(request: NextRequest) {
     // Generate unique filename with timestamp
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 15);
-    const fileExtension = file.name.split(".").pop() || "jpg";
+    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const fileName = `${timestamp}-${randomString}.${fileExtension}`;
+
+    // Determine ContentType - use file type if available, otherwise infer from extension
+    let contentType = file.type;
+    if (!contentType || contentType === "application/octet-stream") {
+      // Infer MIME type from extension if browser didn't provide one
+      const mimeTypes: Record<string, string> = {
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        webp: "image/webp",
+        heic: "image/heic",
+        heif: "image/heif",
+      };
+      contentType = mimeTypes[fileExtension] || "image/jpeg";
+    }
 
     // Upload to Liara S3
     const command = new PutObjectCommand({
       Bucket: process.env.LIARA_BUCKET_NAME,
       Key: `bananaai/images/${fileName}`,
       Body: buffer,
-      ContentType: file.type,
+      ContentType: contentType,
     });
 
     await s3.send(command);
