@@ -62,7 +62,7 @@ const DiscountSchema: Schema = new Schema(
 );
 
 // Index for faster queries
-DiscountSchema.index({ code: 1 });
+// Note: code field already has unique: true which creates an index, so we don't need to add it again
 DiscountSchema.index({ isActive: 1, expiresAt: 1 });
 
 // Method to check if discount code is valid

@@ -157,7 +157,29 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    const body = await request.json();
+    // Get raw text first to handle JSON parsing errors more gracefully
+    let body: any;
+    let rawText: string = "";
+    try {
+      rawText = await request.text();
+      if (!rawText || rawText.trim().length === 0) {
+        throw new Error("Empty request body");
+      }
+      body = JSON.parse(rawText);
+    } catch (parseError: any) {
+      console.error("[Callback] JSON parsing error:", parseError);
+      // Log the raw text for debugging (truncate if too long)
+      console.error("[Callback] Raw request body (first 500 chars):", rawText.substring(0, 500));
+      console.error("[Callback] Parse error details:", parseError.message);
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid JSON format",
+          message: "فرمت داده‌های دریافتی نامعتبر است",
+        },
+        { status: 200 } // Return 200 to prevent retries
+      );
+    }
 
     // Log callback for monitoring (sanitize sensitive data in production)
     console.log(
