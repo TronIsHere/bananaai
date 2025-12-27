@@ -41,7 +41,7 @@ export function HeroSection() {
 
           <p className="max-w-xl text-base leading-relaxed text-slate-400 sm:text-lg">
             با هوش مصنوعی نانوبنانا، ایده‌های خود را در چند ثانیه به آثار هنری
-            خیره‌کننده تبدیل کنید.
+            خیره‌کننده تبدیل کنید. از تولید تصویر تا تبدیل تصویر به ویدیو با مدل Kling 2.6.
             <span className="text-slate-200 font-medium">
               {" "}
               بدون نیاز به دانش فنی{" "}

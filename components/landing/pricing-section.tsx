@@ -12,6 +12,7 @@ import {
   FaShieldAlt,
   FaTimesCircle,
   FaCoins,
+  FaVideo,
 } from "react-icons/fa";
 import { useUser } from "@/hooks/use-user";
 import { LoginDialog } from "@/components/dialog/login-dialog";
@@ -21,6 +22,7 @@ const featureIcons: Record<string, any> = {
   تصویر: FaImage,
   "متن به تصویر": FaImage,
   "تصویر به تصویر": FaImage,
+  "تصویر به ویدیو": FaVideo,
   کیفیت: HiSparkles,
   پردازش: FaRocket,
   واترمارک: FaShieldAlt,

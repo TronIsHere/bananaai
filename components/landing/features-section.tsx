@@ -9,6 +9,9 @@ export function FeaturesSection() {
     if (title === "تبدیل تصویر به تصویر") {
       return "/features/image-to-image";
     }
+    if (title === "تبدیل تصویر به ویدیو") {
+      return "/dashboard/image-to-video";
+    }
     return "#";
   };
 
@@ -26,10 +29,10 @@ export function FeaturesSection() {
         </h2>
         <p className="mx-auto max-w-2xl text-base text-slate-300 sm:text-lg">
           هر ماژول برای جریان خاصی طراحی شده تا کنترل کامل روی نور، سوژه، عمق
-          میدان و ترکیب‌بندی داشته باشید.
+          میدان، ترکیب‌بندی و حرکت داشته باشید.
         </p>
       </div>
-      <div className="mt-12 grid gap-6 sm:mt-16 md:grid-cols-2">
+      <div className="mt-12 grid gap-6 sm:mt-16 md:grid-cols-2 lg:grid-cols-3">
         {features.map((feature) => {
           const Icon = feature.icon;
           const featureLink = getFeatureLink(feature.title);
