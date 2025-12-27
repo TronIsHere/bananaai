@@ -10,7 +10,7 @@ export function FeaturesSection() {
       return "/features/image-to-image";
     }
     if (title === "تبدیل تصویر به ویدیو") {
-      return "/dashboard/image-to-video";
+      return "/features/image-to-video";
     }
     return "#";
   };
