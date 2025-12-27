@@ -25,7 +25,7 @@ export default function DashboardLayout({
         isOpen={isMobileMenuOpen} 
         onClose={closeMenu} 
       />
-      <div className="mr-0 flex-1 md:mr-64">
+      <div className="mr-0 flex-1 md:mr-72">
         <DashboardHeader 
           onMenuClick={toggleMenu}
           isMenuOpen={isMobileMenuOpen}

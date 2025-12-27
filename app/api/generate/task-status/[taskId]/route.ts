@@ -5,6 +5,10 @@ import connectDB from "@/lib/mongodb";
 import Task from "@/app/models/task";
 import User from "@/app/models/user";
 import { getNanoBananaTaskStatus } from "@/lib/services/nanobanana";
+import {
+  getKlingTaskStatus,
+  parseKlingResultJson,
+} from "@/lib/services/kling";
 
 export async function GET(
   request: NextRequest,
@@ -85,100 +89,153 @@ export async function GET(
       await task.save();
     }
 
-    // If task is still pending/processing, attempt to fetch latest status directly from NanoBanana API
+    // If task is still pending/processing, attempt to fetch latest status directly from API
     if (task.status === "pending" || task.status === "processing") {
       try {
-        const remoteStatus = await getNanoBananaTaskStatus(taskId);
+        if (task.taskType === "video") {
+          // Kling API task
+          const remoteStatus = await getKlingTaskStatus(taskId);
+          const statusData = remoteStatus.data;
 
-        // Extract data from the wrapped response structure
-        const statusData = remoteStatus.data;
+          if (statusData?.state === "success" && statusData.resultJson) {
+            // Success - parse video URLs from resultJson
+            const videoUrls = parseKlingResultJson(statusData.resultJson);
 
-        if (
-          statusData?.successFlag === 1 &&
-          statusData.response?.resultImageUrl
-        ) {
-          // Success - update task with image URL
-          const imageUrl = statusData.response.resultImageUrl;
-          task.status = "completed";
-          task.images = [imageUrl];
-          task.completedAt = new Date();
+            if (videoUrls.length > 0) {
+              task.status = "completed";
+              task.videos = videoUrls;
+              task.completedAt = new Date();
 
-          // Deduct credits from user if not already deducted
-          const user = await User.findById(task.userId);
-          if (user && !task.creditsDeducted) {
-            user.credits = Math.max(0, user.credits - task.creditsReserved);
+              // Deduct credits from user if not already deducted
+              const user = await User.findById(task.userId);
+              if (user && !task.creditsDeducted) {
+                user.credits = Math.max(0, user.credits - task.creditsReserved);
 
-            // Save generated image to history (skip for free plan)
-            if (user.currentPlan !== "free") {
-              const generatedImage = {
-                id: `${Date.now()}-0`,
-                url: imageUrl,
-                timestamp: new Date(),
-                prompt: task.prompt,
-              };
+                // Increment images generated counter (used for both images and videos)
+                user.imagesGeneratedThisMonth =
+                  (user.imagesGeneratedThisMonth || 0) + 1;
 
-              // Add to image history
-              user.imageHistory = [
-                {
-                  id: generatedImage.id,
-                  url: generatedImage.url,
-                  timestamp: generatedImage.timestamp,
-                  prompt: generatedImage.prompt,
-                },
-                ...user.imageHistory,
-              ].slice(0, 1000); // Keep last 1000 images
+                await user.save();
+                task.creditsDeducted = true;
+              }
+
+              await task.save();
+            } else {
+              // Success state but no video URLs
+              task.status = "failed";
+              task.error =
+                statusData.failMsg || "هیچ آدرس ویدیویی در پاسخ وجود ندارد";
+              task.completedAt = new Date();
+              task.creditsDeducted = false;
+              await task.save();
+            }
+          } else if (statusData?.state === "fail") {
+            // Failed
+            task.status = "failed";
+            let errorMsg =
+              statusData.failMsg ||
+              "تولید ویدیو با خطا مواجه شد (گزارش شده توسط Kling)";
+            task.error = errorMsg;
+            task.completedAt = new Date();
+            task.creditsDeducted = false;
+            await task.save();
+          }
+          // If state is "waiting", "queuing", or "generating", keep as pending/processing
+        } else {
+          // NanoBanana API task
+          const remoteStatus = await getNanoBananaTaskStatus(taskId);
+
+          // Extract data from the wrapped response structure
+          const statusData = remoteStatus.data;
+
+          if (
+            statusData?.successFlag === 1 &&
+            statusData.response?.resultImageUrl
+          ) {
+            // Success - update task with image URL
+            const imageUrl = statusData.response.resultImageUrl;
+            task.status = "completed";
+            task.images = [imageUrl];
+            task.completedAt = new Date();
+
+            // Deduct credits from user if not already deducted
+            const user = await User.findById(task.userId);
+            if (user && !task.creditsDeducted) {
+              user.credits = Math.max(0, user.credits - task.creditsReserved);
+
+              // Save generated image to history (skip for free plan)
+              if (user.currentPlan !== "free") {
+                const generatedImage = {
+                  id: `${Date.now()}-0`,
+                  url: imageUrl,
+                  timestamp: new Date(),
+                  prompt: task.prompt,
+                };
+
+                // Add to image history
+                user.imageHistory = [
+                  {
+                    id: generatedImage.id,
+                    url: generatedImage.url,
+                    timestamp: generatedImage.timestamp,
+                    prompt: generatedImage.prompt,
+                  },
+                  ...user.imageHistory,
+                ].slice(0, 1000); // Keep last 1000 images
+              }
+
+              // Increment images generated counter
+              user.imagesGeneratedThisMonth =
+                (user.imagesGeneratedThisMonth || 0) + 1;
+
+              await user.save();
+              task.creditsDeducted = true;
             }
 
-            // Increment images generated counter
-            user.imagesGeneratedThisMonth =
-              (user.imagesGeneratedThisMonth || 0) + 1;
-
-            await user.save();
-            task.creditsDeducted = true;
+            await task.save();
+          } else if (statusData?.successFlag === 2) {
+            task.status = "failed";
+            let errorMsg =
+              statusData.errorMessage ||
+              "ایجاد وظیفه با خطا مواجه شد (گزارش شده توسط NanoBanana)";
+            // Check for pattern matching error and replace with user-friendly message
+            if (
+              errorMsg.toLowerCase().includes("string") &&
+              (errorMsg.toLowerCase().includes("pattern") ||
+                errorMsg.toLowerCase().includes("matched"))
+            ) {
+              errorMsg = "مشکلی پیش امده لطفا دوباره امتحان کنید";
+            }
+            task.error = errorMsg;
+            task.completedAt = new Date();
+            task.creditsDeducted = false; // Don't deduct credits for failed tasks - credits remain available
+            await task.save();
+          } else if (statusData?.successFlag === 3) {
+            task.status = "failed";
+            let errorMsg =
+              statusData.errorMessage ||
+              "تولید تصویر با خطا مواجه شد (گزارش شده توسط NanoBanana)";
+            // Check for pattern matching error and replace with user-friendly message
+            if (
+              errorMsg.toLowerCase().includes("string") &&
+              (errorMsg.toLowerCase().includes("pattern") ||
+                errorMsg.toLowerCase().includes("matched"))
+            ) {
+              errorMsg = "مشکلی پیش امده لطفا دوباره امتحان کنید";
+            }
+            task.error = errorMsg;
+            task.completedAt = new Date();
+            task.creditsDeducted = false; // Don't deduct credits for failed tasks - credits remain available
+            await task.save();
           }
-
-          await task.save();
-        } else if (statusData?.successFlag === 2) {
-          task.status = "failed";
-          let errorMsg =
-            statusData.errorMessage ||
-            "ایجاد وظیفه با خطا مواجه شد (گزارش شده توسط NanoBanana)";
-          // Check for pattern matching error and replace with user-friendly message
-          if (
-            errorMsg.toLowerCase().includes("string") &&
-            (errorMsg.toLowerCase().includes("pattern") ||
-              errorMsg.toLowerCase().includes("matched"))
-          ) {
-            errorMsg = "مشکلی پیش امده لطفا دوباره امتحان کنید";
-          }
-          task.error = errorMsg;
-          task.completedAt = new Date();
-          task.creditsDeducted = false; // Don't deduct credits for failed tasks - credits remain available
-          await task.save();
-        } else if (statusData?.successFlag === 3) {
-          task.status = "failed";
-          let errorMsg =
-            statusData.errorMessage ||
-            "تولید تصویر با خطا مواجه شد (گزارش شده توسط NanoBanana)";
-          // Check for pattern matching error and replace with user-friendly message
-          if (
-            errorMsg.toLowerCase().includes("string") &&
-            (errorMsg.toLowerCase().includes("pattern") ||
-              errorMsg.toLowerCase().includes("matched"))
-          ) {
-            errorMsg = "مشکلی پیش امده لطفا دوباره امتحان کنید";
-          }
-          task.error = errorMsg;
-          task.completedAt = new Date();
-          task.creditsDeducted = false; // Don't deduct credits for failed tasks - credits remain available
-          await task.save();
         }
       } catch (remoteError) {
+        const apiName = task.taskType === "video" ? "Kling" : "NanoBanana";
         console.error(
-          "Failed to refresh task status from NanoBanana:",
+          `Failed to refresh task status from ${apiName}:`,
           remoteError
         );
-        // If we can't reach NanoBanana and task is old, mark as failed
+        // If we can't reach the API and task is old, mark as failed
         const taskAge = Date.now() - new Date(task.createdAt).getTime();
         if (taskAge > TIMEOUT_MS && !task.creditsDeducted) {
           task.status = "failed";
@@ -196,7 +253,9 @@ export async function GET(
     return NextResponse.json({
       taskId: task?.taskId,
       status: task?.status,
+      taskType: task?.taskType || "image",
       images: task?.images || [],
+      videos: task?.videos || [],
       error: task?.error,
       prompt: task?.prompt,
       createdAt: task?.createdAt,
@@ -208,7 +267,7 @@ export async function GET(
     return NextResponse.json(
       {
         error: "خطای سرور",
-        message: error.message || "خطا در دریافت وضعیت وظیفه",
+        message: "خطایی رخ داده است. لطفاً با پشتیبانی تماس بگیرید.",
       },
       { status: 500 }
     );

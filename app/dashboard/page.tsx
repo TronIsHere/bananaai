@@ -10,6 +10,7 @@ import {
   Sparkle,
   ImageIcon,
   Layers,
+  Video,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ interface UseCaseCardProps {
   title: string;
   description: string;
   gradient?: string;
+  badges?: string[];
 }
 
 function UseCaseCard({
@@ -29,18 +31,46 @@ function UseCaseCard({
   title,
   description,
   gradient = "from-yellow-400/20 via-orange-400/20 to-pink-500/20",
+  badges,
 }: UseCaseCardProps) {
   return (
     <Link href={href}>
       <div className="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 p-6 transition-all active:scale-[0.98] hover:border-yellow-400/30 hover:shadow-[0_0_30px_rgba(251,191,36,0.2)] md:rounded-2xl md:p-8">
+        {/* Badges - Top Left */}
+        {badges && badges.length > 0 && (
+          <div className="absolute top-3 left-3 flex items-center gap-2 flex-wrap z-10">
+            {badges.map((badge, index) => {
+              // Determine badge color based on content
+              let badgeClass = "";
+              if (badge.includes("Pro")) {
+                badgeClass = "bg-yellow-500/15 border-yellow-500/30 text-yellow-400";
+              } else if (badge.includes("Kling")) {
+                badgeClass = "bg-purple-500/15 border-purple-500/30 text-purple-400";
+              } else {
+                badgeClass = "bg-cyan-500/15 border-cyan-500/30 text-cyan-400";
+              }
+              
+              return (
+                <div
+                  key={index}
+                  className={`flex items-center justify-center rounded-md border px-2.5 py-1 text-[10px] font-medium ${badgeClass}`}
+                >
+                  {badge}
+                </div>
+              );
+            })}
+          </div>
+        )}
         <div
           className={`mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} md:mb-4 md:h-16 md:w-16`}
         >
           {icon}
         </div>
-        <h3 className="mb-2 text-lg font-bold text-white md:text-xl">
-          {title}
-        </h3>
+        <div className="mb-3">
+          <h3 className="text-lg font-bold text-white md:text-xl">
+            {title}
+          </h3>
+        </div>
         <p className="text-xs text-slate-400 md:text-sm">{description}</p>
         <div className="mt-4">
           <Button
@@ -71,7 +101,7 @@ export default function DashboardPage() {
         <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
           ابزارهای اصلی
         </h2>
-        <div className="grid gap-4 md:gap-6 md:grid-cols-2">
+        <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
           <UseCaseCard
             href="/dashboard/text-to-image"
             icon={
@@ -79,12 +109,21 @@ export default function DashboardPage() {
             }
             title="متن به تصویر"
             description="تولید تصویر از متن با استفاده از هوش مصنوعی"
+            badges={["Nano Banana", "Nano Banana Pro"]}
           />
           <UseCaseCard
             href="/dashboard/image-to-image"
             icon={<Image className="h-6 w-6 text-yellow-400 md:h-8 md:w-8" />}
             title="تصویر به تصویر"
             description="تبدیل و پردازش تصویر با هوش مصنوعی"
+            badges={["Nano Banana", "Nano Banana Pro"]}
+          />
+          <UseCaseCard
+            href="/dashboard/image-to-video"
+            icon={<Video className="h-6 w-6 text-yellow-400 md:h-8 md:w-8" />}
+            title="تصویر به ویدیو"
+            description="تبدیل تصویر به ویدیوهای متحرک با هوش مصنوعی"
+            badges={["مدل Kling-2.6"]}
           />
         </div>
       </div>

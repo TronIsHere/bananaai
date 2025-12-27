@@ -131,8 +131,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: "Failed to generate image",
-          message:
-            apiError.message || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.",
+          message: "خطایی رخ داده است. لطفاً با پشتیبانی تماس بگیرید.",
         },
         { status: 500 }
       );
@@ -140,11 +139,11 @@ export async function POST(request: NextRequest) {
 
     // Double-check response (should already be validated in generateImage, but be safe)
     if (!apiResponse || apiResponse.code !== 200 || !apiResponse.data?.taskId) {
+      console.error("Invalid API response:", apiResponse);
       return NextResponse.json(
         {
           error: "Failed to generate image",
-          message:
-            apiResponse?.msg || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.",
+          message: "خطایی رخ داده است. لطفاً با پشتیبانی تماس بگیرید.",
         },
         { status: 500 }
       );
@@ -170,27 +169,26 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Error generating image:", error);
 
-    // Handle specific error messages
-    let errorMessage = "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.";
-
-    if (error.message?.includes("NANOBANANAAPI_KEY")) {
-      errorMessage = "خطا در پیکربندی API. لطفاً با پشتیبانی تماس بگیرید.";
-    } else if (error.message?.includes("callBackUrl")) {
-      errorMessage =
-        "خطا در پیکربندی URL بازگشتی. لطفاً با پشتیبانی تماس بگیرید.";
-    } else if (
+    // Only expose credit-related errors to users (they need to know about their balance)
+    // All other errors should be generic
+    if (
       error.message?.includes("credits") ||
       error.message?.includes("اعتبار")
     ) {
-      errorMessage = error.message;
-    } else if (error.message) {
-      errorMessage = error.message;
+      return NextResponse.json(
+        {
+          error: "Internal server error",
+          message: error.message,
+        },
+        { status: 500 }
+      );
     }
 
+    // Generic error message for all other errors
     return NextResponse.json(
       {
         error: "Internal server error",
-        message: errorMessage,
+        message: "خطایی رخ داده است. لطفاً با پشتیبانی تماس بگیرید.",
       },
       { status: 500 }
     );

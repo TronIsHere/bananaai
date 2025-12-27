@@ -1,12 +1,14 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface ITask extends Document {
-  taskId: string; // NanoBanana API task ID
+  taskId: string; // API task ID (NanoBanana or Kling)
   userId: string; // User who requested the generation
   prompt: string;
   numImages: number;
+  taskType: "image" | "video"; // Type of task: image or video
   status: "pending" | "processing" | "completed" | "failed";
   images?: string[]; // Generated image URLs
+  videos?: string[]; // Generated video URLs
   error?: string; // Error message if failed
   creditsReserved: number; // Credits reserved for this task
   creditsDeducted: boolean; // Whether credits have been deducted
@@ -37,6 +39,12 @@ const TaskSchema: Schema = new Schema(
       min: 1,
       max: 4,
     },
+    taskType: {
+      type: String,
+      enum: ["image", "video"],
+      default: "image",
+      index: true,
+    },
     status: {
       type: String,
       enum: ["pending", "processing", "completed", "failed"],
@@ -44,6 +52,10 @@ const TaskSchema: Schema = new Schema(
       index: true,
     },
     images: {
+      type: [String],
+      default: [],
+    },
+    videos: {
       type: [String],
       default: [],
     },

@@ -383,47 +383,11 @@ export async function POST(request: NextRequest) {
         useSandbox,
       });
 
-      // Return more specific error message
-      if (statusCode === 401) {
-        return NextResponse.json(
-          {
-            error: "Invalid merchant ID or authentication failed",
-            details:
-              errorResponse?.errors ||
-              errorResponse?.message ||
-              "Please check your ZARINPAL_MERCHANT_ID",
-            hint: useSandbox
-              ? "Using sandbox endpoint"
-              : "Using production endpoint",
-          },
-          { status: 500 }
-        );
-      }
-
-      if (statusCode === 403) {
-        return NextResponse.json(
-          {
-            error: "دسترسی به درگاه پرداخت محدود شده است",
-            details: useSandbox
-              ? "Zarinpal sandbox is blocking requests from this IP address. This is a common issue with Zarinpal sandbox. Please try using the production endpoint or contact Zarinpal support to whitelist your IP."
-              : "Zarinpal is blocking requests from this IP address. Please contact Zarinpal support.",
-            status: statusCode,
-            hint: useSandbox
-              ? "Consider switching to production endpoint or using a VPN/proxy"
-              : "Contact Zarinpal support to whitelist your server IP",
-          },
-          { status: 500 }
-        );
-      }
-
+      // Always return generic error message to users
       return NextResponse.json(
         {
-          error: "Payment gateway error",
-          details:
-            errorResponse?.errors ||
-            errorResponse?.message ||
-            axiosError.message,
-          status: statusCode,
+          error: "خطا در درگاه پرداخت",
+          message: "خطایی رخ داده است. لطفاً با پشتیبانی تماس بگیرید.",
         },
         { status: 500 }
       );
@@ -437,8 +401,8 @@ export async function POST(request: NextRequest) {
       console.error("Zarinpal API errors:", zarinpalResponse.data.errors);
       return NextResponse.json(
         {
-          error: "Payment gateway error",
-          details: zarinpalResponse.data.errors,
+          error: "خطا در درگاه پرداخت",
+          message: "خطایی رخ داده است. لطفاً با پشتیبانی تماس بگیرید.",
         },
         { status: 500 }
       );
@@ -484,7 +448,10 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Error creating payment request:", error);
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      {
+        error: "خطا در درگاه پرداخت",
+        message: "خطایی رخ داده است. لطفاً با پشتیبانی تماس بگیرید.",
+      },
       { status: 500 }
     );
   }
