@@ -38,7 +38,7 @@ const menuItems = [
   },
   {
     href: "/dashboard/billing",
-    label: "صورتحساب",
+    label: "پلن ها",
     icon: CreditCard,
   },
   {
