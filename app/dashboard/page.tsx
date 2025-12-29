@@ -1,21 +1,14 @@
 "use client";
 
-import {
-  Sparkles,
-  Image,
-  Camera,
-  Palette,
-  Wand2,
-  Brush,
-  Sparkle,
-  ImageIcon,
-  Layers,
-  Video,
-} from "lucide-react";
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { StyleCard } from "@/components/cards/style-card";
+import { Button } from "@/components/ui/button";
+import {
+  Image,
+  Sparkles,
+  Video
+} from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 interface UseCaseCardProps {
   href: string;
@@ -167,7 +160,7 @@ export default function DashboardPage() {
               <img
                 src={banner.imageUrl}
                 alt="Banner"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 onError={(e) => {
                   console.error("Banner image failed to load:", banner.imageUrl);
                 }}
