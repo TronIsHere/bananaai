@@ -2,13 +2,10 @@
 
 import { StyleCard } from "@/components/cards/style-card";
 import { Button } from "@/components/ui/button";
-import {
-  Image,
-  Sparkles,
-  Video
-} from "lucide-react";
+import { Image, Sparkles, Video } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { READY_PROMPTS } from "@/lib/data";
 
 interface UseCaseCardProps {
   href: string;
@@ -37,13 +34,15 @@ function UseCaseCard({
               // Determine badge color based on content
               let badgeClass = "";
               if (badge.includes("Pro")) {
-                badgeClass = "bg-yellow-500/15 border-yellow-500/30 text-yellow-400";
+                badgeClass =
+                  "bg-yellow-500/15 border-yellow-500/30 text-yellow-400";
               } else if (badge.includes("Kling")) {
-                badgeClass = "bg-purple-500/15 border-purple-500/30 text-purple-400";
+                badgeClass =
+                  "bg-purple-500/15 border-purple-500/30 text-purple-400";
               } else {
                 badgeClass = "bg-cyan-500/15 border-cyan-500/30 text-cyan-400";
               }
-              
+
               return (
                 <div
                   key={index}
@@ -61,9 +60,7 @@ function UseCaseCard({
           {icon}
         </div>
         <div className="mb-3">
-          <h3 className="text-lg font-bold text-white md:text-xl">
-            {title}
-          </h3>
+          <h3 className="text-lg font-bold text-white md:text-xl">{title}</h3>
         </div>
         <p className="text-xs text-slate-400 md:text-sm">{description}</p>
         <div className="mt-4">
@@ -86,6 +83,11 @@ interface Banner {
   height: "small" | "medium" | "large";
   customHeight?: number;
 }
+
+// Helper function to build prompt URLs
+const buildPromptUrl = (route: string, prompt: string) => {
+  return `${route}?prompt=${encodeURIComponent(prompt)}`;
+};
 
 export default function DashboardPage() {
   const [banner, setBanner] = useState<Banner | null>(null);
@@ -137,7 +139,7 @@ export default function DashboardPage() {
           به پنل کاربری بنانا خوش آمدید
         </p>
       </div>
-      
+
       {/* Dynamic Image Banner */}
       {!isLoadingBanner && banner && (
         <Link href={banner.link} className="block mb-8 md:mb-12">
@@ -146,7 +148,8 @@ export default function DashboardPage() {
               className="relative w-full overflow-hidden"
               style={{
                 height:
-                  typeof getBannerHeight() === "string" && getBannerHeight().includes("px")
+                  typeof getBannerHeight() === "string" &&
+                  getBannerHeight().includes("px")
                     ? getBannerHeight()
                     : getBannerHeight() === "h-32"
                     ? "120px"
@@ -162,14 +165,17 @@ export default function DashboardPage() {
                 alt="Banner"
                 className="w-full h-full object-contain"
                 onError={(e) => {
-                  console.error("Banner image failed to load:", banner.imageUrl);
+                  console.error(
+                    "Banner image failed to load:",
+                    banner.imageUrl
+                  );
                 }}
               />
             </div>
           </div>
         </Link>
       )}
-      
+
       {/* Main Tools Section */}
       <div className="mb-8 md:mb-12">
         <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
@@ -233,10 +239,10 @@ export default function DashboardPage() {
         </div>
       </div> */}
       {/* TODO: make these style cards later */}
-      {/* Advanced Features */}
+      {/* Ready Prompts */}
       <div className="mb-8 md:mb-12">
         <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
-          ویژگی‌های پیشرفته
+          پرامپت‌های آماده
         </h2>
         <div className="grid gap-4 md:gap-6 md:grid-cols-4 lg:grid-cols-4">
           <StyleCard
@@ -266,6 +272,15 @@ export default function DashboardPage() {
             beforeImage="/img/styles/style-change.png"
             gradient="from-yellow-400/20 via-amber-400/20 to-orange-500/20"
           />
+          {READY_PROMPTS.map((promptData, index) => (
+            <StyleCard
+              key={index}
+              href={buildPromptUrl(promptData.route, promptData.prompt)}
+              title={promptData.title}
+              beforeImage={promptData.imageUrl}
+              gradient={promptData.gradient}
+            />
+          ))}
         </div>
       </div>
       {/* Creative Tools Section */}

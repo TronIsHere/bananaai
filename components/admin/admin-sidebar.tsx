@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageSquare, Users, Tag, Image } from "lucide-react";
+import { MessageSquare, Users, Tag, Image, HardDrive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
@@ -27,6 +27,11 @@ const menuItems = [
     href: "/admin/banner",
     label: "بنر داشبورد",
     icon: Image,
+  },
+  {
+    href: "/admin/storage",
+    label: "تصاویر Bucket",
+    icon: HardDrive,
   },
 ];
 

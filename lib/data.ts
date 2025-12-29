@@ -231,3 +231,60 @@ export const creditPackages = [
     popular: false,
   },
 ];
+
+// Ready prompts for dashboard style cards
+export interface ReadyPrompt {
+  title: string;
+  prompt: string;
+  imageUrl: string;
+  route: string;
+  gradient?: string;
+}
+
+export const READY_PROMPTS: ReadyPrompt[] = [
+  {
+    title: "نقاشی خودکار",
+    prompt: "Use my uploaded image. Generate a hand-drawn portrait illustration in red and yellow pen on notebook paper, inspired by doodle art and comic annotations. Keep full likeness of the subject, expressive lines, spontaneous gestures, bold outline glow, handwritten notes around, realistic pen stroke texture,",
+    imageUrl: "https://menucaffe-test.storage.c2.liara.space/bananaai/images/sorena.jpg",
+    route: "/dashboard/image-to-image",
+    gradient: "from-red-400/20 via-yellow-400/20 to-orange-500/20",
+  },
+  {
+    title: "اینفوگرافیک غذا",
+    prompt: `ورودی شامل یک تصویر رفرنس از بشقاب غذا است. هوش مصنوعی باید فقط بشقاب غذا را با دقت بالا از پس‌زمینه جدا کند (دوربری تمیز و دقیق)، بدون هیچ‌گونه تغییر در خود غذا، رنگ‌ها، بافت، نور یا چیدمان مواد غذایی.
+
+پس از دوربری، همان بشقاب واقعی بدون دستکاری داخل یک طراحی اینفوگرافیک حرفه‌ای و مینیمال قرار گیرد. هیچ تغییر بصری روی غذا اعمال نشود؛ فقط جایگذاری گرافیکی انجام شود.
+
+طراحی اینفوگرافیک سبک پریمیوم، بالغ و مدرن، مشابه داشبوردهای تحلیلی تغذیه و اپلیکیشن‌های حرفه‌ای سلامت. پس‌زمینه ساده و خنثی (سفید، خاکستری روشن یا تیره ملایم)، تمرکز بصری روی خود بشقاب.
+
+اطلاعات تغذیه‌ای به زبان فارسی، با اعداد فارسی، به‌صورت باکس‌های خطی یا نمودارهای مینیمال در اطراف یا کنار بشقاب نمایش داده شود:
+
+- نام غذا
+
+- کالری تقریبی کل
+
+- پروتئین
+
+- کربوهیدرات
+
+- چربی
+
+- فیبر
+
+- ترکیبات اصلی با نسبت تقریبی
+
+تایپوگرافی رسمی، ساده و خوانا، بدون آیکون کودکانه، بدون رنگ‌های جیغ، بدون ایموجی، بدون متن انگلیسی.
+
+خروجی نهایی کاملاً واضح، شارپ، تمیز و قابل اعتماد؛ مناسب ارائه حرفه‌ای، شبکه‌های اجتماعی یا اپلیکیشن تحلیلی تغذیه.`,
+    imageUrl: "https://menucaffe-test.storage.c2.liara.space/bananaai/images/1767016847482-e5iopnp8qnb.jpg",
+    route: "/dashboard/image-to-image",
+    gradient: "from-teal-400/20 via-cyan-400/20 to-blue-500/20",
+  },
+  {
+    title: "پرتره سینمایی",
+    prompt: "A cinematic fashion portrait of a single subject standing firmly on the ground, centered perfectly in the frame. The subject is sharp and still, fully grounded, with a confident upright posture. Surrounding the subject are dynamic long-exposure light trails and motion blur streaks created by passing city lights, wrapping around the body without affecting facial sharpness. The environment suggests a night-time urban street with neon reflections and ambient glow. Strong contrast between a crisp, detailed subject and energetic blurred background motion. Editorial fashion photography style, artistic but realistic. Shallow depth of field, subject isolation, cinematic color grading, natural skin texture, no floating, no levitation, no surreal gravity effects, grounded stance only.",
+    imageUrl: "https://menucaffe-test.storage.c2.liara.space/bananaai/images/gogosh.jpg",
+    route: "/dashboard/image-to-image",
+    gradient: "from-purple-400/20 via-pink-400/20 to-rose-500/20",
+  },
+];
