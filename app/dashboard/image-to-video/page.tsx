@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
 import { LoadingState } from "@/components/dashboard/loading-state";
+import { InsufficientCreditsDialog } from "@/components/dialog/insufficient-credits-dialog";
 import {
   Select,
   SelectContent,
@@ -56,6 +57,11 @@ export default function ImageToVideoPage() {
   } | null>(null);
   const [duration, setDuration] = useState<"5" | "10">("5");
   const [sound, setSound] = useState(false);
+  const [showInsufficientCreditsDialog, setShowInsufficientCreditsDialog] =
+    useState(false);
+  const [insufficientCreditsMessage, setInsufficientCreditsMessage] = useState<
+    string | undefined
+  >();
 
   const { user, refreshUserData } = useUser();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -226,6 +232,20 @@ export default function ImageToVideoPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Check if it's an insufficient credits error
+        if (
+          response.status === 403 ||
+          data.error === "Insufficient credits" ||
+          data.message?.includes("اعتبار") ||
+          data.message?.includes("کافی نیست")
+        ) {
+          setInsufficientCreditsMessage(data.message);
+          setShowInsufficientCreditsDialog(true);
+          setIsLoading(false);
+          setLoadingProgress(null);
+          startTimeRef.current = null;
+          return;
+        }
         throw new Error(data.message || data.error || "خطا در تولید ویدیو");
       }
 
@@ -401,6 +421,15 @@ export default function ImageToVideoPage() {
             </button>
           </div>
         )}
+
+        {/* Insufficient Credits Dialog */}
+        <InsufficientCreditsDialog
+          open={showInsufficientCreditsDialog}
+          onOpenChange={setShowInsufficientCreditsDialog}
+          message={insufficientCreditsMessage}
+          requiredCredits={requiredCredits}
+          currentCredits={user.credits}
+        />
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-5">

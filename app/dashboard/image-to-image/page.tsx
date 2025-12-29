@@ -22,6 +22,7 @@ import { GeneratedImage } from "@/types/dashboard-types";
 import { GeneratedImageDisplay } from "@/components/dashboard/generated-image-display";
 import { LoadingState } from "@/components/dashboard/loading-state";
 import { useUser } from "@/hooks/use-user";
+import { InsufficientCreditsDialog } from "@/components/dialog/insufficient-credits-dialog";
 import {
   Select,
   SelectContent,
@@ -110,6 +111,10 @@ export default function ImageToImagePage() {
     elapsedSeconds: number;
     estimatedTimeRemaining: number;
   } | null>(null);
+  const [showInsufficientCreditsDialog, setShowInsufficientCreditsDialog] =
+    useState(false);
+  const [insufficientCreditsMessage, setInsufficientCreditsMessage] =
+    useState<string | undefined>();
 
   const { user, refreshUserData } = useUser();
   const [numOutputs] = useState(1);
@@ -303,6 +308,21 @@ export default function ImageToImagePage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Check if it's an insufficient credits error
+        if (
+          response.status === 403 ||
+          data.error === "اعتبار ناکافی" ||
+          data.error === "Insufficient credits" ||
+          data.message?.includes("اعتبار") ||
+          data.message?.includes("کافی نیست")
+        ) {
+          setInsufficientCreditsMessage(data.message);
+          setShowInsufficientCreditsDialog(true);
+          setIsLoading(false);
+          setLoadingProgress(null);
+          startTimeRef.current = null;
+          return;
+        }
         let errorMessage = data.message || data.error || "خطا در تولید تصویر";
         // Check for pattern matching error and replace with user-friendly message
         if (
@@ -552,6 +572,15 @@ export default function ImageToImagePage() {
             </button>
           </div>
         )}
+
+        {/* Insufficient Credits Dialog */}
+        <InsufficientCreditsDialog
+          open={showInsufficientCreditsDialog}
+          onOpenChange={setShowInsufficientCreditsDialog}
+          message={insufficientCreditsMessage}
+          requiredCredits={isPro ? 24 : 4}
+          currentCredits={user.credits}
+        />
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Mode Selection - Compact & Top */}
