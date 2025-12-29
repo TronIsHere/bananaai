@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "whitediv.ir",
       },
+      {
+        protocol: "https",
+        hostname: "menucaffe-test.storage.c2.liara.space",
+      },
     ],
   },
 };

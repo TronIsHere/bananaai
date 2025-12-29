@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MessageSquare, Users, Tag } from "lucide-react";
+import { MessageSquare, Users, Tag, Image } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
@@ -22,6 +22,11 @@ const menuItems = [
     href: "/admin/discounts",
     label: "کدهای تخفیف",
     icon: Tag,
+  },
+  {
+    href: "/admin/banner",
+    label: "بنر داشبورد",
+    icon: Image,
   },
 ];
 

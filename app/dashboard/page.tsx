@@ -12,8 +12,8 @@ import {
   Layers,
   Video,
 } from "lucide-react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
 import { StyleCard } from "@/components/cards/style-card";
 
@@ -86,7 +86,54 @@ function UseCaseCard({
   );
 }
 
+interface Banner {
+  id: string;
+  imageUrl: string;
+  link: string;
+  height: "small" | "medium" | "large";
+  customHeight?: number;
+}
+
 export default function DashboardPage() {
+  const [banner, setBanner] = useState<Banner | null>(null);
+  const [isLoadingBanner, setIsLoadingBanner] = useState(true);
+
+  useEffect(() => {
+    const fetchBanner = async () => {
+      try {
+        const response = await fetch("/api/banner");
+        const data = await response.json();
+
+        if (response.ok && data.banner) {
+          setBanner(data.banner);
+        }
+      } catch (error) {
+        console.error("Error fetching banner:", error);
+      } finally {
+        setIsLoadingBanner(false);
+      }
+    };
+
+    fetchBanner();
+  }, []);
+
+  const getBannerHeight = () => {
+    if (!banner) return "h-32";
+    if (banner.customHeight) {
+      return `${banner.customHeight}px`;
+    }
+    switch (banner.height) {
+      case "small":
+        return "h-32";
+      case "medium":
+        return "h-48 md:h-52";
+      case "large":
+        return "h-64 md:h-80";
+      default:
+        return "h-32";
+    }
+  };
+
   return (
     <div className="max-w-7xl">
       <div className="mb-6 md:mb-8">
@@ -98,43 +145,37 @@ export default function DashboardPage() {
         </p>
       </div>
       
-      {/* Image Banner */}
-      <div className="mb-8 md:mb-12 relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50">
-        <div className="relative h-48 md:h-64 lg:h-80 w-full">
-          {/* Background Image */}
-          <NextImage
-            src="/img/proshir-gemini.png"
-            alt="Banner"
-            fill
-            className="object-cover opacity-90"
-            priority
-          />
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/60 to-slate-950/40" />
-          {/* Content Overlay */}
-          <div className="absolute inset-0 flex items-center justify-end p-6 md:p-8 lg:p-12">
-            <div className="text-right max-w-md">
-              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-2 md:mb-3">
-                خوش آمدید به بنانا
-              </h2>
-              <p className="text-sm md:text-base text-slate-300 mb-4 md:mb-6">
-                با هوش مصنوعی تصاویر و ویدیوهای خارق‌العاده خلق کنید
-              </p>
-              <Link href="/dashboard/text-to-image">
-                <Button
-                  variant="outline"
-                  className="border-yellow-400/30 bg-yellow-400/10 text-yellow-400 hover:border-yellow-400/50 hover:bg-yellow-400/15"
-                >
-                  شروع کنید
-                </Button>
-              </Link>
+      {/* Dynamic Image Banner */}
+      {!isLoadingBanner && banner && (
+        <Link href={banner.link} className="block mb-8 md:mb-12">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 transition-all hover:border-yellow-400/30 hover:shadow-[0_0_30px_rgba(251,191,36,0.2)] cursor-pointer">
+            <div
+              className="relative w-full overflow-hidden"
+              style={{
+                height:
+                  typeof getBannerHeight() === "string" && getBannerHeight().includes("px")
+                    ? getBannerHeight()
+                    : getBannerHeight() === "h-32"
+                    ? "120px"
+                    : getBannerHeight() === "h-48 md:h-52"
+                    ? "200px"
+                    : getBannerHeight() === "h-64 md:h-80"
+                    ? "320px"
+                    : "120px",
+              }}
+            >
+              <img
+                src={banner.imageUrl}
+                alt="Banner"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  console.error("Banner image failed to load:", banner.imageUrl);
+                }}
+              />
             </div>
           </div>
-          {/* Decorative Elements */}
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-yellow-400/10 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-pink-500/10 blur-3xl" />
-        </div>
-      </div>
+        </Link>
+      )}
       
       {/* Main Tools Section */}
       <div className="mb-8 md:mb-12">

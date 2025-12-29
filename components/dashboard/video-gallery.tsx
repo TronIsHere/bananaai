@@ -123,7 +123,9 @@ export function VideoGallery({
             key={video.id}
             onClick={() => handleVideoClick(video)}
             className={`group relative cursor-pointer overflow-hidden rounded-xl border border-white/10 bg-slate-900/50 transition-all hover:border-yellow-400/30 hover:shadow-[0_0_20px_rgba(251,191,36,0.15)] ${
-              deletingVideoId === video.id ? "opacity-50 pointer-events-none" : ""
+              deletingVideoId === video.id
+                ? "opacity-50 pointer-events-none"
+                : ""
             }`}
           >
             <div className="aspect-square overflow-hidden relative">
