@@ -1,21 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { History, Trash2, Search, Filter } from "lucide-react";
+import { History, Trash2, Search, Image as ImageIcon, Video as VideoIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GeneratedImage } from "@/types/dashboard-types";
+import { GeneratedImage, GeneratedVideo } from "@/types/dashboard-types";
 import { ImageGallery } from "@/components/dashboard/image-gallery";
+import { VideoGallery } from "@/components/dashboard/video-gallery";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
+type TabType = "images" | "videos";
+
 export default function HistoryPage() {
+  const [activeTab, setActiveTab] = useState<TabType>("images");
   const [images, setImages] = useState<GeneratedImage[]>([]);
+  const [videos, setVideos] = useState<GeneratedVideo[]>([]);
   const [filteredImages, setFilteredImages] = useState<GeneratedImage[]>([]);
+  const [filteredVideos, setFilteredVideos] = useState<GeneratedVideo[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
+  const [deletingVideoId, setDeletingVideoId] = useState<string | null>(null);
   const [isClearingAll, setIsClearingAll] = useState(false);
 
   useEffect(() => {
@@ -26,21 +33,39 @@ export default function HistoryPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch("/api/user/history");
       
-      if (!response.ok) {
-        throw new Error("Failed to fetch history");
+      // Fetch both image and video history in parallel
+      const [imagesResponse, videosResponse] = await Promise.all([
+        fetch("/api/user/history"),
+        fetch("/api/user/video-history"),
+      ]);
+      
+      if (!imagesResponse.ok) {
+        throw new Error("Failed to fetch image history");
       }
       
-      const history = await response.json();
+      if (!videosResponse.ok) {
+        throw new Error("Failed to fetch video history");
+      }
+      
+      const imageHistory = await imagesResponse.json();
+      const videoHistory = await videosResponse.json();
+      
       // Convert timestamp strings to Date objects
-      const formattedHistory = history.map((img: any) => ({
+      const formattedImages = imageHistory.map((img: any) => ({
         ...img,
         timestamp: new Date(img.timestamp),
       }));
       
-      setImages(formattedHistory);
-      setFilteredImages(formattedHistory);
+      const formattedVideos = videoHistory.map((video: any) => ({
+        ...video,
+        timestamp: new Date(video.timestamp),
+      }));
+      
+      setImages(formattedImages);
+      setVideos(formattedVideos);
+      setFilteredImages(formattedImages);
+      setFilteredVideos(formattedVideos);
     } catch (err) {
       console.error("Error fetching history:", err);
       setError("خطا در بارگذاری تاریخچه");
@@ -52,17 +77,24 @@ export default function HistoryPage() {
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredImages(images);
+      setFilteredVideos(videos);
       return;
     }
 
     const query = searchQuery.toLowerCase();
-    const filtered = images.filter(
+    const filteredImgs = images.filter(
       (img) =>
         img.prompt.toLowerCase().includes(query) ||
         img.id.toLowerCase().includes(query)
     );
-    setFilteredImages(filtered);
-  }, [searchQuery, images]);
+    const filteredVids = videos.filter(
+      (video) =>
+        video.prompt.toLowerCase().includes(query) ||
+        video.id.toLowerCase().includes(query)
+    );
+    setFilteredImages(filteredImgs);
+    setFilteredVideos(filteredVids);
+  }, [searchQuery, images, videos]);
 
   const handleDelete = async (imageId: string) => {
     try {
@@ -93,21 +125,65 @@ export default function HistoryPage() {
     }
   };
 
+  const handleDeleteVideo = async (videoId: string) => {
+    try {
+      setDeletingVideoId(videoId);
+      setError(null);
+      
+      const response = await fetch(`/api/user/video-history/${videoId}`, {
+        method: "DELETE",
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to delete video");
+      }
+      
+      // Update local state
+      const updatedVideos = videos.filter((video) => video.id !== videoId);
+      setVideos(updatedVideos);
+      setFilteredVideos(updatedVideos.filter((video) => 
+        !searchQuery.trim() || 
+        video.prompt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        video.id.toLowerCase().includes(searchQuery.toLowerCase())
+      ));
+    } catch (err) {
+      console.error("Error deleting video:", err);
+      setError("خطا در حذف ویدیو");
+    } finally {
+      setDeletingVideoId(null);
+    }
+  };
+
   const handleClearAll = async () => {
     try {
       setIsClearingAll(true);
       setError(null);
       
-      const response = await fetch("/api/user/history", {
-        method: "DELETE",
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to clear history");
+      // Clear based on active tab
+      if (activeTab === "images") {
+        const response = await fetch("/api/user/history", {
+          method: "DELETE",
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to clear image history");
+        }
+        
+        setImages([]);
+        setFilteredImages([]);
+      } else {
+        const response = await fetch("/api/user/video-history", {
+          method: "DELETE",
+        });
+        
+        if (!response.ok) {
+          throw new Error("Failed to clear video history");
+        }
+        
+        setVideos([]);
+        setFilteredVideos([]);
       }
       
-      setImages([]);
-      setFilteredImages([]);
       setIsClearDialogOpen(false);
     } catch (err) {
       console.error("Error clearing history:", err);
@@ -117,10 +193,19 @@ export default function HistoryPage() {
     }
   };
 
-  const handleDownload = (imageUrl: string, id: string) => {
+  const handleDownloadImage = (imageUrl: string, id: string) => {
     const link = document.createElement("a");
     link.href = imageUrl;
     link.download = `bananaai-image-${id}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadVideo = (videoUrl: string, id: string) => {
+    const link = document.createElement("a");
+    link.href = videoUrl;
+    link.download = `bananaai-video-${id}.mp4`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -149,6 +234,10 @@ export default function HistoryPage() {
     );
   }
 
+  const currentItems = activeTab === "images" ? images : videos;
+  const currentFilteredItems = activeTab === "images" ? filteredImages : filteredVideos;
+  const totalCount = images.length + videos.length;
+
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6 md:mb-8">
@@ -158,17 +247,17 @@ export default function HistoryPage() {
               <History className="h-5 w-5 text-yellow-400 md:h-6 md:w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-white md:text-4xl">تاریخچه تصاویر</h1>
+              <h1 className="text-2xl font-black text-white md:text-4xl">تاریخچه</h1>
               <p className="text-xs text-slate-400 md:text-base">
-                تمام تصاویر تولید شده شما ({images.length} تصویر)
+                تمام محتوای تولید شده شما ({images.length} تصویر، {videos.length} ویدیو)
               </p>
             </div>
           </div>
-          {images.length > 0 && (
+          {currentItems.length > 0 && (
             <Button
               onClick={() => setIsClearDialogOpen(true)}
               variant="outline"
-              disabled={isClearingAll || deletingImageId !== null}
+              disabled={isClearingAll || deletingImageId !== null || deletingVideoId !== null}
               className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500 active:scale-95 md:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isClearingAll ? (
@@ -186,8 +275,34 @@ export default function HistoryPage() {
           )}
         </div>
 
+        {/* Tabs */}
+        <div className="mb-4 flex gap-2 border-b border-white/10">
+          <button
+            onClick={() => setActiveTab("images")}
+            className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
+              activeTab === "images"
+                ? "border-yellow-400 text-yellow-400"
+                : "border-transparent text-slate-400 hover:text-white"
+            }`}
+          >
+            <ImageIcon className="h-4 w-4" />
+            <span className="text-sm font-medium">تصاویر ({images.length})</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("videos")}
+            className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
+              activeTab === "videos"
+                ? "border-yellow-400 text-yellow-400"
+                : "border-transparent text-slate-400 hover:text-white"
+            }`}
+          >
+            <VideoIcon className="h-4 w-4" />
+            <span className="text-sm font-medium">ویدیوها ({videos.length})</span>
+          </button>
+        </div>
+
         {/* Search Bar */}
-        {images.length > 0 && (
+        {currentItems.length > 0 && (
           <div className="relative">
             <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 md:h-5 md:w-5" />
             <Input
@@ -203,30 +318,51 @@ export default function HistoryPage() {
       </div>
 
       {/* Gallery */}
-      {filteredImages.length > 0 ? (
-        <ImageGallery
-          images={filteredImages}
-          onDelete={handleDelete}
-          onDownload={handleDownload}
-          deletingImageId={deletingImageId}
-        />
-      ) : images.length === 0 ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-slate-400">تاریخچه شما خالی است</p>
-        </div>
+      {activeTab === "images" ? (
+        filteredImages.length > 0 ? (
+          <ImageGallery
+            images={filteredImages}
+            onDelete={handleDelete}
+            onDownload={handleDownloadImage}
+            deletingImageId={deletingImageId}
+          />
+        ) : images.length === 0 ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <p className="text-slate-400">تاریخچه تصاویر شما خالی است</p>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <p className="text-slate-400">نتیجه‌ای یافت نشد</p>
+          </div>
+        )
       ) : (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-slate-400">نتیجه‌ای یافت نشد</p>
-        </div>
+        filteredVideos.length > 0 ? (
+          <VideoGallery
+            videos={filteredVideos}
+            onDelete={handleDeleteVideo}
+            onDownload={handleDownloadVideo}
+            deletingVideoId={deletingVideoId}
+          />
+        ) : videos.length === 0 ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <p className="text-slate-400">تاریخچه ویدیوهای شما خالی است</p>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <p className="text-slate-400">نتیجه‌ای یافت نشد</p>
+          </div>
+        )
       )}
 
       {/* Clear All Dialog */}
       <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
         <DialogContent className="bg-slate-900 border-white/10 text-white">
           <DialogHeader>
-            <DialogTitle className="text-right text-white">پاک کردن تمام تاریخچه</DialogTitle>
+            <DialogTitle className="text-right text-white">
+              پاک کردن تمام تاریخچه {activeTab === "images" ? "تصاویر" : "ویدیوها"}
+            </DialogTitle>
             <DialogDescription className="text-right text-slate-400">
-              آیا مطمئن هستید که می‌خواهید تمام تصاویر تاریخچه را پاک کنید؟ این عمل قابل بازگشت نیست.
+              آیا مطمئن هستید که می‌خواهید تمام {activeTab === "images" ? "تصاویر" : "ویدیوهای"} تاریخچه را پاک کنید؟ این عمل قابل بازگشت نیست.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-row-reverse gap-2">

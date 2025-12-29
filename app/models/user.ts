@@ -116,6 +116,38 @@ const ImageHistorySchema = new Schema<IImageHistory>(
   { _id: false }
 );
 
+// Video History Schema
+export interface IVideoHistory {
+  id: string;
+  url: string;
+  timestamp: Date;
+  prompt: string;
+}
+
+const VideoHistorySchema = new Schema<IVideoHistory>(
+  {
+    id: {
+      type: String,
+      required: true,
+    },
+    url: {
+      type: String,
+      required: true,
+    },
+    timestamp: {
+      type: Date,
+      required: true,
+      default: Date.now,
+    },
+    prompt: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+  },
+  { _id: false }
+);
+
 // User Schema
 export interface IUser extends Document {
   mobileNumber: string;
@@ -131,6 +163,7 @@ export interface IUser extends Document {
   // History
   billingHistory: IBillingHistory[];
   imageHistory: IImageHistory[];
+  videoHistory: IVideoHistory[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -197,6 +230,10 @@ const UserSchema: Schema = new Schema(
       type: [ImageHistorySchema],
       default: [],
     },
+    videoHistory: {
+      type: [VideoHistorySchema],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -218,6 +255,7 @@ UserSchema.pre("save", function (next) {
 // Index for faster queries
 // Note: mobileNumber already has an index from unique: true, so we don't need to add it again
 UserSchema.index({ "imageHistory.timestamp": -1 });
+UserSchema.index({ "videoHistory.timestamp": -1 });
 UserSchema.index({ "billingHistory.date": -1 });
 
 // Prevent re-compilation during development

@@ -194,8 +194,22 @@ async function processKlingCallback(
         if (user && !task.creditsDeducted) {
           user.credits = Math.max(0, user.credits - task.creditsReserved);
 
-          // Note: Video history could be added here if needed
-          // For now, we'll just increment the counter
+          // Save generated videos to history (skip for free plan)
+          if (user.currentPlan !== "free") {
+            // Create video history entries for all videos
+            const newVideos = videoUrls.map((videoUrl, index) => ({
+              id: `${Date.now()}-${index}`,
+              url: videoUrl,
+              timestamp: new Date(),
+              prompt: task.prompt,
+            }));
+
+            // Add all videos to video history at once
+            user.videoHistory = [
+              ...newVideos,
+              ...user.videoHistory,
+            ].slice(0, 1000); // Keep last 1000 videos
+          }
 
           // Increment images generated counter (used for both images and videos)
           user.imagesGeneratedThisMonth =

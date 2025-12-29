@@ -13,6 +13,7 @@ import {
   Video,
 } from "lucide-react";
 import Link from "next/link";
+import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
 import { StyleCard } from "@/components/cards/style-card";
 
@@ -96,6 +97,45 @@ export default function DashboardPage() {
           به پنل کاربری بنانا خوش آمدید
         </p>
       </div>
+      
+      {/* Image Banner */}
+      <div className="mb-8 md:mb-12 relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50">
+        <div className="relative h-48 md:h-64 lg:h-80 w-full">
+          {/* Background Image */}
+          <NextImage
+            src="/img/proshir-gemini.png"
+            alt="Banner"
+            fill
+            className="object-cover opacity-90"
+            priority
+          />
+          {/* Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/60 to-slate-950/40" />
+          {/* Content Overlay */}
+          <div className="absolute inset-0 flex items-center justify-end p-6 md:p-8 lg:p-12">
+            <div className="text-right max-w-md">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-2 md:mb-3">
+                خوش آمدید به بنانا
+              </h2>
+              <p className="text-sm md:text-base text-slate-300 mb-4 md:mb-6">
+                با هوش مصنوعی تصاویر و ویدیوهای خارق‌العاده خلق کنید
+              </p>
+              <Link href="/dashboard/text-to-image">
+                <Button
+                  variant="outline"
+                  className="border-yellow-400/30 bg-yellow-400/10 text-yellow-400 hover:border-yellow-400/50 hover:bg-yellow-400/15"
+                >
+                  شروع کنید
+                </Button>
+              </Link>
+            </div>
+          </div>
+          {/* Decorative Elements */}
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-yellow-400/10 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-pink-500/10 blur-3xl" />
+        </div>
+      </div>
+      
       {/* Main Tools Section */}
       <div className="mb-8 md:mb-12">
         <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
