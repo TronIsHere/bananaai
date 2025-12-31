@@ -79,20 +79,20 @@ export function PricingSection() {
               itemScope
               itemType="https://schema.org/Offer"
             >
-              {/* Featured badges */}
-              {isFeatured && (
-                <>
-                  <div className="absolute left-2 top-2 md:left-3 md:top-3 rounded-lg bg-yellow-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-400 md:text-xs z-10">
-                    محبوب‌ترین انتخاب
-                  </div>
-                  <div className="absolute right-2 top-2 md:right-3 md:top-3 rounded-lg bg-emerald-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400 md:text-xs z-10">
-                    بیشترین خرید کاربران
-                  </div>
-                </>
-              )}
-
               {/* Card content */}
-              <div className="relative flex flex-col p-3 md:p-4 h-full">
+              <div className={`relative flex flex-col p-3 md:p-4 h-full ${isFeatured ? 'pt-10 md:pt-12' : ''}`}>
+                {/* Featured badges */}
+                {isFeatured && (
+                  <>
+                    <div className="absolute left-2 top-2 md:left-3 md:top-3 rounded-lg bg-yellow-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-400 md:text-xs z-10">
+                      محبوب‌ترین انتخاب
+                    </div>
+                    <div className="absolute right-2 top-2 md:right-3 md:top-3 rounded-lg bg-emerald-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400 md:text-xs z-10">
+                      بیشترین خرید کاربران
+                    </div>
+                  </>
+                )}
+
                 {/* Plan header */}
                 <div className="mb-3">
                   <div className="flex items-center gap-2">
