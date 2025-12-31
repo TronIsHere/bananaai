@@ -133,7 +133,8 @@ export default function AdminStoragePage() {
           <div className="flex items-center gap-2">
             <Image className="h-5 w-5 text-yellow-400" />
             <p className="text-sm text-slate-400">
-              تعداد کل تصاویر: <span className="text-white font-bold">{files.length}</span>
+              تعداد کل تصاویر:{" "}
+              <span className="text-white font-bold">{files.length}</span>
             </p>
           </div>
         </div>
@@ -177,7 +178,7 @@ export default function AdminStoragePage() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                
+
                 {/* Overlay Actions */}
                 <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button
@@ -212,13 +213,19 @@ export default function AdminStoragePage() {
 
               {/* File Info */}
               <div className="p-4 space-y-2">
-                <p className="text-sm font-semibold text-white truncate" title={getFileName(file.key)}>
+                <p
+                  className="text-sm font-semibold text-white truncate"
+                  title={getFileName(file.key)}
+                >
                   {getFileName(file.key)}
                 </p>
                 <div className="flex items-center justify-between text-xs text-slate-400">
                   <span>{formatFileSize(file.size || 0)}</span>
                   {file.lastModified && (
-                    <span className="truncate" title={formatDate(file.lastModified)}>
+                    <span
+                      className="truncate"
+                      title={formatDate(file.lastModified)}
+                    >
                       {formatDate(file.lastModified)}
                     </span>
                   )}

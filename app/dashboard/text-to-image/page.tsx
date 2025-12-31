@@ -4,18 +4,12 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sparkles,
-  Download,
   Loader2,
   Palette,
   Wand2,
   Zap,
   Image as ImageIcon,
   AlertCircle,
-  ChevronDown,
-  ChevronUp,
-  Lightbulb,
-  Settings,
-  Check,
 } from "lucide-react";
 import { demoPrompts, STYLE_PRESETS, IMAGE_SIZES } from "@/lib/data";
 import { GeneratedImage } from "@/types/dashboard-types";
@@ -40,6 +34,66 @@ const iconMap = {
   Zap,
 } as const;
 
+// Aspect ratio icon component
+function AspectRatioIcon({
+  ratio,
+  className = "",
+}: {
+  ratio: string;
+  className?: string;
+}) {
+  const getRect = () => {
+    switch (ratio) {
+      case "1:1":
+        return { x: 3, y: 3, width: 10, height: 10 };
+      case "16:9":
+        return { x: 1, y: 4, width: 14, height: 8 };
+      case "9:16":
+        return { x: 4, y: 1, width: 8, height: 14 };
+      case "3:4":
+        return { x: 3.5, y: 1, width: 9, height: 14 };
+      case "4:3":
+        return { x: 1, y: 3.5, width: 14, height: 9 };
+      case "3:2":
+        return { x: 1, y: 4, width: 14, height: 8 };
+      case "2:3":
+        return { x: 4, y: 1, width: 8, height: 14 };
+      case "5:4":
+        return { x: 1.5, y: 2, width: 13, height: 12 };
+      case "4:5":
+        return { x: 2, y: 1.5, width: 12, height: 13 };
+      case "21:9":
+        return { x: 0.5, y: 5, width: 15, height: 6 };
+      default:
+        return { x: 3, y: 3, width: 10, height: 10 };
+    }
+  };
+
+  const rect = getRect();
+
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      className={className}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect
+        x={rect.x}
+        y={rect.y}
+        width={rect.width}
+        height={rect.height}
+        stroke="currentColor"
+        strokeWidth="1.5"
+        fill="none"
+        rx="1"
+      />
+    </svg>
+  );
+}
+
 export default function TextToImagePage() {
   const [prompt, setPrompt] = useState("");
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
@@ -56,13 +110,13 @@ export default function TextToImagePage() {
   } | null>(null);
   const [showInsufficientCreditsDialog, setShowInsufficientCreditsDialog] =
     useState(false);
-  const [insufficientCreditsMessage, setInsufficientCreditsMessage] =
-    useState<string | undefined>();
+  const [insufficientCreditsMessage, setInsufficientCreditsMessage] = useState<
+    string | undefined
+  >();
 
   const { user, refreshUserData } = useUser();
-  const [numOutputs] = useState(1);
-  const [imageSize, setImageSize] = useState("16:9");
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [numOutputs, setNumOutputs] = useState(1);
+  const [imageSize, setImageSize] = useState("1:1");
   const [isPro, setIsPro] = useState(true);
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -70,6 +124,8 @@ export default function TextToImagePage() {
   // Check if user has access to image size selection (creator or studio plans)
   const canSelectImageSize =
     user.currentPlan === "creator" || user.currentPlan === "studio";
+
+  const creditCost = isPro ? 24 : 4;
 
   // Set prompt from URL parameter on mount
   useEffect(() => {
@@ -161,8 +217,8 @@ export default function TextToImagePage() {
       const taskId = data.taskId;
 
       // Step 2: Poll for task completion
-      const pollInterval = 1500; // Poll every 1.5 seconds (faster)
-      const maxAttempts = 80; // Maximum 2 minutes (80 * 1.5 seconds)
+      const pollInterval = 1500;
+      const maxAttempts = 80;
       let attempts = 0;
 
       const pollTaskStatus = async (): Promise<void> => {
@@ -191,7 +247,6 @@ export default function TextToImagePage() {
           }
 
           if (statusData.status === "completed") {
-            // Task completed successfully
             if (statusData.images && statusData.images.length > 0) {
               const newImages: GeneratedImage[] = statusData.images.map(
                 (url: string, index: number) => ({
@@ -204,8 +259,6 @@ export default function TextToImagePage() {
 
               setGeneratedImages(newImages);
               setSelectedGenerated(newImages[0]);
-
-              // Refresh user data to update credits
               await refreshUserData();
             } else {
               throw new Error("هیچ تصویری تولید نشد");
@@ -218,7 +271,6 @@ export default function TextToImagePage() {
               pollingTimeoutRef.current = null;
             }
           } else if (statusData.status === "failed") {
-            // Task failed
             setIsLoading(false);
             setLoadingProgress(null);
             startTimeRef.current = null;
@@ -231,7 +283,6 @@ export default function TextToImagePage() {
             statusData.status === "pending" ||
             statusData.status === "processing"
           ) {
-            // Still processing, continue polling
             if (attempts >= maxAttempts) {
               setIsLoading(false);
               if (pollingTimeoutRef.current) {
@@ -248,7 +299,7 @@ export default function TextToImagePage() {
               );
             }
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error("Error polling task status:", err);
           setIsLoading(false);
           setLoadingProgress(null);
@@ -257,23 +308,26 @@ export default function TextToImagePage() {
             clearTimeout(pollingTimeoutRef.current);
             pollingTimeoutRef.current = null;
           }
-          setError(err.message || "خطا در بررسی وضعیت تولید تصویر");
+          setError(
+            err instanceof Error
+              ? err.message
+              : "خطا در بررسی وضعیت تولید تصویر"
+          );
         }
       };
 
-      // Start polling immediately (don't wait for first interval)
       pollTaskStatus();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error generating image:", err);
-      setError(err.message || "خطا در تولید تصویر. لطفاً دوباره تلاش کنید.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "خطا در تولید تصویر. لطفاً دوباره تلاش کنید."
+      );
       setIsLoading(false);
       setLoadingProgress(null);
       startTimeRef.current = null;
     }
-  };
-
-  const handleUseExample = (examplePrompt: string) => {
-    setPrompt(examplePrompt);
   };
 
   const handleDownload = (imageUrl: string, id: string) => {
@@ -291,574 +345,249 @@ export default function TextToImagePage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const applyPreset = (preset: (typeof STYLE_PRESETS)[number]) => {
-    if (selectedStyleId === preset.id) {
-      setSelectedStyleId(null);
-    } else {
-      setSelectedStyleId(preset.id);
-    }
-  };
-
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20">
-            <Sparkles className="h-6 w-6 text-yellow-400" />
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-4">
+      {/* Error Message */}
+      {error && (
+        <div className="rounded-xl border border-red-500/50 bg-red-500/10 p-4 flex items-start gap-3 mb-6">
+          <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm text-red-400 font-medium">{error}</p>
           </div>
-          <div>
-            <h1 className="text-3xl font-black text-white">متن به تصویر</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              ایده‌هایتان را به تصویر تبدیل کنید
-            </p>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-300 transition"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Insufficient Credits Dialog */}
+      <InsufficientCreditsDialog
+        open={showInsufficientCreditsDialog}
+        onOpenChange={setShowInsufficientCreditsDialog}
+        message={insufficientCreditsMessage}
+        requiredCredits={creditCost * numOutputs}
+        currentCredits={user.credits}
+      />
+
+      {/* Main Input Container */}
+      <form onSubmit={handleSubmit}>
+        <div className="bg-zinc-900/80 rounded-2xl border border-white/10">
+          {/* Prompt Input Area */}
+          <div className="p-4">
+            {/* Mobile label */}
+            <label className="sm:hidden block text-xs font-medium text-white/70 mb-2 text-right">
+              پرامپت
+            </label>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="تصویری که می‌خواهید را توصیف کنید..."
+              className="w-full bg-transparent text-white placeholder:text-white/40 text-base resize-none outline-none min-h-[80px] sm:min-h-[60px] py-1"
+              dir="rtl"
+              rows={3}
+            />
+          </div>
+
+          {/* Toolbar */}
+          <div className="flex items-center gap-2 px-4 pb-4 flex-wrap">
+            {/* Model Selector */}
+            <Select
+              value={isPro ? "pro" : "standard"}
+              onValueChange={(value) => setIsPro(value === "pro")}
+            >
+              <SelectTrigger className="w-fit sm:flex-initial rounded-full bg-white/5 hover:bg-white/10 border-white/10 text-white h-9 sm:h-9 px-3 sm:px-3 py-2 gap-2">
+                <SelectValue>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`flex items-center justify-center w-5 h-5 rounded text-[10px] font-bold ${
+                        isPro
+                          ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-black"
+                          : "bg-cyan-500 text-white"
+                      }`}
+                    >
+                      {isPro ? "G" : "S"}
+                    </span>
+                    <span className="text-sm font-medium">
+                      {isPro ? "Nano Banana Pro" : "استاندارد"}
+                    </span>
+                  </div>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                <SelectItem
+                  value="pro"
+                  className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <span className="flex items-center justify-center w-6 h-6 rounded bg-gradient-to-br from-yellow-400 to-orange-500 text-xs font-bold text-black">
+                      G
+                    </span>
+                    <div className="flex-1 text-right">
+                      <div className="text-sm font-medium">Nano Banana Pro</div>
+                      <div className="text-xs text-white/50">
+                        ۲۴ اعتبار • کیفیت بالا
+                      </div>
+                    </div>
+                  </div>
+                </SelectItem>
+                <SelectItem
+                  value="standard"
+                  className="text-right focus:bg-cyan-400/10 focus:text-cyan-400"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <span className="flex items-center justify-center w-6 h-6 rounded bg-cyan-500 text-xs font-bold text-white">
+                      S
+                    </span>
+                    <div className="flex-1 text-right">
+                      <div className="text-sm font-medium">استاندارد</div>
+                      <div className="text-xs text-white/50">
+                        ۴ اعتبار • سریع
+                      </div>
+                    </div>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Aspect Ratio Selector */}
+            {canSelectImageSize && (
+              <Select value={imageSize} onValueChange={setImageSize}>
+                <SelectTrigger className="w-fit rounded-full bg-white/5 hover:bg-white/10 border-white/10 text-white h-9 px-3 py-2 gap-2">
+                  <AspectRatioIcon
+                    ratio={imageSize}
+                    className="text-white/80"
+                  />
+                  <SelectValue>
+                    <span className="text-sm">{imageSize}</span>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                  {IMAGE_SIZES.map((size) => (
+                    <SelectItem
+                      key={size.value}
+                      value={size.value}
+                      className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <AspectRatioIcon
+                          ratio={size.value}
+                          className="text-white/80"
+                        />
+                        <span className="flex-1">{size.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            {/* Style Selector */}
+            <Select
+              value={selectedStyleId || "none"}
+              onValueChange={(value) =>
+                setSelectedStyleId(value === "none" ? null : value)
+              }
+            >
+              <SelectTrigger
+                className={`w-fit rounded-full border h-9 px-3 py-2 gap-2 ${
+                  selectedStyleId
+                    ? "bg-yellow-400/10 border-yellow-400/30 text-yellow-400"
+                    : "bg-white/5 hover:bg-white/10 border-white/10 text-white/80"
+                }`}
+              >
+                <Palette className="h-4 w-4" />
+                <SelectValue>
+                  <span className="text-sm">
+                    {selectedStyleId
+                      ? STYLE_PRESETS.find((s) => s.id === selectedStyleId)
+                          ?.name
+                      : "سبک"}
+                  </span>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-white/10 text-white">
+                <SelectItem
+                  value="none"
+                  className="text-right focus:bg-white/5"
+                >
+                  <span className="text-sm text-white/60">بدون سبک</span>
+                </SelectItem>
+                {STYLE_PRESETS.map((preset) => {
+                  const Icon =
+                    iconMap[preset.icon as keyof typeof iconMap] || ImageIcon;
+                  return (
+                    <SelectItem
+                      key={preset.id}
+                      value={preset.id}
+                      className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <Icon className="h-4 w-4 text-white/60" />
+                        <span className="flex-1">{preset.name}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Generate Button */}
+            <Button
+              type="submit"
+              disabled={isLoading || !prompt.trim()}
+              className="w-full sm:w-auto bg-[#c8ff00] hover:bg-[#b8ef00] text-black font-bold px-6 py-2 rounded-xl h-10 sm:h-10 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                  در حال تولید...
+                </>
+              ) : (
+                <>
+                  تولید
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  <span className="text-black/70">
+                    ✦ {creditCost * numOutputs}
+                  </span>
+                </>
+              )}
+            </Button>
           </div>
         </div>
-      </div>
+      </form>
 
-      <div className="space-y-6">
-        {/* Error Message */}
-        {error && (
-          <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm text-red-400 font-medium">{error}</p>
-            </div>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-400 hover:text-red-300 transition"
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        {/* Insufficient Credits Dialog */}
-        <InsufficientCreditsDialog
-          open={showInsufficientCreditsDialog}
-          onOpenChange={setShowInsufficientCreditsDialog}
-          message={insufficientCreditsMessage}
-          requiredCredits={isPro ? 24 : 4}
-          currentCredits={user.credits}
-        />
-
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-          {/* Mode Selection - Compact & Top */}
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-white/90 block text-right">
-              مدل انتخابی
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Standard Mode */}
-              <div
-                onClick={() => setIsPro(false)}
-                className={`cursor-pointer relative rounded-xl border p-3 transition-all duration-200 ${
-                  !isPro
-                    ? "border-cyan-500 bg-cyan-500/10"
-                    : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
-                }`}
+      {/* Example Prompts */}
+      {!generatedImages.length && !isLoading && demoPrompts.length > 0 && (
+        <div className="mt-6">
+          <p className="text-xs text-white/40 mb-3 text-right">
+            مثال‌های پیشنهادی:
+          </p>
+          <div className="flex flex-wrap gap-2 justify-end">
+            {demoPrompts.map((example, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setPrompt(example)}
+                className="rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-2 text-xs text-white/60 hover:text-white/80 transition-colors text-right"
               >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`p-1.5 rounded-lg ${
-                        !isPro ? "bg-cyan-500/20" : "bg-white/10"
-                      }`}
-                    >
-                      <Sparkles
-                        className={`h-4 w-4 ${
-                          !isPro ? "text-cyan-400" : "text-white/70"
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <h3
-                        className={`font-bold text-sm ${
-                          !isPro ? "text-white" : "text-white/80"
-                        }`}
-                      >
-                        استاندارد
-                      </h3>
-                      <div className="flex items-center gap-1 text-cyan-300 text-[10px] font-medium">
-                        <span className="font-bold">۴</span>
-                        <span>اعتبار</span>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Checkmark */}
-                  {!isPro && (
-                    <div className="h-5 w-5 rounded-full bg-cyan-500 flex items-center justify-center">
-                      <Check className="h-3 w-3 text-white" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Pro Mode */}
-              <div
-                onClick={() => setIsPro(true)}
-                className={`cursor-pointer relative rounded-xl border p-3 transition-all duration-200 ${
-                  isPro
-                    ? "border-yellow-400 bg-yellow-400/10 shadow-[0_0_15px_-5px_rgba(250,204,21,0.3)]"
-                    : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
-                }`}
-              >
-                {/* Badge */}
-                <div className="absolute -top-2 right-3 px-1.5 py-0.5 bg-linear-to-r from-yellow-400 to-orange-500 rounded-full text-[8px] font-bold text-black shadow-sm">
-                  PRO
-                </div>
-
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`p-1.5 rounded-lg ${
-                        isPro ? "bg-yellow-400/20" : "bg-white/10"
-                      }`}
-                    >
-                      <Zap
-                        className={`h-4 w-4 ${
-                          isPro ? "text-yellow-400" : "text-white/70"
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <h3
-                        className={`font-bold text-sm ${
-                          isPro ? "text-white" : "text-white/80"
-                        }`}
-                      >
-                        نانو بنانا پرو
-                      </h3>
-                      <div className="flex items-center gap-1 text-yellow-400 text-[10px] font-medium">
-                        <span className="font-bold">۲۴</span>
-                        <span>اعتبار</span>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Checkmark */}
-                  {isPro && (
-                    <div className="h-5 w-5 rounded-full bg-yellow-400 flex items-center justify-center">
-                      <Check className="h-3 w-3 text-black" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+                {example.substring(0, 50)}...
+              </button>
+            ))}
           </div>
+        </div>
+      )}
 
-          {/* Main Prompt Input - Prominent */}
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <label
-                htmlFor="prompt"
-                className="text-sm font-semibold text-white/90 block text-right"
-              >
-                تصویری که می‌خواهید را توصیف کنید
-              </label>
-              <textarea
-                id="prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="مثلاً: یک گربه فضانورد در حال رانندگی با موتورسیکلت در مریخ، نور طلایی، سبک علمی تخیلی"
-                className="w-full rounded-xl border-2 border-white/10 bg-white/5 p-4 text-right text-base text-white placeholder:text-white/30 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 min-h-[160px] resize-none transition-all md:min-h-[180px] md:text-lg"
-                dir="rtl"
-                autoFocus
-              />
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-slate-400 text-right">
-                  💡 هرچه جزئیات بیشتری بنویسید، نتیجه بهتری خواهید گرفت
-                </p>
-                <span className="text-xs text-slate-500">
-                  {prompt.length} کاراکتر
-                </span>
-              </div>
-              
-              {/* Image Size Dropdown - Only for Creator and Studio plans */}
-              {canSelectImageSize && (
-                <div className="flex justify-start">
-                  <Select value={imageSize} onValueChange={setImageSize}>
-                    <SelectTrigger className="w-fit border-white/10 bg-white/5 text-white hover:bg-white/10 focus:border-yellow-400 text-sm">
-                      <div className="flex items-center gap-2">
-                        {/* SVG Icon based on aspect ratio */}
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 16 16"
-                          className="shrink-0"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          {imageSize === "1:1" && (
-                            <rect
-                              x="2"
-                              y="2"
-                              width="12"
-                              height="12"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              rx="1"
-                            />
-                          )}
-                          {imageSize === "16:9" && (
-                            <rect
-                              x="1"
-                              y="4"
-                              width="14"
-                              height="8"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              rx="1"
-                            />
-                          )}
-                          {imageSize === "9:16" && (
-                            <rect
-                              x="4"
-                              y="1"
-                              width="8"
-                              height="14"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              rx="1"
-                            />
-                          )}
-                          {imageSize === "3:4" && (
-                            <rect
-                              x="3.5"
-                              y="1"
-                              width="9"
-                              height="14"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              rx="1"
-                            />
-                          )}
-                          {imageSize === "4:3" && (
-                            <rect
-                              x="1"
-                              y="3.5"
-                              width="14"
-                              height="9"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              rx="1"
-                            />
-                          )}
-                          {imageSize === "3:2" && (
-                            <rect
-                              x="1"
-                              y="4"
-                              width="14"
-                              height="8"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              rx="1"
-                            />
-                          )}
-                          {imageSize === "2:3" && (
-                            <rect
-                              x="4"
-                              y="1"
-                              width="8"
-                              height="14"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              rx="1"
-                            />
-                          )}
-                          {imageSize === "5:4" && (
-                            <rect
-                              x="1.5"
-                              y="2"
-                              width="13"
-                              height="12"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              rx="1"
-                            />
-                          )}
-                          {imageSize === "4:5" && (
-                            <rect
-                              x="2"
-                              y="1.5"
-                              width="12"
-                              height="13"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              rx="1"
-                            />
-                          )}
-                          {imageSize === "21:9" && (
-                            <rect
-                              x="0.5"
-                              y="5"
-                              width="15"
-                              height="6"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              rx="1"
-                            />
-                          )}
-                        </svg>
-                        <SelectValue>
-                          {IMAGE_SIZES.find((s) => s.value === imageSize)?.label || imageSize}
-                        </SelectValue>
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
-                      {IMAGE_SIZES.map((size) => (
-                        <SelectItem
-                          key={size.value}
-                          value={size.value}
-                          className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
-                        >
-                          <div className="flex items-center gap-2 justify-end w-full">
-                            <span>{size.label}</span>
-                            <svg
-                              width="16"
-                              height="16"
-                              viewBox="0 0 16 16"
-                              className="shrink-0"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              {size.value === "1:1" && (
-                                <rect
-                                  x="2"
-                                  y="2"
-                                  width="12"
-                                  height="12"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  fill="none"
-                                  rx="1"
-                                />
-                              )}
-                              {size.value === "16:9" && (
-                                <rect
-                                  x="1"
-                                  y="4"
-                                  width="14"
-                                  height="8"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  fill="none"
-                                  rx="1"
-                                />
-                              )}
-                              {size.value === "9:16" && (
-                                <rect
-                                  x="4"
-                                  y="1"
-                                  width="8"
-                                  height="14"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  fill="none"
-                                  rx="1"
-                                />
-                              )}
-                              {size.value === "3:4" && (
-                                <rect
-                                  x="3.5"
-                                  y="1"
-                                  width="9"
-                                  height="14"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  fill="none"
-                                  rx="1"
-                                />
-                              )}
-                              {size.value === "4:3" && (
-                                <rect
-                                  x="1"
-                                  y="3.5"
-                                  width="14"
-                                  height="9"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  fill="none"
-                                  rx="1"
-                                />
-                              )}
-                              {size.value === "3:2" && (
-                                <rect
-                                  x="1"
-                                  y="4"
-                                  width="14"
-                                  height="8"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  fill="none"
-                                  rx="1"
-                                />
-                              )}
-                              {size.value === "2:3" && (
-                                <rect
-                                  x="4"
-                                  y="1"
-                                  width="8"
-                                  height="14"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  fill="none"
-                                  rx="1"
-                                />
-                              )}
-                              {size.value === "5:4" && (
-                                <rect
-                                  x="1.5"
-                                  y="2"
-                                  width="13"
-                                  height="12"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  fill="none"
-                                  rx="1"
-                                />
-                              )}
-                              {size.value === "4:5" && (
-                                <rect
-                                  x="2"
-                                  y="1.5"
-                                  width="12"
-                                  height="13"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  fill="none"
-                                  rx="1"
-                                />
-                              )}
-                              {size.value === "21:9" && (
-                                <rect
-                                  x="0.5"
-                                  y="5"
-                                  width="15"
-                                  height="6"
-                                  stroke="currentColor"
-                                  strokeWidth="1.5"
-                                  fill="none"
-                                  rx="1"
-                                />
-                              )}
-                            </svg>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-
-            {/* Quick Example Prompts - Compact */}
-            {demoPrompts.length > 0 && (
-              <div className="flex items-center gap-2 flex-wrap">
-                <Lightbulb className="h-4 w-4 text-yellow-400/60 shrink-0" />
-                <span className="text-xs text-slate-400">مثال‌های آماده:</span>
-                {demoPrompts.slice(0, 2).map((example, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => handleUseExample(example)}
-                    className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-white/70 transition hover:border-yellow-400/40 hover:bg-yellow-400/10 hover:text-yellow-400 active:scale-95"
-                  >
-                    {example.substring(0, 35)}...
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Mode Selection has been moved to top */}
-
-          {/* Advanced Options - Collapsible */}
-          <div className="border-t border-white/10 pt-4">
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center justify-between w-full text-sm font-medium text-white/80 hover:text-white transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span>تنظیمات پیشرفته</span>
-              </div>
-              {showAdvanced ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </button>
-
-            {showAdvanced && (
-              <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-200">
-                {/* Style Presets */}
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-white/70 block text-right">
-                    افزودن سبک هنری
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {STYLE_PRESETS.map((preset) => {
-                      const Icon =
-                        (iconMap[
-                          preset.icon as keyof typeof iconMap
-                        ] as typeof ImageIcon) || ImageIcon;
-                      return (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          onClick={() => applyPreset(preset)}
-                          className={`flex flex-col items-center justify-center gap-1.5 rounded-lg border px-2 py-2.5 text-[10px] transition active:scale-95 ${
-                            selectedStyleId === preset.id
-                              ? "border-yellow-400 bg-yellow-400/20 text-yellow-400"
-                              : "border-white/10 bg-white/5 text-white/70 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
-                          }`}
-                        >
-                          <Icon className="h-4 w-4 shrink-0" />
-                          <span className="truncate w-full text-center">
-                            {preset.name}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <Button
-            type="submit"
-            disabled={isLoading || !prompt.trim()}
-            className="w-full bg-yellow-500 font-bold text-slate-950 hover:bg-yellow-600 h-10 text-sm px-4 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-5 w-5 ml-2 animate-spin" />
-                در حال تولید تصویر...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-5 w-5 ml-2" />
-                تولید تصویر
-              </>
-            )}
-          </Button>
-        </form>
-
-        {/* Loading State */}
-        {isLoading && (
+      {/* Loading State */}
+      {isLoading && (
+        <div className="mt-8">
           <LoadingState
-            message="در حال آماده‌سازی عکس هستیم"
+            message="در حال آماده‌سازی تصویر"
             subMessage={
               loadingProgress
                 ? `زمان سپری شده: ${loadingProgress.elapsedSeconds} ثانیه`
@@ -866,10 +595,12 @@ export default function TextToImagePage() {
             }
             numOutputs={numOutputs}
           />
-        )}
+        </div>
+      )}
 
-        {/* Generated Images */}
-        {generatedImages.length > 0 && !isLoading && (
+      {/* Generated Images */}
+      {generatedImages.length > 0 && !isLoading && (
+        <div className="mt-8">
           <GeneratedImageDisplay
             generatedImages={generatedImages}
             selectedGenerated={selectedGenerated}
@@ -878,8 +609,8 @@ export default function TextToImagePage() {
             onCopyPrompt={handleCopyPrompt}
             copiedId={copiedId}
           />
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

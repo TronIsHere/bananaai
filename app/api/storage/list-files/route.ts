@@ -31,20 +31,28 @@ export async function GET(request: NextRequest) {
       );
     }
     const bucketName = process.env.LIARA_BUCKET_NAME || "bananaai";
-    
+
     const command = new ListObjectsV2Command({
       Bucket: bucketName,
       Prefix: "bananaai/", // Only list files in the bananaai folder
     });
 
     const data = await s3.send(command);
-    
+
     // Filter to only include image files
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+    const imageExtensions = [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".gif",
+      ".webp",
+      ".svg",
+      ".bmp",
+    ];
     const files = (data.Contents || []).filter((file) => {
       if (!file.Key) return false;
       const key = file.Key.toLowerCase();
-      return imageExtensions.some(ext => key.endsWith(ext));
+      return imageExtensions.some((ext) => key.endsWith(ext));
     });
 
     // Build full URLs for each file
@@ -63,16 +71,16 @@ export async function GET(request: NextRequest) {
       return dateB - dateA; // Descending order (newest first)
     });
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       files: filesWithUrls,
-      count: filesWithUrls.length 
+      count: filesWithUrls.length,
     });
   } catch (error: any) {
     console.error("Error listing files:", error);
     return NextResponse.json(
-      { 
-        error: "Failed to list files", 
-        message: error.message 
+      {
+        error: "Failed to list files",
+        message: error.message,
       },
       { status: 500 }
     );
