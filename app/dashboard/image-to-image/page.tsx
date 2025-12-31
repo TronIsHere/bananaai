@@ -637,7 +637,7 @@ export default function ImageToImagePage() {
                         }`}
                       />
                       <p className="text-xs font-medium text-white/60 text-center px-2">
-                        {index === 0 ? "تصویر اصلی" : "تصویر دوم"}
+                        {index === 0 ? "تصویر اصلی" : "تصویر دوم (اختیاری)"}
                       </p>
                       <input
                         ref={(el) => {
@@ -852,13 +852,6 @@ export default function ImageToImagePage() {
               </>
             )}
           </Button>
-
-          {/* Credits info - Mobile */}
-          <div className="sm:hidden text-center">
-            <p className="text-xs text-white/50">
-              {user.credits} اعتبار باقی‌مانده
-            </p>
-          </div>
         </div>
       </form>
 

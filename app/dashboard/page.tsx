@@ -2,10 +2,19 @@
 
 import { StyleCard } from "@/components/cards/style-card";
 import { Button } from "@/components/ui/button";
-import { Image, Sparkles, Video } from "lucide-react";
+import {
+  Image,
+  Sparkles,
+  Video,
+  ArrowLeft,
+  Zap,
+  Crown,
+  ChevronLeft,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { READY_PROMPTS } from "@/lib/data";
+import { useUser } from "@/hooks/use-user";
 
 interface UseCaseCardProps {
   href: string;
@@ -14,6 +23,7 @@ interface UseCaseCardProps {
   description: string;
   gradient?: string;
   badges?: string[];
+  accentColor?: string;
 }
 
 function UseCaseCard({
@@ -21,21 +31,53 @@ function UseCaseCard({
   icon,
   title,
   description,
-  gradient = "from-yellow-400/20 via-orange-400/20 to-pink-500/20",
   badges,
+  accentColor = "yellow",
 }: UseCaseCardProps) {
+  const getAccentClasses = () => {
+    switch (accentColor) {
+      case "purple":
+        return {
+          iconBg: "bg-purple-500/20",
+          border: "hover:border-purple-400/40",
+          shadow: "hover:shadow-[0_0_40px_rgba(168,85,247,0.15)]",
+          button:
+            "hover:border-purple-400/40 hover:bg-purple-400/10 hover:text-purple-400",
+        };
+      case "cyan":
+        return {
+          iconBg: "bg-cyan-500/20",
+          border: "hover:border-cyan-400/40",
+          shadow: "hover:shadow-[0_0_40px_rgba(34,211,238,0.15)]",
+          button:
+            "hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-cyan-400",
+        };
+      default:
+        return {
+          iconBg: "bg-yellow-500/20",
+          border: "hover:border-yellow-400/40",
+          shadow: "hover:shadow-[0_0_40px_rgba(251,191,36,0.15)]",
+          button:
+            "hover:border-yellow-400/40 hover:bg-yellow-400/10 hover:text-yellow-400",
+        };
+    }
+  };
+
+  const accent = getAccentClasses();
+
   return (
-    <Link href={href}>
-      <div className="group relative overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 p-6 transition-all active:scale-[0.98] hover:border-yellow-400/30 hover:shadow-[0_0_30px_rgba(251,191,36,0.2)] md:rounded-2xl md:p-8">
-        {/* Badges - Top Left */}
+    <Link href={href} className="block h-full">
+      <div
+        className={`group relative overflow-hidden rounded-2xl bg-zinc-900/80 border border-white/10 p-5 sm:p-6 transition-all duration-300 active:scale-[0.98] h-full flex flex-col ${accent.border} ${accent.shadow}`}
+      >
+        {/* Badges */}
         {badges && badges.length > 0 && (
-          <div className="absolute top-3 left-3 flex items-center gap-2 flex-wrap z-10">
+          <div className="flex items-center gap-2 flex-wrap mb-4">
             {badges.map((badge, index) => {
-              // Determine badge color based on content
               let badgeClass = "";
               if (badge.includes("Pro")) {
                 badgeClass =
-                  "bg-yellow-500/15 border-yellow-500/30 text-yellow-400";
+                  "bg-gradient-to-r from-yellow-500/15 to-orange-500/15 border-yellow-500/30 text-yellow-400";
               } else if (badge.includes("Kling")) {
                 badgeClass =
                   "bg-purple-500/15 border-purple-500/30 text-purple-400";
@@ -44,32 +86,44 @@ function UseCaseCard({
               }
 
               return (
-                <div
+                <span
                   key={index}
-                  className={`flex items-center justify-center rounded-md border px-2.5 py-1 text-[10px] font-medium ${badgeClass}`}
+                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold ${badgeClass}`}
                 >
                   {badge}
-                </div>
+                </span>
               );
             })}
           </div>
         )}
+
+        {/* Icon */}
         <div
-          className={`mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${gradient} md:mb-4 md:h-16 md:w-16`}
+          className={`mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${accent.iconBg} transition-transform duration-300 group-hover:scale-110`}
         >
           {icon}
         </div>
-        <div className="mb-3">
-          <h3 className="text-lg font-bold text-white md:text-xl">{title}</h3>
-        </div>
-        <p className="text-xs text-slate-400 md:text-sm">{description}</p>
-        <div className="mt-4">
-          <Button
-            variant="outline"
-            className="w-full border-white/10 text-white/80 hover:border-yellow-400/30 hover:text-yellow-400 md:w-auto"
+
+        {/* Title */}
+        <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
+
+        {/* Description */}
+        <p className="text-sm text-white/50 mb-5 leading-relaxed grow">
+          {description}
+        </p>
+
+        {/* CTA */}
+        <div className="flex items-center justify-between mt-auto">
+          <span
+            className={`text-sm font-medium text-white/40 group-hover:text-white/60 transition-colors`}
           >
             شروع کنید
-          </Button>
+          </span>
+          <div
+            className={`flex items-center justify-center w-8 h-8 rounded-full bg-white/5 border border-white/10 transition-all group-hover:bg-white/10 ${accent.button}`}
+          >
+            <ChevronLeft className="h-4 w-4 text-white/60 group-hover:text-white transition-colors" />
+          </div>
         </div>
       </div>
     </Link>
@@ -92,6 +146,7 @@ const buildPromptUrl = (route: string, prompt: string) => {
 export default function DashboardPage() {
   const [banner, setBanner] = useState<Banner | null>(null);
   const [isLoadingBanner, setIsLoadingBanner] = useState(true);
+  const { user } = useUser();
 
   useEffect(() => {
     const fetchBanner = async () => {
@@ -113,52 +168,69 @@ export default function DashboardPage() {
   }, []);
 
   const getBannerHeight = () => {
-    if (!banner) return "h-32";
+    if (!banner) return "120px";
     if (banner.customHeight) {
       return `${banner.customHeight}px`;
     }
     switch (banner.height) {
       case "small":
-        return "h-32";
+        return "120px";
       case "medium":
-        return "h-48 md:h-52";
+        return "200px";
       case "large":
-        return "h-64 md:h-80";
+        return "320px";
       default:
-        return "h-32";
+        return "120px";
     }
   };
 
   return (
-    <div className="max-w-7xl">
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl font-black text-white mb-2 md:text-4xl">
-          داشبورد
-        </h1>
-        <p className="text-sm text-slate-400 md:text-base">
-          به پنل کاربری بنانا خوش آمدید
-        </p>
+    <div className="w-full max-w-5xl mx-auto px-3 sm:px-4">
+      {/* Header Section */}
+      <div className="mb-8 sm:mb-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white mb-2">
+              سلام، {user.firstName || "کاربر"} 👋
+            </h1>
+            <p className="text-sm sm:text-base text-white/50">
+              امروز می‌خوای چی بسازی؟
+            </p>
+          </div>
+
+          {/* Credits Badge */}
+          <div className="flex items-center gap-3 bg-zinc-900/80 rounded-2xl border border-white/10 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500">
+                <Zap className="h-4 w-4 text-black" />
+              </div>
+              <div>
+                <p className="text-xs text-white/50">اعتبار شما</p>
+                <p className="text-lg font-bold text-white">
+                  {user.credits.toLocaleString("fa-IR")}
+                </p>
+              </div>
+            </div>
+            <Link href="/dashboard/billing">
+              <Button
+                size="sm"
+                className="bg-[#c8ff00] hover:bg-[#b8ef00] text-black font-bold rounded-xl h-9 px-4"
+              >
+                <Crown className="h-3.5 w-3.5 ml-1.5" />
+                خرید
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Dynamic Image Banner */}
       {!isLoadingBanner && banner && (
-        <Link href={banner.link} className="block mb-8 md:mb-12">
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 transition-all hover:border-yellow-400/30 hover:shadow-[0_0_30px_rgba(251,191,36,0.2)] cursor-pointer">
+        <Link href={banner.link} className="block mb-8 sm:mb-10">
+          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/80 transition-all hover:border-yellow-400/30 hover:shadow-[0_0_40px_rgba(251,191,36,0.15)] cursor-pointer">
             <div
               className="relative w-full overflow-hidden"
-              style={{
-                height:
-                  typeof getBannerHeight() === "string" &&
-                  getBannerHeight().includes("px")
-                    ? getBannerHeight()
-                    : getBannerHeight() === "h-32"
-                    ? "120px"
-                    : getBannerHeight() === "h-48 md:h-52"
-                    ? "200px"
-                    : getBannerHeight() === "h-64 md:h-80"
-                    ? "320px"
-                    : "120px",
-              }}
+              style={{ height: getBannerHeight() }}
             >
               <img
                 src={banner.imageUrl}
@@ -177,74 +249,49 @@ export default function DashboardPage() {
       )}
 
       {/* Main Tools Section */}
-      <div className="mb-8 md:mb-12">
-        <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
-          ابزارهای اصلی
-        </h2>
-        <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mb-10 sm:mb-12">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xl font-bold text-white">ابزارهای هوش مصنوعی</h2>
+        </div>
+        <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 items-stretch">
           <UseCaseCard
             href="/dashboard/text-to-image"
-            icon={
-              <Sparkles className="h-6 w-6 text-yellow-400 md:h-8 md:w-8" />
-            }
+            icon={<Sparkles className="h-6 w-6 text-yellow-400" />}
             title="متن به تصویر"
-            description="تولید تصویر از متن با استفاده از هوش مصنوعی"
+            description="با نوشتن یک متن ساده، تصاویر خیره‌کننده بسازید"
             badges={["Nano Banana", "Nano Banana Pro"]}
+            accentColor="yellow"
           />
           <UseCaseCard
             href="/dashboard/image-to-image"
-            icon={<Image className="h-6 w-6 text-yellow-400 md:h-8 md:w-8" />}
+            icon={<Image className="h-6 w-6 text-cyan-400" />}
             title="تصویر به تصویر"
-            description="تبدیل و پردازش تصویر با هوش مصنوعی"
+            description="تصاویر خود را به آثار هنری جدید تبدیل کنید"
             badges={["Nano Banana", "Nano Banana Pro"]}
+            accentColor="cyan"
           />
           <UseCaseCard
             href="/dashboard/image-to-video"
-            icon={<Video className="h-6 w-6 text-yellow-400 md:h-8 md:w-8" />}
+            icon={<Video className="h-6 w-6 text-purple-400" />}
             title="تصویر به ویدیو"
-            description="تبدیل تصویر به ویدیوهای متحرک با هوش مصنوعی"
-            badges={["مدل Kling-2.6"]}
+            description="تصاویر ثابت خود را به ویدیوهای متحرک تبدیل کنید"
+            badges={["Kling 2.6"]}
+            accentColor="purple"
           />
         </div>
       </div>
-      {/* Photo Creation Use Cases */}
-      {/* <div className="mb-8 md:mb-12">
-        <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
-          ساخت عکس
-        </h2>
-        <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <UseCaseCard
-            href="/dashboard/text-to-image?prompt=عکس+مجلسی+و+رسمی+با+کیفیت+عالی+،+نور+حرفه‌ای+،+پس‌زمینه+ساده+و+زیبا"
-            icon={<Camera className="h-6 w-6 text-blue-400 md:h-8 md:w-8" />}
-            title="ساخت عکس مجلسی"
-            description="ایجاد عکس‌های مجلسی و رسمی با کیفیت بالا"
-            gradient="from-blue-400/20 via-purple-400/20 to-pink-500/20"
-          />
-          <UseCaseCard
-            href="/dashboard/text-to-image?prompt=عکس+استودیویی+حرفه‌ای+،+نور+استودیو+،+پس‌زمینه+یکدست+،+کیفیت+بالا"
-            icon={
-              <ImageIcon className="h-6 w-6 text-purple-400 md:h-8 md:w-8" />
-            }
-            title="ساخت عکس استودیویی"
-            description="تولید عکس‌های استودیویی حرفه‌ای"
-            gradient="from-purple-400/20 via-pink-400/20 to-red-500/20"
-          />
-          <UseCaseCard
-            href="/dashboard/image-to-image?prompt=تبدیل+به+پرتره+حرفه‌ای+،+بهبود+کیفیت+،+نور+طبیعی+،+فوکوس+روی+چهره"
-            icon={<Brush className="h-6 w-6 text-pink-400 md:h-8 md:w-8" />}
-            title="تبدیل به پرتره"
-            description="تبدیل عکس‌های معمولی به پرتره حرفه‌ای"
-            gradient="from-pink-400/20 via-rose-400/20 to-orange-500/20"
-          />
+
+      {/* Ready Prompts Section */}
+      <div className="mb-10 sm:mb-12">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xl font-bold text-white">پرامپت‌های آماده</h2>
+          <span className="text-xs text-white/40 bg-white/5 px-3 py-1.5 rounded-full">
+            کلیک کنید و امتحان کنید
+          </span>
         </div>
-      </div> */}
-      {/* TODO: make these style cards later */}
-      {/* Ready Prompts */}
-      <div className="mb-8 md:mb-12">
-        <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
-          پرامپت‌های آماده
-        </h2>
-        <div className="grid gap-4 md:gap-6 md:grid-cols-4 lg:grid-cols-4">
+
+        {/* Featured Style Cards */}
+        <div className="grid gap-4 sm:gap-5 grid-cols-2 lg:grid-cols-4 mb-5">
           <StyleCard
             href="/dashboard/text-to-image?prompt=تغییر+پس‌زمینه+تصویر+،+حذف+پس‌زمینه+قدیمی+و+جایگزینی+با+پس‌زمینه+جدید+و+زیبا+در+محیط+دشت+طبیعی+با+نمای+باشکوه+کوه+دماوند+در+پس‌زمینه+،+نور+طبیعی+واقع‌گرایانه+،+کیفیت+بالا+،+جزئیات+دقیق+،+فضای+سینمایی+و+چشم‌نواز"
             title="تغییر پس‌زمینه"
@@ -272,40 +319,44 @@ export default function DashboardPage() {
             beforeImage="/img/styles/style-change.png"
             gradient="from-yellow-400/20 via-amber-400/20 to-orange-500/20"
           />
-          {READY_PROMPTS.map((promptData, index) => (
-            <StyleCard
-              key={index}
-              href={buildPromptUrl(promptData.route, promptData.prompt)}
-              title={promptData.title}
-              beforeImage={promptData.imageUrl}
-              gradient={promptData.gradient}
-            />
-          ))}
+        </div>
+
+        {/* More Style Cards from READY_PROMPTS */}
+        {READY_PROMPTS.length > 0 && (
+          <div className="grid gap-4 sm:gap-5 grid-cols-2 lg:grid-cols-4">
+            {READY_PROMPTS.map((promptData, index) => (
+              <StyleCard
+                key={index}
+                href={buildPromptUrl(promptData.route, promptData.prompt)}
+                title={promptData.title}
+                beforeImage={promptData.imageUrl}
+                gradient={promptData.gradient}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Quick Tips Section */}
+      <div className="mb-8">
+        <div className="bg-gradient-to-br from-yellow-500/10 via-orange-500/5 to-transparent rounded-2xl border border-yellow-500/20 p-5 sm:p-6">
+          <div className="flex items-start gap-4">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-yellow-500/20 shrink-0">
+              <Sparkles className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white mb-1">
+                نکته برای نتایج بهتر
+              </h3>
+              <p className="text-sm text-white/60 leading-relaxed">
+                برای گرفتن بهترین نتیجه، پرامپت خود را با جزئیات بیشتری بنویسید.
+                مثلاً به جای &quot;یک گربه&quot;، بنویسید &quot;یک گربه نارنجی
+                پشمالو در حال خواب روی یک مبل آبی در نور آفتاب عصر&quot;
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-      {/* Creative Tools Section */}
-      {/* <div>
-        <h2 className="text-xl font-bold text-white mb-4 md:text-2xl">
-          ابزارهای خلاقانه
-        </h2>
-        <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <StyleCard
-            href="/dashboard/text-to-image?prompt=آثار+هنری+و+طراحی+خلاقانه+،+سبک+هنری+منحصر+به+فرد+،+رنگ‌های+زنده+و+زیبا"
-            title="هنر و طراحی"
-            beforeImage="/img/styles/art-design-before.jpg"
-            afterImage="/img/styles/art-design-after.jpg"
-            gradient="from-green-400/20 via-emerald-400/20 to-teal-500/20"
-          />
-          <StyleCard
-            href="/dashboard/image-to-image?prompt=بهبود+کیفیت+تصویر+،+افزایش+وضوح+،+حذف+نویز+،+بهبود+رنگ+و+روشنایی"
-            title="بهبود تصویر"
-            beforeImage="/img/styles/image-enhancement-before.jpg"
-            afterImage="/img/styles/image-enhancement-after.png"
-            gradient="from-cyan-400/20 via-blue-400/20 to-indigo-500/20"
-          />
-
-        </div>
-      </div> */}
     </div>
   );
 }

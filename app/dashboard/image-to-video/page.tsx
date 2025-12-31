@@ -581,13 +581,6 @@ export default function ImageToVideoPage() {
               </>
             )}
           </Button>
-
-          {/* Credits info - Mobile */}
-          <div className="sm:hidden text-center">
-            <p className="text-xs text-white/50">
-              {user.credits} اعتبار باقی‌مانده
-            </p>
-          </div>
         </div>
       </form>
 

@@ -215,8 +215,8 @@ export default function BillingPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
-          plan: planEnglish, 
+        body: JSON.stringify({
+          plan: planEnglish,
           type: "plan",
           ...(discountCode && { discountCode }),
         }),
@@ -264,7 +264,10 @@ export default function BillingPage() {
       if (!response.ok) {
         const errorData = await response.json();
         // Use Persian error message if available, otherwise fall back to English or default
-        const errorMessage = errorData.error || errorData.errorEn || "Failed to create payment request";
+        const errorMessage =
+          errorData.error ||
+          errorData.errorEn ||
+          "Failed to create payment request";
         throw new Error(errorMessage);
       }
 
@@ -630,7 +633,8 @@ export default function BillingPage() {
                 {!canPurchaseCredits && (
                   <div className="mb-3 rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2">
                     <p className="text-xs text-amber-400 text-center">
-                      برای خرید اعتبار اضافی باید یک پلن فعال (غیر از رایگان) داشته باشید
+                      برای خرید اعتبار اضافی باید یک پلن فعال (غیر از رایگان)
+                      داشته باشید
                     </p>
                   </div>
                 )}
