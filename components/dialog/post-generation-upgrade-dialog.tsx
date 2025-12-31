@@ -29,7 +29,9 @@ export function PostGenerationUpgradeDialog({
 }: PostGenerationUpgradeDialogProps) {
   const router = useRouter();
   const [isPurchasing, setIsPurchasing] = useState(false);
-  const [discountExpiresIn, setDiscountExpiresIn] = useState<number | null>(null);
+  const [discountExpiresIn, setDiscountExpiresIn] = useState<number | null>(
+    null
+  );
 
   // Get Creator plan
   const creatorPlan = plans.find((p) => p.nameEn === "Creator");
@@ -74,10 +76,10 @@ export function PostGenerationUpgradeDialog({
   const formatTimeRemaining = (expiresAt: number) => {
     const remaining = expiresAt - Date.now();
     if (remaining <= 0) return "منقضی شده";
-    
+
     const hours = Math.floor(remaining / (1000 * 60 * 60));
     const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours > 0) {
       return `${hours} ساعت و ${minutes} دقیقه`;
     }
@@ -121,7 +123,9 @@ export function PostGenerationUpgradeDialog({
             }),
           });
         } else {
-          throw new Error(errorData.error || "Failed to create payment request");
+          throw new Error(
+            errorData.error || "Failed to create payment request"
+          );
         }
       }
 
@@ -165,7 +169,7 @@ export function PostGenerationUpgradeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-950 border-white/10 text-white p-0 overflow-hidden max-w-lg gap-0 sm:rounded-3xl">
+      <DialogContent className="bg-slate-950 border-white/10 text-white p-0 overflow-hidden max-w-lg gap-0 sm:rounded-3xl max-h-[90vh] overflow-y-auto sm:max-h-[85vh]">
         {/* Header Section */}
         <div className="relative px-4 pt-8 pb-4 pr-12 bg-linear-to-b from-slate-900 to-slate-950 overflow-hidden">
           {/* Background decorative elements */}
@@ -189,9 +193,11 @@ export function PostGenerationUpgradeDialog({
                   🎉 عالی شد!
                 </DialogTitle>
                 <p className="text-sm text-slate-300 leading-relaxed">
-                  با پلن Creator می‌تونی همین حالا
+                  با پلن خلاق می‌تونی همین حالا
                   <br />
-                  <span className="font-bold text-yellow-400">30 تصویر دیگه بسازی</span>
+                  <span className="font-bold text-yellow-400">
+                    30 تصویر دیگه بسازی
+                  </span>
                 </p>
               </div>
             </div>
@@ -199,57 +205,52 @@ export function PostGenerationUpgradeDialog({
         </div>
 
         {/* Body Section */}
-        <div className="px-5 pb-4 bg-slate-950 space-y-4">
+        <div className="px-5 pb-4 bg-slate-950 space-y-3">
           {/* Generated Image Display */}
           {generatedImageUrl && (
             <div className="relative rounded-xl overflow-hidden border border-white/10 bg-slate-900/50">
               <img
                 src={generatedImageUrl}
                 alt="Generated image"
-                className="w-full h-48 object-cover"
+                className="w-full h-40 object-cover"
               />
               <div className="absolute inset-0 bg-linear-to-t from-slate-950/80 to-transparent" />
               <div className="absolute bottom-3 right-3 flex items-center gap-2">
                 <Crown className="h-4 w-4 text-yellow-400" />
                 <span className="text-xs font-medium text-white">
-                  تصویر شما با Creator
+                  تصویر شما با خلاق
                 </span>
               </div>
             </div>
           )}
 
           {/* Discount Badge */}
-          <div className="rounded-xl border border-yellow-400/30 bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-pink-500/10 p-4">
+          <div className="rounded-xl border border-yellow-400/30 bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-pink-500/10 p-3">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className="text-lg">⏳</span>
-                <span className="text-sm font-bold text-yellow-400">
+                <span className="text-base">⏳</span>
+                <span className="text-xs font-bold text-yellow-400">
                   10٪ تخفیف کاربران جدید
                 </span>
               </div>
-              {discountExpiresIn && (
-                <span className="text-xs text-slate-400">
-                  {formatTimeRemaining(discountExpiresIn)}
-                </span>
-              )}
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-lg text-slate-400 line-through">
+              <span className="text-sm text-slate-400 line-through">
                 {originalPrice.toLocaleString("fa-IR")} تومان
               </span>
-              <span className="text-2xl font-black text-white">
+              <span className="text-xl font-black text-white">
                 {discountedPrice.toLocaleString("fa-IR")} تومان
               </span>
             </div>
           </div>
 
           {/* Creator Plan Info */}
-          <div className="rounded-lg bg-slate-900/50 border border-white/5 p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Crown className="h-5 w-5 text-yellow-400" />
-              <span className="text-sm font-bold text-white">پلن Creator</span>
+          <div className="rounded-lg bg-slate-900/50 border border-white/5 p-2.5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Crown className="h-4 w-4 text-yellow-400" />
+              <span className="text-xs font-bold text-white">پلن خلاق</span>
             </div>
-            <ul className="space-y-1.5">
+            <ul className="space-y-1">
               <li className="flex items-center gap-2 text-xs text-slate-300">
                 <span className="text-emerald-400">✓</span>
                 <span>۶۵۰ اعتبار</span>
@@ -270,11 +271,11 @@ export function PostGenerationUpgradeDialog({
           </div>
 
           {/* Footer Actions */}
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-1">
             <Button
               onClick={handleUpgrade}
               disabled={isPurchasing}
-              className="w-full h-12 text-base font-bold bg-linear-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white shadow-lg shadow-orange-500/20 rounded-xl transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100 disabled:opacity-70"
+              className="w-full h-11 text-sm font-bold bg-linear-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white shadow-lg shadow-orange-500/20 rounded-xl transition-all duration-300 hover:scale-[1.02] disabled:hover:scale-100 disabled:opacity-70"
             >
               {isPurchasing ? (
                 <>
@@ -283,8 +284,7 @@ export function PostGenerationUpgradeDialog({
                 </>
               ) : (
                 <>
-                  <Crown className="h-4 w-4 ml-2" />
-                  ✅ ادامه با Creator
+                  <Crown className="h-4 w-4 ml-2" />✅ ادامه با خلاق
                 </>
               )}
             </Button>
@@ -303,4 +303,3 @@ export function PostGenerationUpgradeDialog({
     </Dialog>
   );
 }
-

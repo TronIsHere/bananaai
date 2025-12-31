@@ -174,7 +174,7 @@ export default function ImageToImagePage() {
   useEffect(() => {
     if (
       generatedImages.length > 0 &&
-      user.currentPlan === "free" &&
+      (user.currentPlan === "free" || user.currentPlan === null) &&
       !localStorage.getItem("post_gen_upgrade_shown") &&
       !showPostGenerationUpgrade
     ) {
