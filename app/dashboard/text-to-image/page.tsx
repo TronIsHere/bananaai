@@ -471,6 +471,293 @@ export default function TextToImagePage() {
                   {prompt.length} کاراکتر
                 </span>
               </div>
+              
+              {/* Image Size Dropdown - Only for Creator and Studio plans */}
+              {canSelectImageSize && (
+                <div className="flex justify-start">
+                  <Select value={imageSize} onValueChange={setImageSize}>
+                    <SelectTrigger className="w-fit border-white/10 bg-white/5 text-white hover:bg-white/10 focus:border-yellow-400 text-sm">
+                      <div className="flex items-center gap-2">
+                        {/* SVG Icon based on aspect ratio */}
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 16 16"
+                          className="shrink-0"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          {imageSize === "1:1" && (
+                            <rect
+                              x="2"
+                              y="2"
+                              width="12"
+                              height="12"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              rx="1"
+                            />
+                          )}
+                          {imageSize === "16:9" && (
+                            <rect
+                              x="1"
+                              y="4"
+                              width="14"
+                              height="8"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              rx="1"
+                            />
+                          )}
+                          {imageSize === "9:16" && (
+                            <rect
+                              x="4"
+                              y="1"
+                              width="8"
+                              height="14"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              rx="1"
+                            />
+                          )}
+                          {imageSize === "3:4" && (
+                            <rect
+                              x="3.5"
+                              y="1"
+                              width="9"
+                              height="14"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              rx="1"
+                            />
+                          )}
+                          {imageSize === "4:3" && (
+                            <rect
+                              x="1"
+                              y="3.5"
+                              width="14"
+                              height="9"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              rx="1"
+                            />
+                          )}
+                          {imageSize === "3:2" && (
+                            <rect
+                              x="1"
+                              y="4"
+                              width="14"
+                              height="8"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              rx="1"
+                            />
+                          )}
+                          {imageSize === "2:3" && (
+                            <rect
+                              x="4"
+                              y="1"
+                              width="8"
+                              height="14"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              rx="1"
+                            />
+                          )}
+                          {imageSize === "5:4" && (
+                            <rect
+                              x="1.5"
+                              y="2"
+                              width="13"
+                              height="12"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              rx="1"
+                            />
+                          )}
+                          {imageSize === "4:5" && (
+                            <rect
+                              x="2"
+                              y="1.5"
+                              width="12"
+                              height="13"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              rx="1"
+                            />
+                          )}
+                          {imageSize === "21:9" && (
+                            <rect
+                              x="0.5"
+                              y="5"
+                              width="15"
+                              height="6"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              rx="1"
+                            />
+                          )}
+                        </svg>
+                        <SelectValue>
+                          {IMAGE_SIZES.find((s) => s.value === imageSize)?.label || imageSize}
+                        </SelectValue>
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-900 border-white/10 text-white">
+                      {IMAGE_SIZES.map((size) => (
+                        <SelectItem
+                          key={size.value}
+                          value={size.value}
+                          className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
+                        >
+                          <div className="flex items-center gap-2 justify-end w-full">
+                            <span>{size.label}</span>
+                            <svg
+                              width="16"
+                              height="16"
+                              viewBox="0 0 16 16"
+                              className="shrink-0"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              {size.value === "1:1" && (
+                                <rect
+                                  x="2"
+                                  y="2"
+                                  width="12"
+                                  height="12"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  fill="none"
+                                  rx="1"
+                                />
+                              )}
+                              {size.value === "16:9" && (
+                                <rect
+                                  x="1"
+                                  y="4"
+                                  width="14"
+                                  height="8"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  fill="none"
+                                  rx="1"
+                                />
+                              )}
+                              {size.value === "9:16" && (
+                                <rect
+                                  x="4"
+                                  y="1"
+                                  width="8"
+                                  height="14"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  fill="none"
+                                  rx="1"
+                                />
+                              )}
+                              {size.value === "3:4" && (
+                                <rect
+                                  x="3.5"
+                                  y="1"
+                                  width="9"
+                                  height="14"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  fill="none"
+                                  rx="1"
+                                />
+                              )}
+                              {size.value === "4:3" && (
+                                <rect
+                                  x="1"
+                                  y="3.5"
+                                  width="14"
+                                  height="9"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  fill="none"
+                                  rx="1"
+                                />
+                              )}
+                              {size.value === "3:2" && (
+                                <rect
+                                  x="1"
+                                  y="4"
+                                  width="14"
+                                  height="8"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  fill="none"
+                                  rx="1"
+                                />
+                              )}
+                              {size.value === "2:3" && (
+                                <rect
+                                  x="4"
+                                  y="1"
+                                  width="8"
+                                  height="14"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  fill="none"
+                                  rx="1"
+                                />
+                              )}
+                              {size.value === "5:4" && (
+                                <rect
+                                  x="1.5"
+                                  y="2"
+                                  width="13"
+                                  height="12"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  fill="none"
+                                  rx="1"
+                                />
+                              )}
+                              {size.value === "4:5" && (
+                                <rect
+                                  x="2"
+                                  y="1.5"
+                                  width="12"
+                                  height="13"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  fill="none"
+                                  rx="1"
+                                />
+                              )}
+                              {size.value === "21:9" && (
+                                <rect
+                                  x="0.5"
+                                  y="5"
+                                  width="15"
+                                  height="6"
+                                  stroke="currentColor"
+                                  strokeWidth="1.5"
+                                  fill="none"
+                                  rx="1"
+                                />
+                              )}
+                            </svg>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             {/* Quick Example Prompts - Compact */}
@@ -545,31 +832,6 @@ export default function TextToImagePage() {
                     })}
                   </div>
                 </div>
-
-                {/* Image Size Selector - Only for Creator and Studio plans */}
-                {canSelectImageSize && (
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-white/70 block text-right">
-                      اندازه تصویر
-                    </label>
-                    <Select value={imageSize} onValueChange={setImageSize}>
-                      <SelectTrigger className="w-full border-white/10 bg-white/5 text-white hover:bg-white/10 focus:border-yellow-400 text-sm">
-                        <SelectValue placeholder="انتخاب اندازه تصویر" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-slate-900 border-white/10 text-white">
-                        {IMAGE_SIZES.map((size) => (
-                          <SelectItem
-                            key={size.value}
-                            value={size.value}
-                            className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
-                          >
-                            {size.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
               </div>
             )}
           </div>
