@@ -63,10 +63,14 @@ export function PricingSection() {
         {plans.map((plan) => {
           const isFeatured = plan.featured;
           // Extract credits from highlights
-          const creditsHighlight = plan.highlights.find((h) => h.includes("اعتبار"));
+          const creditsHighlight = plan.highlights.find((h) =>
+            h.includes("اعتبار")
+          );
           const creditsMatch = creditsHighlight?.match(/(\d+)\s*اعتبار/);
           const creditsNumber = creditsMatch ? creditsMatch[1] : null;
-          const otherHighlights = plan.highlights.filter((h) => !h.includes("اعتبار"));
+          const otherHighlights = plan.highlights.filter(
+            (h) => !h.includes("اعتبار")
+          );
 
           return (
             <article
@@ -80,7 +84,11 @@ export function PricingSection() {
               itemType="https://schema.org/Offer"
             >
               {/* Card content */}
-              <div className={`relative flex flex-col p-3 md:p-4 h-full ${isFeatured ? 'pt-10 md:pt-12' : ''}`}>
+              <div
+                className={`relative flex flex-col p-3 md:p-4 h-full ${
+                  isFeatured ? "pt-10 md:pt-12" : ""
+                }`}
+              >
                 {/* Featured badges */}
                 {isFeatured && (
                   <>
@@ -114,10 +122,19 @@ export function PricingSection() {
 
                 {/* Pricing */}
                 <div className="mb-3">
-                  <p className="text-lg font-black text-white md:text-xl" itemProp="price" itemScope itemType="https://schema.org/PriceSpecification">
-                    <span itemProp="price">{plan.price}</span> <span itemProp="priceCurrency">{plan.currency}</span>
+                  <p
+                    className="text-lg font-black text-white md:text-xl"
+                    itemProp="price"
+                    itemScope
+                    itemType="https://schema.org/PriceSpecification"
+                  >
+                    <span itemProp="price">{plan.price}</span>{" "}
+                    <span itemProp="priceCurrency">{plan.currency}</span>
                   </p>
-                  <p className="mt-0.5 text-[10px] text-slate-400 md:text-xs" itemProp="description">
+                  <p
+                    className="mt-0.5 text-[10px] text-slate-400 md:text-xs"
+                    itemProp="description"
+                  >
                     {plan.tagline}
                   </p>
                 </div>
@@ -127,10 +144,14 @@ export function PricingSection() {
                   <div className="mb-3 rounded-xl bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-pink-500/10 border border-yellow-400/30 p-3">
                     <div className="flex items-center gap-2 mb-1">
                       <FaCoins className="h-4 w-4 text-yellow-400 md:h-5 md:w-5 flex-shrink-0" />
-                      <span className="text-[10px] text-yellow-300/80 md:text-xs font-medium">اعتبار</span>
+                      <span className="text-[10px] text-yellow-300/80 md:text-xs font-medium">
+                        اعتبار
+                      </span>
                     </div>
                     <p className="text-2xl font-black text-white md:text-3xl">
-                      {new Intl.NumberFormat("fa-IR").format(parseInt(creditsNumber))}
+                      {new Intl.NumberFormat("fa-IR").format(
+                        parseInt(creditsNumber)
+                      )}
                     </p>
                   </div>
                 )}
@@ -194,12 +215,7 @@ export function PricingSection() {
               پرداخت امن با زرین‌پال
             </span>
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2">
-            <FaUndo className="h-4 w-4 text-blue-400" />
-            <span className="text-xs font-medium text-white sm:text-sm">
-              تضمین بازگشت وجه 7 روزه
-            </span>
-          </div>
+
           <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2">
             <FaCrown className="h-4 w-4 text-yellow-400" />
             <span className="text-xs font-medium text-white sm:text-sm">
@@ -207,7 +223,7 @@ export function PricingSection() {
             </span>
           </div>
         </div>
-        
+
         <p className="text-center text-sm text-slate-400">
           تمام پلن‌ها شامل پشتیبانی ۲۴/۷ و به‌روزرسانی‌های رایگان هستند
         </p>
