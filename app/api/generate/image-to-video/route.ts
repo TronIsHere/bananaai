@@ -147,6 +147,7 @@ export async function POST(request: NextRequest) {
     const callbackUrl = getCallbackUrl(request);
 
     // Call Kling API
+    // Note: If end frame is provided, it should be the second item in imageUrls array
     let apiResponse;
     try {
       apiResponse = await createKlingTask({
@@ -154,7 +155,7 @@ export async function POST(request: NextRequest) {
         callBackUrl: callbackUrl,
         input: {
           prompt: prompt.trim(),
-          image_urls: imageUrls,
+          image_urls: imageUrls, // Should be [mainImageUrl] or [mainImageUrl, endFrameUrl]
           sound: Boolean(sound),
           duration: duration as "5" | "10",
         },

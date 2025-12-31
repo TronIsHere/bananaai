@@ -8,22 +8,18 @@ import {
   X,
   Loader2,
   AlertCircle,
-  Settings,
   Check,
   Volume2,
   VolumeX,
+  Clock,
+  Play,
+  Download,
+  Copy,
+  Sparkles,
 } from "lucide-react";
 import { useUser } from "@/hooks/use-user";
-import { LoadingState } from "@/components/dashboard/loading-state";
+import { VideoLoadingState } from "@/components/dashboard/video-loading-state";
 import { InsufficientCreditsDialog } from "@/components/dialog/insufficient-credits-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 
 interface GeneratedVideo {
   id: string;
@@ -96,7 +92,6 @@ export default function ImageToVideoPage() {
 
   const handleImageSelect = (file: File) => {
     if (file) {
-      // Check if file is an image by MIME type or extension
       const fileName = file.name.toLowerCase();
       const fileExtension = fileName.substring(fileName.lastIndexOf("."));
       const allowedExtensions = [
@@ -111,8 +106,7 @@ export default function ImageToVideoPage() {
       const isImageByExtension = allowedExtensions.includes(fileExtension);
 
       if (isImageByType || isImageByExtension) {
-        // Validate file size (6MB max)
-        const maxSize = 6 * 1024 * 1024; // 6MB
+        const maxSize = 6 * 1024 * 1024;
         if (file.size > maxSize) {
           setError("حجم فایل نباید بیشتر از 6 مگابایت باشد");
           return;
@@ -144,7 +138,9 @@ export default function ImageToVideoPage() {
     e.preventDefault();
     setDragging(false);
     const file = e.dataTransfer.files?.[0];
-    if (file) handleImageSelect(file);
+    if (file) {
+      handleImageSelect(file);
+    }
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -192,7 +188,6 @@ export default function ImageToVideoPage() {
     startTimeRef.current = Date.now();
 
     try {
-      // Step 1: Upload image to get public URL
       const formData = new FormData();
       formData.append("image", imageSlot.file);
 
@@ -201,19 +196,16 @@ export default function ImageToVideoPage() {
         body: formData,
       });
 
-      // Handle 413 errors specifically (Request Entity Too Large)
       if (uploadResponse.status === 413) {
         throw new Error(
           "حجم فایل خیلی بزرگ است. لطفاً فایلی کوچکتر از 6 مگابایت انتخاب کنید."
         );
       }
 
-      // Try to parse JSON, but handle cases where response might be HTML error page
       let uploadData;
       try {
         uploadData = await uploadResponse.json();
       } catch (parseError) {
-        // If JSON parsing fails, it might be an HTML error page
         if (uploadResponse.status >= 400) {
           throw new Error(
             "خطا در آپلود تصویر. لطفاً مطمئن شوید حجم فایل کمتر از 6 مگابایت است."
@@ -234,7 +226,6 @@ export default function ImageToVideoPage() {
 
       const imageUrl = uploadData.url;
 
-      // Step 2: Submit generation request
       const response = await fetch("/api/generate/image-to-video", {
         method: "POST",
         headers: {
@@ -251,7 +242,6 @@ export default function ImageToVideoPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Check if it's an insufficient credits error
         if (
           response.status === 403 ||
           data.error === "Insufficient credits" ||
@@ -274,9 +264,8 @@ export default function ImageToVideoPage() {
 
       const taskId = data.taskId;
 
-      // Step 3: Poll for task completion
-      const pollInterval = 2000; // Poll every 2 seconds (videos take longer)
-      const maxAttempts = 150; // Maximum 5 minutes (150 * 2 seconds)
+      const pollInterval = 2000; // Poll every 2 seconds
+      const maxAttempts = 400; // Maximum ~13 minutes (400 * 2 seconds = 800 seconds)
       let attempts = 0;
 
       const pollTaskStatus = async (): Promise<void> => {
@@ -305,7 +294,6 @@ export default function ImageToVideoPage() {
           }
 
           if (statusData.status === "completed") {
-            // Task completed successfully
             if (statusData.videos && statusData.videos.length > 0) {
               const newVideos: GeneratedVideo[] = statusData.videos.map(
                 (url: string, index: number) => ({
@@ -319,7 +307,6 @@ export default function ImageToVideoPage() {
               setGeneratedVideos(newVideos);
               setSelectedGenerated(newVideos[0]);
 
-              // Refresh user data to update credits
               await refreshUserData();
             } else {
               throw new Error("هیچ ویدیویی تولید نشد");
@@ -332,7 +319,6 @@ export default function ImageToVideoPage() {
               pollingTimeoutRef.current = null;
             }
           } else if (statusData.status === "failed") {
-            // Task failed
             setIsLoading(false);
             setLoadingProgress(null);
             startTimeRef.current = null;
@@ -345,7 +331,6 @@ export default function ImageToVideoPage() {
             statusData.status === "pending" ||
             statusData.status === "processing"
           ) {
-            // Still processing, continue polling
             if (attempts >= maxAttempts) {
               setIsLoading(false);
               setLoadingProgress(null);
@@ -377,7 +362,6 @@ export default function ImageToVideoPage() {
         }
       };
 
-      // Start polling immediately
       pollTaskStatus();
     } catch (err: any) {
       console.error("Error generating video:", err);
@@ -404,296 +388,289 @@ export default function ImageToVideoPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20">
-            <Video className="h-6 w-6 text-yellow-400" />
-          </div>
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-4">
+      {/* Error Message */}
+      {error && (
+        <div className="rounded-xl border border-red-500/50 bg-red-500/10 p-4 flex items-start gap-3 mb-6">
+          <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-3xl font-black text-white">تصویر به ویدیو</h1>
-              <div className="flex items-center gap-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 px-3 py-1 text-xs font-medium text-yellow-500">
-                مدل Kling-2.6
-              </div>
-            </div>
-            <p className="text-sm text-slate-400 mt-1">
-              تصاویر خود را به ویدیوهای متحرک تبدیل کنید
-            </p>
+            <p className="text-sm text-red-400 font-medium">{error}</p>
           </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-300 transition"
+          >
+            ×
+          </button>
         </div>
-      </div>
+      )}
 
-      <div className="space-y-6">
-        {/* Error Message */}
-        {error && (
-          <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <p className="text-sm text-red-400 font-medium">{error}</p>
-            </div>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-400 hover:text-red-300 transition"
-            >
-              ×
-            </button>
-          </div>
-        )}
+      {/* Insufficient Credits Dialog */}
+      <InsufficientCreditsDialog
+        open={showInsufficientCreditsDialog}
+        onOpenChange={setShowInsufficientCreditsDialog}
+        message={insufficientCreditsMessage}
+        requiredCredits={requiredCredits}
+        currentCredits={user.credits}
+      />
 
-        {/* Insufficient Credits Dialog */}
-        <InsufficientCreditsDialog
-          open={showInsufficientCreditsDialog}
-          onOpenChange={setShowInsufficientCreditsDialog}
-          message={insufficientCreditsMessage}
-          requiredCredits={requiredCredits}
-          currentCredits={user.credits}
-        />
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid gap-6 lg:grid-cols-5">
-            {/* Image Upload Section - Takes 2 columns */}
-            <div className="lg:col-span-2 space-y-3">
-              <label className="text-sm font-semibold text-white/90 text-right block">
+      {/* Main Input Container */}
+      <form onSubmit={handleSubmit}>
+        <div className="bg-zinc-900/80 rounded-2xl border border-white/10">
+          {/* Image Upload Section */}
+          <div className="p-3 sm:p-4 border-b border-white/10">
+            <div className="flex items-center justify-between mb-3 gap-2">
+              <label className="text-sm font-medium text-white/70 text-right">
                 تصویر ورودی
               </label>
-
-              {!imageSlot.preview ? (
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all h-[200px] active:scale-[0.98] ${
-                    dragging
-                      ? "border-yellow-400 bg-yellow-400/10 scale-[1.02]"
-                      : "border-white/20 bg-white/5 hover:border-yellow-400/50 hover:bg-white/10"
-                  }`}
-                >
-                  <div className="text-center p-2">
-                    <Upload
-                      className={`mx-auto mb-2 h-8 w-8 transition-all ${
-                        dragging
-                          ? "text-yellow-400 scale-110"
-                          : "text-slate-400"
-                      }`}
-                    />
-                    <p className="text-xs font-semibold text-white/80">
-                      تصویر را اینجا بکشید یا کلیک کنید
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      JPG، PNG، WEBP (حداکثر 10MB)
-                    </p>
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileInputChange}
-                    className="hidden"
-                  />
-                </div>
-              ) : (
-                <div className="relative group h-[200px]">
-                  <div className="relative overflow-hidden rounded-xl border-2 border-white/10 bg-slate-900/50 w-full h-full">
-                    <img
-                      src={imageSlot.preview}
-                      alt="Upload"
-                      className="w-full h-full object-contain"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <button
-                      type="button"
-                      onClick={handleRemoveImage}
-                      className="absolute left-2 top-2 rounded-full bg-red-500/90 p-1.5 text-white transition hover:bg-red-500 hover:scale-110"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center gap-1 sm:gap-1.5 rounded-full bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-medium text-yellow-500 shrink-0">
+                <Play className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                <span className="hidden xs:inline">Kling 2.6</span>
+                <span className="xs:hidden">K2.6</span>
+              </div>
             </div>
 
-            {/* Prompt Section - Takes 3 columns */}
-            <div className="lg:col-span-3 space-y-4">
-              {/* Prompt */}
-              <div className="space-y-3">
-                <label
-                  htmlFor="prompt"
-                  className="text-sm font-semibold text-white/90 block text-right"
-                >
-                  چه حرکتی می‌خواهید در ویدیو باشد؟
-                </label>
-                <textarea
-                  id="prompt"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="مثلاً: دوربین به آرامی به سمت راست حرکت می‌کند، باد در برگ‌ها می‌وزد، نور خورشید در حال طلوع است..."
-                  className="w-full rounded-xl border-2 border-white/10 bg-white/5 p-4 text-right text-base text-white placeholder:text-white/30 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/20 min-h-[160px] resize-none transition-all md:min-h-[180px] md:text-lg"
-                  dir="rtl"
-                  autoFocus
-                  maxLength={2500}
+            {/* Image Upload Area */}
+            {!imageSlot.preview ? (
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onClick={() => fileInputRef.current?.click()}
+                className={`flex cursor-pointer flex-col items-center justify-center rounded-lg sm:rounded-xl border-2 border-dashed transition-all h-[180px] sm:h-[200px] md:h-[220px] active:scale-[0.98] touch-manipulation ${
+                  dragging
+                    ? "border-yellow-400 bg-yellow-400/10 scale-[1.02]"
+                    : "border-white/20 bg-white/5 hover:border-yellow-400/50 hover:bg-white/10"
+                }`}
+              >
+                <Upload
+                  className={`h-8 w-8 sm:h-10 sm:w-10 mb-2 sm:mb-3 transition-all ${
+                    dragging ? "text-yellow-400 scale-110" : "text-white/40"
+                  }`}
                 />
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-slate-400 text-right">
-                    💡 هرچه جزئیات بیشتری بنویسید، نتیجه بهتری خواهید گرفت
-                  </p>
-                  <span className="text-xs text-slate-500">
-                    {prompt.length}/2500 کاراکتر
-                  </span>
+                <p className="text-sm sm:text-base font-medium text-white/70 text-center px-4">
+                  تصویر را اینجا بکشید یا کلیک کنید
+                </p>
+                <p className="text-xs text-white/40 mt-1.5">
+                  JPG، PNG، WEBP، HEIC (حداکثر 6MB)
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileInputChange}
+                  className="hidden"
+                />
+              </div>
+            ) : (
+              <div className="relative">
+                <div className="relative overflow-hidden rounded-lg sm:rounded-xl border-2 border-yellow-500/30 bg-slate-900/50 w-full aspect-video max-h-[400px]">
+                  <img
+                    src={imageSlot.preview}
+                    alt="Uploaded image"
+                    className="w-full h-full object-contain"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute left-2 top-2 rounded-full bg-red-500/90 p-2 text-white transition active:bg-red-500 active:scale-110 touch-manipulation sm:opacity-0 sm:group-hover:opacity-100"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
+            )}
+          </div>
 
-              {/* Video Settings */}
-              <div className="space-y-4 border-t border-white/10 pt-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-white/70 block text-right">
-                    مدت زمان ویدیو
-                  </label>
-                  <Select
-                    value={duration}
-                    onValueChange={(value) => setDuration(value as "5" | "10")}
-                  >
-                    <SelectTrigger className="w-full border-white/10 bg-white/5 text-white hover:bg-white/10 focus:border-yellow-400 text-sm">
-                      <SelectValue placeholder="انتخاب مدت زمان" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-900 border-white/10 text-white">
-                      <SelectItem
-                        value="5"
-                        className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
-                      >
-                        5 ثانیه
-                      </SelectItem>
-                      <SelectItem
-                        value="10"
-                        className="text-right focus:bg-yellow-400/10 focus:text-yellow-400"
-                      >
-                        10 ثانیه
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="sound"
-                    className="text-xs font-medium text-white/70 text-right cursor-pointer"
-                  >
-                    صدا
-                  </label>
-                  <div className="flex items-center gap-2">
-                    {sound ? (
-                      <Volume2 className="h-4 w-4 text-yellow-400" />
-                    ) : (
-                      <VolumeX className="h-4 w-4 text-slate-500" />
-                    )}
-                    <Switch
-                      id="sound"
-                      checked={sound}
-                      onCheckedChange={setSound}
-                      className="data-[state=checked]:bg-yellow-400"
-                    />
-                  </div>
-                </div>
-              </div>
+          {/* Prompt Input Area */}
+          <div className="p-3 sm:p-4">
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="حرکت را توصیف کنید... مثلاً: دوربین به آرامی زوم می‌کند، باد موها را تکان می‌دهد، آب دریا موج می‌زند..."
+              className="w-full bg-transparent text-white placeholder:text-white/40 text-sm sm:text-base resize-none outline-none min-h-[90px] sm:min-h-[80px] md:min-h-[100px] py-1"
+              dir="rtl"
+              rows={3}
+              maxLength={2500}
+            />
+            <div className="flex justify-between items-center mt-1">
+              <span className="text-[10px] text-white/30">
+                {prompt.length}/2500
+              </span>
             </div>
           </div>
 
+          {/* Toolbar */}
+          <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 pb-3 sm:pb-4 flex-wrap">
+            {/* Duration Toggle */}
+            <div className="flex items-center rounded-full bg-white/5 p-0.5 border border-white/10 shrink-0">
+              <button
+                type="button"
+                onClick={() => setDuration("5")}
+                className={`flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-all touch-manipulation ${
+                  duration === "5"
+                    ? "bg-yellow-400 text-black"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <span>5s</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDuration("10")}
+                className={`flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-medium transition-all touch-manipulation ${
+                  duration === "10"
+                    ? "bg-yellow-400 text-black"
+                    : "text-white/60 hover:text-white"
+                }`}
+              >
+                <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <span>10s</span>
+              </button>
+            </div>
+
+            {/* Sound Toggle */}
+            <button
+              type="button"
+              onClick={() => setSound(!sound)}
+              className={`flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-3 py-1.5 border transition-all touch-manipulation shrink-0 ${
+                sound
+                  ? "bg-violet-500/20 border-violet-500/40 text-violet-400"
+                  : "bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              {sound ? (
+                <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              ) : (
+                <VolumeX className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              )}
+              <span className="text-xs sm:text-sm font-medium">
+                {sound ? "با صدا" : "بی‌صدا"}
+              </span>
+            </button>
+
+            {/* Credits indicator */}
+            <div className="mr-auto flex items-center gap-1 sm:gap-1.5 bg-yellow-500/10 border border-yellow-500/30 px-2 sm:px-3 py-1.5 rounded-full shrink-0">
+              <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-yellow-400" />
+              <span className="text-xs sm:text-sm font-semibold text-yellow-400 whitespace-nowrap">
+                {requiredCredits} اعتبار
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Action Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mt-4">
           <Button
             type="submit"
             disabled={isLoading || !imageSlot.file || !prompt.trim()}
-            className="w-full bg-yellow-500 font-bold text-slate-950 hover:bg-yellow-600 h-10 text-sm px-4 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all"
+            className="w-full sm:w-auto sm:ml-auto bg-[#c8ff00] hover:bg-[#b8ef00] text-black font-bold px-6 py-3 sm:py-2 rounded-xl h-12 sm:h-10 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg sm:shadow-none"
           >
             {isLoading ? (
               <>
-                <Loader2 className="h-5 w-5 ml-2 animate-spin" />
-                در حال تولید ویدیو...
+                <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                <span className="text-sm sm:text-base">در حال تولید...</span>
               </>
             ) : (
               <>
-                <Video className="h-5 w-5 ml-2" />
-                تولید ویدیو ({requiredCredits} اعتبار)
+                <Video className="h-4 w-4 ml-2" />
+                <span className="text-sm sm:text-base font-bold">
+                  تولید ویدیو
+                </span>
               </>
             )}
           </Button>
-        </form>
 
-        {/* Loading State */}
-        {isLoading && (
-          <LoadingState
-            message="در حال تولید ویدیو هستیم"
-            subMessage={
-              loadingProgress
-                ? `زمان سپری شده: ${loadingProgress.elapsedSeconds} ثانیه`
-                : undefined
-            }
-            numOutputs={1}
+          {/* Credits info - Mobile */}
+          <div className="sm:hidden text-center">
+            <p className="text-xs text-white/50">
+              {user.credits} اعتبار باقی‌مانده
+            </p>
+          </div>
+        </div>
+      </form>
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="mt-6 sm:mt-8">
+          <VideoLoadingState
+            message="در حال ساخت ویدیو"
+            elapsedSeconds={loadingProgress?.elapsedSeconds ?? 0}
+            duration={duration}
+            hasSound={sound}
           />
-        )}
+        </div>
+      )}
 
-        {/* Generated Videos */}
-        {generatedVideos.length > 0 && !isLoading && (
-          <div className="space-y-6">
-            {/* Main Generated Video */}
-            {selectedGenerated && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Video className="h-4 w-4 text-yellow-400" />
-                  <span className="text-sm font-semibold text-white/80">
-                    ویدیو تولید شده
-                  </span>
-                </div>
+      {/* Generated Video Result */}
+      {generatedVideos.length > 0 && !isLoading && selectedGenerated && (
+        <div className="mt-6 sm:mt-8 space-y-4">
+          {/* Video Preview Card */}
+          <div className="bg-zinc-900/80 rounded-xl sm:rounded-2xl border border-white/10 overflow-hidden">
+            <div className="relative">
+              <video
+                src={selectedGenerated.url}
+                controls
+                autoPlay
+                loop
+                className="w-full h-auto max-h-[400px] sm:max-h-[500px] object-contain bg-black"
+              />
+            </div>
 
-                <div className="relative overflow-hidden rounded-xl border border-yellow-400/30 bg-slate-900/50">
-                  <video
-                    src={selectedGenerated.url}
-                    controls
-                    className="w-full h-auto max-h-[600px]"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="grid gap-3 sm:grid-cols-2">
+            {/* Video Actions */}
+            <div className="p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 border-t border-white/10">
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() =>
-                  selectedGenerated &&
                   handleDownload(selectedGenerated.url, selectedGenerated.id)
                 }
-                className="border-white/10 text-white/80 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400"
+                className="w-full sm:flex-1 border-white/10 text-white/80 hover:border-yellow-400/30 hover:bg-yellow-400/10 hover:text-yellow-400 rounded-xl h-10 touch-manipulation"
               >
-                <Upload className="h-5 w-5 ml-2" />
-                دانلود ویدیو
+                <Download className="h-4 w-4 ml-2" />
+                دانلود
               </Button>
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() =>
-                  selectedGenerated &&
                   handleCopyPrompt(
                     selectedGenerated.id,
                     selectedGenerated.prompt
                   )
                 }
-                className="border-white/10 text-white/80 hover:border-white/30 hover:text-white"
+                className="w-full sm:flex-1 border-white/10 text-white/80 hover:border-white/30 hover:text-white rounded-xl h-10 touch-manipulation"
               >
-                {copiedId === selectedGenerated?.id ? (
+                {copiedId === selectedGenerated.id ? (
                   <>
-                    <Check className="h-5 w-5 ml-2 text-green-400" />
+                    <Check className="h-4 w-4 ml-2 text-green-400" />
                     کپی شد!
                   </>
                 ) : (
                   <>
-                    <Video className="h-5 w-5 ml-2" />
+                    <Copy className="h-4 w-4 ml-2" />
                     کپی پرامپت
                   </>
                 )}
               </Button>
+
+              {/* Video info - Mobile */}
+              <div className="flex sm:hidden items-center justify-center gap-2 text-xs text-white/40 pt-1">
+                <span>{duration} ثانیه</span>
+                <span>•</span>
+                <span>{sound ? "با صدا" : "بی‌صدا"}</span>
+              </div>
+              {/* Video info - Desktop */}
+              <div className="mr-auto hidden sm:flex items-center gap-2 text-xs text-white/40">
+                <span>{duration} ثانیه</span>
+                <span>•</span>
+                <span>{sound ? "با صدا" : "بی‌صدا"}</span>
+              </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
