@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Clock, Trash2 } from "lucide-react";
+import { Users, Clock, Trash2, Edit2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,6 +19,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getPlanNamePersian, type PlanType } from "@/lib/utils";
 
 interface User {
   id: string;
@@ -27,6 +36,7 @@ interface User {
   lastName: string;
   createdAt: string;
   credits: number;
+  currentPlan: PlanType;
 }
 
 export default function AdminUsersPage() {
@@ -36,6 +46,11 @@ export default function AdminUsersPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  const [editCredits, setEditCredits] = useState<string>("");
+  const [editPlan, setEditPlan] = useState<PlanType>("free");
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -77,6 +92,68 @@ export default function AdminUsersPage() {
   const handleDeleteClick = (user: User) => {
     setUserToDelete(user);
     setDeleteDialogOpen(true);
+  };
+
+  const handleEditClick = (user: User) => {
+    setUserToEdit(user);
+    setEditCredits(user.credits.toString());
+    setEditPlan(user.currentPlan || "free");
+    setEditDialogOpen(true);
+  };
+
+  const handleEditConfirm = async () => {
+    if (!userToEdit) return;
+
+    setIsUpdating(true);
+    try {
+      const creditsNum = parseInt(editCredits, 10);
+      if (isNaN(creditsNum) || creditsNum < 0) {
+        setError("اعتبارات باید یک عدد مثبت باشد");
+        setIsUpdating(false);
+        return;
+      }
+
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: userToEdit.id,
+          credits: creditsNum,
+          currentPlan: editPlan === "free" ? null : editPlan,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "خطا در به‌روزرسانی کاربر");
+        setIsUpdating(false);
+        return;
+      }
+
+      // Update user in list
+      setUsers(
+        users.map((u) =>
+          u.id === userToEdit.id
+            ? {
+                ...u,
+                credits: creditsNum,
+                currentPlan: editPlan === "free" ? null : editPlan,
+              }
+            : u
+        )
+      );
+      setEditDialogOpen(false);
+      setUserToEdit(null);
+      setError("");
+    } catch (error) {
+      console.error("Error updating user:", error);
+      setError("خطا در ارتباط با سرور");
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleDeleteConfirm = async () => {
@@ -187,6 +264,9 @@ export default function AdminUsersPage() {
                   اعتبارات
                 </TableHead>
                 <TableHead className="text-right text-slate-300 font-semibold">
+                  پلن
+                </TableHead>
+                <TableHead className="text-right text-slate-300 font-semibold">
                   عملیات
                 </TableHead>
               </TableRow>
@@ -215,15 +295,28 @@ export default function AdminUsersPage() {
                   <TableCell className="text-slate-300 font-semibold">
                     {user.credits}
                   </TableCell>
+                  <TableCell className="text-slate-300 font-semibold">
+                    {getPlanNamePersian(user.currentPlan) || "رایگان"}
+                  </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(user)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditClick(user)}
+                        className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClick(user)}
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -231,6 +324,73 @@ export default function AdminUsersPage() {
           </Table>
         </div>
       )}
+
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="bg-slate-900 border-white/10 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white">ویرایش کاربر</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              ویرایش اطلاعات کاربر{" "}
+              <span className="font-semibold text-white">
+                {userToEdit?.firstName} {userToEdit?.lastName}
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300">
+                اعتبارات
+              </label>
+              <Input
+                type="number"
+                min="0"
+                value={editCredits}
+                onChange={(e) => setEditCredits(e.target.value)}
+                className="bg-slate-800 border-white/10 text-white"
+                placeholder="تعداد اعتبارات"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-300">پلن</label>
+              <Select
+                value={editPlan || "free"}
+                onValueChange={(value) => setEditPlan(value as PlanType)}
+              >
+                <SelectTrigger className="bg-slate-800 border-white/10 text-white w-full">
+                  <SelectValue placeholder="انتخاب پلن" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 border-white/10">
+                  <SelectItem value="free">رایگان</SelectItem>
+                  <SelectItem value="explorer">کاوشگر</SelectItem>
+                  <SelectItem value="creator">خلاق</SelectItem>
+                  <SelectItem value="studio">استودیو</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setEditDialogOpen(false);
+                setUserToEdit(null);
+              }}
+              disabled={isUpdating}
+              className="text-slate-400 hover:text-white"
+            >
+              انصراف
+            </Button>
+            <Button
+              onClick={handleEditConfirm}
+              disabled={isUpdating}
+              className="bg-blue-500 hover:bg-blue-600 text-white"
+            >
+              {isUpdating ? "در حال به‌روزرسانی..." : "ذخیره تغییرات"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

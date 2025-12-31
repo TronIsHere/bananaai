@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     const users = await User.find({})
-      .select("mobileNumber firstName lastName createdAt credits")
+      .select("mobileNumber firstName lastName createdAt credits currentPlan")
       .sort({ createdAt: -1 })
       .lean();
 
@@ -67,12 +67,96 @@ export async function GET(request: NextRequest) {
           lastName: user.lastName,
           createdAt: user.createdAt,
           credits: user.credits,
+          currentPlan: user.currentPlan || "free",
         })),
       },
       { status: 200 }
     );
   } catch (error) {
     console.error("Error fetching users:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const adminCheck = await checkAdminAccess();
+    if (!adminCheck.authorized) {
+      return NextResponse.json(
+        { error: adminCheck.error },
+        { status: adminCheck.error === "Unauthorized" ? 401 : 403 }
+      );
+    }
+
+    const body = await request.json();
+    const { userId, credits, currentPlan } = body;
+
+    if (!userId || typeof userId !== "string") {
+      return NextResponse.json(
+        { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Update credits if provided
+    if (credits !== undefined) {
+      if (typeof credits !== "number" || credits < 0) {
+        return NextResponse.json(
+          { error: "Credits must be a non-negative number" },
+          { status: 400 }
+        );
+      }
+      user.credits = credits;
+    }
+
+    // Update plan if provided
+    if (currentPlan !== undefined) {
+      const validPlans = ["free", "explorer", "creator", "studio", null];
+      if (!validPlans.includes(currentPlan)) {
+        return NextResponse.json(
+          { error: "Invalid plan type" },
+          { status: 400 }
+        );
+      }
+      user.currentPlan = currentPlan;
+      
+      // Update plan dates if plan is being set
+      if (currentPlan && currentPlan !== "free") {
+        const now = new Date();
+        user.planStartDate = now;
+        // Set plan end date to 30 days from now (or adjust as needed)
+        const endDate = new Date(now);
+        endDate.setMonth(endDate.getMonth() + 1);
+        user.planEndDate = endDate;
+      } else if (currentPlan === "free" || currentPlan === null) {
+        user.planStartDate = null;
+        user.planEndDate = null;
+      }
+    }
+
+    await user.save();
+
+    return NextResponse.json({
+      success: true,
+      message: "User updated successfully",
+      user: {
+        id: user._id.toString(),
+        credits: user.credits,
+        currentPlan: user.currentPlan,
+      },
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
