@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { AlertCircle, CreditCard } from "lucide-react";
+import { AlertCircle, CreditCard, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { plans } from "@/lib/data";
 
 interface InsufficientCreditsDialogProps {
   open: boolean;
@@ -28,6 +29,12 @@ export function InsufficientCreditsDialog({
   currentCredits,
 }: InsufficientCreditsDialogProps) {
   const router = useRouter();
+
+  // Check if credits are 0 (free credits exhausted)
+  const isZeroCredits = currentCredits === 0;
+
+  // Get Explorer plan
+  const explorerPlan = plans.find((p) => p.nameEn === "Explorer");
 
   const handleGoToPlans = () => {
     onOpenChange(false);
@@ -57,10 +64,12 @@ export function InsufficientCreditsDialog({
               {/* Title & Description */}
               <div>
                 <DialogTitle className="text-lg font-bold text-white mb-0.5">
-                  اعتبار ناکافی
+                  {isZeroCredits ? "اعتبار رایگانتون تموم شده" : "اعتبار ناکافی"}
                 </DialogTitle>
                 <DialogDescription className="text-slate-400 text-xs max-w-xs mx-auto leading-relaxed">
-                  برای ادامه، نیاز به اعتبار بیشتر دارید
+                  {isZeroCredits
+                    ? "ولی نذار خلاقیتت از بین بره"
+                    : "برای ادامه، نیاز به اعتبار بیشتر دارید"}
                 </DialogDescription>
               </div>
             </div>
@@ -69,54 +78,130 @@ export function InsufficientCreditsDialog({
 
         {/* Body Section */}
         <div className="px-5 pb-4 bg-slate-950 space-y-3.5">
-          {/* Message */}
-          <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
-            <p className="text-sm text-red-400 text-center leading-relaxed">
-              {message ||
-                (requiredCredits && currentCredits !== undefined
-                  ? `برای این عملیات به ${requiredCredits} اعتبار نیاز دارید. شما ${currentCredits} اعتبار دارید.`
-                  : "اعتبار شما برای انجام این عملیات کافی نیست.")}
-            </p>
-          </div>
+          {isZeroCredits ? (
+            <>
+              {/* Explorer Plan Card - Only shown when credits are 0 */}
+              {explorerPlan && (
+                <div className="rounded-xl border border-yellow-400/30 bg-gradient-to-br from-yellow-500/10 via-orange-500/10 to-pink-500/10 p-4 shadow-[0_0_30px_rgba(251,191,36,0.2)]">
+                  <div className="mb-3 flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-yellow-400/20 via-orange-400/20 to-pink-500/20 flex-shrink-0">
+                      <Sparkles className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base font-bold text-white">
+                        {explorerPlan.name}
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        {explorerPlan.tagline}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <p className="text-2xl font-black text-white">
+                      {explorerPlan.price} {explorerPlan.currency}
+                    </p>
+                  </div>
+                  <ul className="mb-3 space-y-1.5">
+                    {explorerPlan.highlights
+                      .filter((feature) =>
+                        [
+                          "۲۰۰ اعتبار",
+                          "متن به تصویر",
+                          "تصویر به تصویر",
+                          "تصویر به ویدیو (بهترین مدل ویدیو دنیا)",
+                        ].includes(feature)
+                      )
+                      .map((feature, idx) => (
+                        <li
+                          key={idx}
+                          className="flex items-start gap-1.5 text-xs text-slate-300"
+                        >
+                          <span className="text-emerald-400 mt-0.5">✓</span>
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              )}
 
-          {/* Credit Info */}
-          {requiredCredits !== undefined && currentCredits !== undefined && (
-            <div className="flex items-center justify-between rounded-lg bg-slate-900/50 border border-white/5 p-3">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4 text-slate-400" />
-                <span className="text-xs text-slate-400">اعتبار مورد نیاز:</span>
+              {/* Info Note */}
+              <div className="rounded-lg bg-yellow-500/5 border border-yellow-500/10 p-2.5">
+                <p className="text-xs text-yellow-500/80 text-center leading-relaxed">
+                  💡 با خرید پلن کاوشگر، اعتبار خود را افزایش دهید و به خلاقیت ادامه دهید
+                </p>
               </div>
-              <span className="text-sm font-bold text-white">
-                {requiredCredits.toLocaleString("fa-IR")}
-              </span>
-            </div>
+
+              {/* Footer Actions */}
+              <div className="space-y-2 pt-2">
+                <Button
+                  onClick={handleGoToPlans}
+                  className="w-full h-10 text-sm font-bold bg-linear-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white shadow-lg shadow-orange-500/20 rounded-xl transition-all duration-300 hover:scale-[1.02]"
+                >
+                  <CreditCard className="h-4 w-4 ml-2" />
+                  مشاهده پلن کاوشگر
+                </Button>
+
+                <Button
+                  onClick={() => onOpenChange(false)}
+                  variant="ghost"
+                  className="w-full h-8 text-xs text-slate-400 hover:text-white hover:bg-white/5 rounded-xl"
+                >
+                  بستن
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Message */}
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3">
+                <p className="text-sm text-red-400 text-center leading-relaxed">
+                  {message ||
+                    (requiredCredits && currentCredits !== undefined
+                      ? `برای این عملیات به ${requiredCredits} اعتبار نیاز دارید. شما ${currentCredits} اعتبار دارید.`
+                      : "اعتبار شما برای انجام این عملیات کافی نیست.")}
+                </p>
+              </div>
+
+              {/* Credit Info */}
+              {requiredCredits !== undefined && currentCredits !== undefined && (
+                <div className="flex items-center justify-between rounded-lg bg-slate-900/50 border border-white/5 p-3">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-slate-400" />
+                    <span className="text-xs text-slate-400">اعتبار مورد نیاز:</span>
+                  </div>
+                  <span className="text-sm font-bold text-white">
+                    {requiredCredits.toLocaleString("fa-IR")}
+                  </span>
+                </div>
+              )}
+
+              {/* Info Note */}
+              <div className="rounded-lg bg-yellow-500/5 border border-yellow-500/10 p-2.5">
+                <p className="text-xs text-yellow-500/80 text-center leading-relaxed">
+                  💡 می‌توانید با خرید پلن یا اعتبار اضافی، اعتبار خود را افزایش دهید
+                </p>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="space-y-2 pt-2">
+                <Button
+                  onClick={handleGoToPlans}
+                  className="w-full h-10 text-sm font-bold bg-linear-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white shadow-lg shadow-orange-500/20 rounded-xl transition-all duration-300 hover:scale-[1.02]"
+                >
+                  <CreditCard className="h-4 w-4 ml-2" />
+                  مشاهده پلن‌ها و خرید اعتبار
+                </Button>
+
+                <Button
+                  onClick={() => onOpenChange(false)}
+                  variant="ghost"
+                  className="w-full h-8 text-xs text-slate-400 hover:text-white hover:bg-white/5 rounded-xl"
+                >
+                  بستن
+                </Button>
+              </div>
+            </>
           )}
-
-          {/* Info Note */}
-          <div className="rounded-lg bg-yellow-500/5 border border-yellow-500/10 p-2.5">
-            <p className="text-xs text-yellow-500/80 text-center leading-relaxed">
-              💡 می‌توانید با خرید پلن یا اعتبار اضافی، اعتبار خود را افزایش دهید
-            </p>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="space-y-2 pt-2">
-            <Button
-              onClick={handleGoToPlans}
-              className="w-full h-10 text-sm font-bold bg-linear-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white shadow-lg shadow-orange-500/20 rounded-xl transition-all duration-300 hover:scale-[1.02]"
-            >
-              <CreditCard className="h-4 w-4 ml-2" />
-              مشاهده پلن‌ها و خرید اعتبار
-            </Button>
-
-            <Button
-              onClick={() => onOpenChange(false)}
-              variant="ghost"
-              className="w-full h-8 text-xs text-slate-400 hover:text-white hover:bg-white/5 rounded-xl"
-            >
-              بستن
-            </Button>
-          </div>
         </div>
       </DialogContent>
     </Dialog>

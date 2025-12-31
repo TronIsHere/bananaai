@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { siteConfig } from "@/lib/seo-config";
+import { FaEnvelope, FaTelegram } from "react-icons/fa";
 
 export function Footer() {
   const currentYear = new Date().toLocaleDateString("fa-IR", {
@@ -37,6 +38,31 @@ export function Footer() {
             <p className="max-w-xs text-sm leading-relaxed text-slate-400">
               {siteConfig.description}
             </p>
+            
+            {/* Support Section */}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-white">پشتیبانی فارسی</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                <a
+                  href="mailto:support@bananaai.ir"
+                  className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-yellow-400 w-fit"
+                >
+                  <FaEnvelope className="h-4 w-4" />
+                  <span>support@bananaai.ir</span>
+                </a>
+                <a
+                  href="https://t.me/bananaai_support"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-yellow-400 w-fit"
+                >
+                  <FaTelegram className="h-4 w-4" />
+                  <span>@bananaai_support</span>
+                </a>
+              </div>
+            </div>
           </div>
 
           {/* Quick Links */}

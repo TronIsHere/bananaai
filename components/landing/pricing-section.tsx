@@ -13,6 +13,8 @@ import {
   FaTimesCircle,
   FaCoins,
   FaVideo,
+  FaLock,
+  FaUndo,
 } from "react-icons/fa";
 import { useUser } from "@/hooks/use-user";
 import { LoginDialog } from "@/components/dialog/login-dialog";
@@ -77,11 +79,16 @@ export function PricingSection() {
               itemScope
               itemType="https://schema.org/Offer"
             >
-              {/* Featured badge */}
+              {/* Featured badges */}
               {isFeatured && (
-                <div className="absolute left-2 top-2 md:left-3 md:top-3 rounded-lg bg-yellow-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-400 md:text-xs z-10">
-                  محبوب ترین
-                </div>
+                <>
+                  <div className="absolute left-2 top-2 md:left-3 md:top-3 rounded-lg bg-yellow-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-yellow-400 md:text-xs z-10">
+                    محبوب‌ترین انتخاب
+                  </div>
+                  <div className="absolute right-2 top-2 md:right-3 md:top-3 rounded-lg bg-emerald-400/20 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400 md:text-xs z-10">
+                    بیشترین خرید کاربران
+                  </div>
+                </>
               )}
 
               {/* Card content */}
@@ -178,8 +185,30 @@ export function PricingSection() {
       </div>
 
       {/* Additional info */}
-      <div className="mt-12 text-center">
-        <p className="text-sm text-slate-400">
+      <div className="mt-12 space-y-6">
+        {/* Trust badges */}
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2">
+            <FaLock className="h-4 w-4 text-emerald-400" />
+            <span className="text-xs font-medium text-white sm:text-sm">
+              پرداخت امن با زرین‌پال
+            </span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2">
+            <FaUndo className="h-4 w-4 text-blue-400" />
+            <span className="text-xs font-medium text-white sm:text-sm">
+              تضمین بازگشت وجه 7 روزه
+            </span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2">
+            <FaCrown className="h-4 w-4 text-yellow-400" />
+            <span className="text-xs font-medium text-white sm:text-sm">
+              بیش از ۱۰۰۰ کاربر فعال
+            </span>
+          </div>
+        </div>
+        
+        <p className="text-center text-sm text-slate-400">
           تمام پلن‌ها شامل پشتیبانی ۲۴/۷ و به‌روزرسانی‌های رایگان هستند
         </p>
       </div>

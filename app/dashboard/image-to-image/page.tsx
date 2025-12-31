@@ -20,6 +20,7 @@ import { GeneratedImageDisplay } from "@/components/dashboard/generated-image-di
 import { LoadingState } from "@/components/dashboard/loading-state";
 import { useUser } from "@/hooks/use-user";
 import { InsufficientCreditsDialog } from "@/components/dialog/insufficient-credits-dialog";
+import { PostGenerationUpgradeDialog } from "@/components/dialog/post-generation-upgrade-dialog";
 import {
   Select,
   SelectContent,
@@ -130,6 +131,11 @@ export default function ImageToImagePage() {
   const [insufficientCreditsMessage, setInsufficientCreditsMessage] = useState<
     string | undefined
   >();
+  const [showPostGenerationUpgrade, setShowPostGenerationUpgrade] =
+    useState(false);
+  const [upgradeDialogImageUrl, setUpgradeDialogImageUrl] = useState<
+    string | null
+  >(null);
 
   const { user, refreshUserData } = useUser();
   const [numOutputs] = useState(1);
@@ -163,6 +169,20 @@ export default function ImageToImagePage() {
       }
     };
   }, []);
+
+  // Show post-generation upgrade dialog for free plan users after first successful generation
+  useEffect(() => {
+    if (
+      generatedImages.length > 0 &&
+      user.currentPlan === "free" &&
+      !localStorage.getItem("post_gen_upgrade_shown") &&
+      !showPostGenerationUpgrade
+    ) {
+      setUpgradeDialogImageUrl(generatedImages[0].url);
+      setShowPostGenerationUpgrade(true);
+      localStorage.setItem("post_gen_upgrade_shown", "true");
+    }
+  }, [generatedImages, user.currentPlan, showPostGenerationUpgrade]);
 
   const handleImageSelect = (file: File, index: number) => {
     if (file) {
@@ -599,6 +619,16 @@ export default function ImageToImagePage() {
         message={insufficientCreditsMessage}
         requiredCredits={creditCost * numOutputs}
         currentCredits={user.credits}
+      />
+
+      {/* Post-Generation Upgrade Dialog */}
+      <PostGenerationUpgradeDialog
+        open={showPostGenerationUpgrade}
+        onOpenChange={setShowPostGenerationUpgrade}
+        generatedImageUrl={upgradeDialogImageUrl}
+        onUpgrade={() => {
+          setShowPostGenerationUpgrade(false);
+        }}
       />
 
       {/* Main Input Container */}
