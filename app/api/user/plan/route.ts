@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     const planCredits: Record<string, number> = {
       free: 24, // 1 pro image * 24 credits
       explorer: 200, // 50 images * 4 credits
-      creator: 600, // 150 images * 4 credits
+      creator: 650, // 650 credits
       studio: 2000, // 500 images * 4 credits
     };
 
@@ -61,8 +61,8 @@ export async function POST(request: NextRequest) {
     const planPrices: Record<string, number> = {
       free: 0,
       explorer: 350000,
-      creator: 999000,
-      studio: 2990000,
+      creator: 1090000,
+      studio: 3390000,
     };
 
     const billingEntry = {

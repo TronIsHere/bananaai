@@ -497,6 +497,16 @@ export default function BillingPage() {
             // Free plan should always allow upgrade, even if current (since users fall back to it)
             // But don't show upgrade button for free plan itself - users upgrade TO other plans
 
+            // Extract credits from highlights
+            const creditsHighlight = plan.highlights.find((h) =>
+              h.includes("اعتبار")
+            );
+            const creditsMatch = creditsHighlight?.match(/(\d+)\s*اعتبار/);
+            const creditsNumber = creditsMatch ? creditsMatch[1] : null;
+            const otherHighlights = plan.highlights.filter(
+              (h) => !h.includes("اعتبار")
+            );
+
             return (
               <div
                 key={plan.name}
@@ -532,8 +542,32 @@ export default function BillingPage() {
                     {plan.tagline}
                   </p>
                 </div>
+
+                {/* Credits - Prominent Display */}
+                {creditsNumber && (
+                  <div
+                    className={`mb-3 rounded-xl border p-3 ${
+                      isCurrent
+                        ? "bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-pink-500/10 border-yellow-400/30"
+                        : "bg-gradient-to-br from-yellow-500/15 via-orange-500/8 to-pink-500/8 border-yellow-400/20"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Coins className="h-3.5 w-3.5 text-yellow-400 md:h-4 md:w-4 flex-shrink-0" />
+                      <span className="text-[10px] text-yellow-300/80 md:text-xs font-medium">
+                        اعتبار
+                      </span>
+                    </div>
+                    <p className="text-xl font-black text-white md:text-2xl">
+                      {new Intl.NumberFormat("fa-IR").format(
+                        parseInt(creditsNumber)
+                      )}
+                    </p>
+                  </div>
+                )}
+
                 <ul className="mb-3 flex-1 space-y-1.5">
-                  {plan.highlights.map((feature, idx) => {
+                  {otherHighlights.map((feature, idx) => {
                     const isNoStorage = feature.includes("بدون نگهداری");
                     return (
                       <li

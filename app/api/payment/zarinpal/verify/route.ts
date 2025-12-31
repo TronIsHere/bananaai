@@ -11,15 +11,15 @@ import { PlanType, getPlanNameEnglish } from "@/lib/utils";
 const planPrices: Record<string, number> = {
   free: 0,
   explorer: 350000,
-  creator: 999000,
-  studio: 2990000,
+  creator: 1090000,
+  studio: 3390000,
 };
 
 // Plan credits mapping
 const planCredits: Record<string, number> = {
   free: 24,
   explorer: 200,
-  creator: 600,
+  creator: 650,
   studio: 2000,
 };
 

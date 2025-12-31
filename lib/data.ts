@@ -87,11 +87,11 @@ export const plans = [
   {
     name: "خلاق",
     nameEn: "Creator",
-    price: "999,000",
+    price: "1,090,000",
     currency: "تومان",
     tagline: "برای طراحان و فریلنسرها",
     highlights: [
-      "۶۰۰ اعتبار",
+      "۶۵۰ اعتبار",
       "متن به تصویر",
       "تصویر به تصویر",
       "تصویر به ویدیو",
@@ -106,7 +106,7 @@ export const plans = [
   {
     name: "استودیو",
     nameEn: "Studio",
-    price: "2,990,000",
+    price: "3,390,000",
     currency: "تومان",
     tagline: "مناسب تیم‌ها و کسب‌وکارها",
     highlights: [

@@ -60,6 +60,11 @@ export function PricingSection() {
       <div className="mt-12 grid gap-3 sm:mt-16 md:grid-cols-4">
         {plans.map((plan) => {
           const isFeatured = plan.featured;
+          // Extract credits from highlights
+          const creditsHighlight = plan.highlights.find((h) => h.includes("اعتبار"));
+          const creditsMatch = creditsHighlight?.match(/(\d+)\s*اعتبار/);
+          const creditsNumber = creditsMatch ? creditsMatch[1] : null;
+          const otherHighlights = plan.highlights.filter((h) => !h.includes("اعتبار"));
 
           return (
             <article
@@ -110,9 +115,22 @@ export function PricingSection() {
                   </p>
                 </div>
 
+                {/* Credits - Prominent Display */}
+                {creditsNumber && (
+                  <div className="mb-3 rounded-xl bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-pink-500/10 border border-yellow-400/30 p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <FaCoins className="h-4 w-4 text-yellow-400 md:h-5 md:w-5 flex-shrink-0" />
+                      <span className="text-[10px] text-yellow-300/80 md:text-xs font-medium">اعتبار</span>
+                    </div>
+                    <p className="text-2xl font-black text-white md:text-3xl">
+                      {new Intl.NumberFormat("fa-IR").format(parseInt(creditsNumber))}
+                    </p>
+                  </div>
+                )}
+
                 {/* Features list */}
                 <ul className="mb-3 flex-1 space-y-1.5 min-h-0">
-                  {plan.highlights.map((item) => {
+                  {otherHighlights.map((item) => {
                     const isNoStorage = item.includes("بدون نگهداری");
                     const iconKey = Object.keys(featureIcons).find((key) =>
                       item.includes(key)
