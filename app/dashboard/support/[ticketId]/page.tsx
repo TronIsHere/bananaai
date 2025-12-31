@@ -124,9 +124,9 @@ export default function TicketDetailPage() {
       const isImageByExtension = allowedExtensions.includes(fileExtension);
 
       if (isImageByType || isImageByExtension) {
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        const maxSize = 6 * 1024 * 1024; // 6MB
         if (file.size > maxSize) {
-          setError("حجم فایل نباید بیشتر از 10 مگابایت باشد");
+          setError("حجم فایل نباید بیشتر از 6 مگابایت باشد");
           return;
         }
 

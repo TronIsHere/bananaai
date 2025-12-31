@@ -111,10 +111,10 @@ export default function ImageToVideoPage() {
       const isImageByExtension = allowedExtensions.includes(fileExtension);
 
       if (isImageByType || isImageByExtension) {
-        // Validate file size (10MB max)
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        // Validate file size (6MB max)
+        const maxSize = 6 * 1024 * 1024; // 6MB
         if (file.size > maxSize) {
-          setError("حجم فایل نباید بیشتر از 10 مگابایت باشد");
+          setError("حجم فایل نباید بیشتر از 6 مگابایت باشد");
           return;
         }
 
@@ -201,7 +201,26 @@ export default function ImageToVideoPage() {
         body: formData,
       });
 
-      const uploadData = await uploadResponse.json();
+      // Handle 413 errors specifically (Request Entity Too Large)
+      if (uploadResponse.status === 413) {
+        throw new Error(
+          "حجم فایل خیلی بزرگ است. لطفاً فایلی کوچکتر از 6 مگابایت انتخاب کنید."
+        );
+      }
+
+      // Try to parse JSON, but handle cases where response might be HTML error page
+      let uploadData;
+      try {
+        uploadData = await uploadResponse.json();
+      } catch (parseError) {
+        // If JSON parsing fails, it might be an HTML error page
+        if (uploadResponse.status >= 400) {
+          throw new Error(
+            "خطا در آپلود تصویر. لطفاً مطمئن شوید حجم فایل کمتر از 6 مگابایت است."
+          );
+        }
+        throw parseError;
+      }
 
       if (!uploadResponse.ok) {
         throw new Error(

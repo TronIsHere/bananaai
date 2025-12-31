@@ -38,12 +38,12 @@ export function validateImageFileServer(file: File): ImageValidationResult {
     };
   }
 
-  // Check file size (10MB max)
-  const maxSize = 10 * 1024 * 1024; // 10MB
+  // Check file size (6MB max)
+  const maxSize = 6 * 1024 * 1024; // 6MB
   if (file.size > maxSize) {
     return {
       isValid: false,
-      error: "حجم فایل نباید بیشتر از 10 مگابایت باشد",
+      error: "حجم فایل نباید بیشتر از 6 مگابایت باشد",
     };
   }
 

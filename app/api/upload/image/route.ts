@@ -5,9 +5,14 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "@/lib/s3";
 import { validateImageFileServer } from "@/lib/image-validation";
 
-// Configure route to allow larger file uploads (up to 10MB)
+// Configure route to allow larger file uploads (up to 6MB)
 export const maxDuration = 60;
 export const runtime = "nodejs";
+
+// Disable body parsing limit for this route
+// Note: For production, configure nginx or your reverse proxy to allow 6MB+ uploads
+// See NGINX_CONFIG.md for configuration details
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +26,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const formData = await request.formData();
+    // Try to parse form data - this will fail with 413 if body is too large
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (error: any) {
+      // Handle 413 errors specifically
+      if (error.message?.includes("413") || error.message?.includes("too large")) {
+        return NextResponse.json(
+          {
+            error: "File too large",
+            message: "حجم فایل خیلی بزرگ است. لطفاً فایلی کوچکتر از 6 مگابایت انتخاب کنید.",
+          },
+          { status: 413 }
+        );
+      }
+      throw error;
+    }
     const file = formData.get("image") as File;
 
     if (!file) {
@@ -86,6 +107,17 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error("Upload error:", error);
+    
+    // Handle 413 errors that might be caught here
+    if (error.message?.includes("413") || error.message?.includes("too large") || error.status === 413) {
+      return NextResponse.json(
+        {
+          error: "File too large",
+          message: "حجم فایل خیلی بزرگ است. لطفاً فایلی کوچکتر از 6 مگابایت انتخاب کنید.",
+        },
+        { status: 413 }
+      );
+    }
     
     return NextResponse.json(
       {
