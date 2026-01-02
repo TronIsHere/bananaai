@@ -13,9 +13,11 @@ import {
   Gift,
   Coins,
   TrendingUp,
+  ImageIcon,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { plans as landingPlans, creditPackages } from "@/lib/data";
+import { plans as landingPlans, creditPackages, creditCosts, calculateCreditUsage } from "@/lib/data";
 import { useUser } from "@/hooks/use-user";
 import { getPlanNamePersian, getPlanNameEnglish } from "@/lib/utils";
 import { UpgradeDialog } from "@/components/dialog/upgrade-dialog";
@@ -472,14 +474,91 @@ export default function BillingPage() {
               </div>
             )}
 
-            {/* Footer info */}
-            {/* TODO: Maybe add reset date in future */}
-            {/* <div className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 backdrop-blur-sm">
-              <Calendar className="h-4 w-4 text-slate-400 flex-shrink-0" />
-              <span className="text-xs text-slate-300 md:text-sm">
-                بازنشانی در {usage.resetDate}
-              </span>
-            </div> */}
+            {/* Credit Usage Breakdown */}
+            {user.credits > 0 && (() => {
+              const usage = calculateCreditUsage(user.credits);
+              return (
+                <div className="rounded-xl bg-white/5 p-3 backdrop-blur-sm">
+                  <p className="text-[10px] text-slate-400 md:text-xs font-medium mb-2">
+                    قابل استفاده برای:
+                  </p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <ImageIcon className="h-3 w-3 text-emerald-400" />
+                        <span className="text-[9px] text-slate-400 md:text-[10px]">استاندارد</span>
+                      </div>
+                      <p className="text-sm font-bold text-white md:text-base">
+                        {new Intl.NumberFormat("fa-IR").format(usage.standardImages)}
+                      </p>
+                    </div>
+                    <div className="text-center border-x border-white/10">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <Sparkles className="h-3 w-3 text-purple-400" />
+                        <span className="text-[9px] text-slate-400 md:text-[10px]">پرو 2K</span>
+                      </div>
+                      <p className="text-sm font-bold text-white md:text-base">
+                        {new Intl.NumberFormat("fa-IR").format(usage.proImages)}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <Video className="h-3 w-3 text-orange-400" />
+                        <span className="text-[9px] text-slate-400 md:text-[10px]">ویدیو ۵ث</span>
+                      </div>
+                      <p className="text-sm font-bold text-white md:text-base">
+                        {new Intl.NumberFormat("fa-IR").format(usage.videos5s)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      </div>
+
+      {/* Credit Explanation Section */}
+      <div className="mb-6 md:mb-8 rounded-xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 p-4 md:rounded-2xl md:p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-400/20 md:h-10 md:w-10">
+            <Coins className="h-4 w-4 text-yellow-400 md:h-5 md:w-5" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-white md:text-lg">اعتبار چیست؟</h2>
+            <p className="text-xs text-slate-400 md:text-sm">هر اعتبار چه کاری انجام می‌دهد</p>
+          </div>
+        </div>
+        
+        <div className="grid gap-3 sm:grid-cols-3">
+          {/* Standard Image */}
+          <div className="rounded-lg border border-white/10 bg-white/5 p-3 text-center">
+            <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-400/20">
+              <ImageIcon className="h-4 w-4 text-emerald-400" />
+            </div>
+            <h4 className="text-sm font-bold text-white mb-0.5">تصویر استاندارد</h4>
+            <p className="text-xl font-black text-yellow-400">{creditCosts.nanoBananaStandard}</p>
+            <p className="text-[10px] text-slate-400">اعتبار برای هر تصویر</p>
+          </div>
+
+          {/* Pro Image */}
+          <div className="rounded-lg border border-purple-400/30 bg-purple-400/10 p-3 text-center">
+            <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-purple-400/20">
+              <Sparkles className="h-4 w-4 text-purple-400" />
+            </div>
+            <h4 className="text-sm font-bold text-white mb-0.5">تصویر پرو (2K)</h4>
+            <p className="text-xl font-black text-yellow-400">{creditCosts.nanoBananaPro}</p>
+            <p className="text-[10px] text-slate-400">اعتبار برای هر تصویر</p>
+          </div>
+
+          {/* Video */}
+          <div className="rounded-lg border border-orange-400/30 bg-orange-400/10 p-3 text-center">
+            <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-orange-400/20">
+              <Video className="h-4 w-4 text-orange-400" />
+            </div>
+            <h4 className="text-sm font-bold text-white mb-0.5">ویدیو (Kling)</h4>
+            <p className="text-xl font-black text-yellow-400">{creditCosts.klingVideo5s}-{creditCosts.klingVideo10sSound}</p>
+            <p className="text-[10px] text-slate-400">۵ث: {creditCosts.klingVideo5s} • ۱۰ث: {creditCosts.klingVideo10s} • با صدا: ×۲</p>
           </div>
         </div>
       </div>
@@ -497,12 +576,8 @@ export default function BillingPage() {
             // Free plan should always allow upgrade, even if current (since users fall back to it)
             // But don't show upgrade button for free plan itself - users upgrade TO other plans
 
-            // Extract credits from highlights
-            const creditsHighlight = plan.highlights.find((h) =>
-              h.includes("اعتبار")
-            );
-            const creditsMatch = creditsHighlight?.match(/(\d+)\s*اعتبار/);
-            const creditsNumber = creditsMatch ? creditsMatch[1] : null;
+            // Use credits from plan object
+            const credits = plan.credits || 0;
             const otherHighlights = plan.highlights.filter(
               (h) => !h.includes("اعتبار")
             );
@@ -544,27 +619,60 @@ export default function BillingPage() {
                 </div>
 
                 {/* Credits - Prominent Display */}
-                {creditsNumber && (
-                  <div
-                    className={`mb-3 rounded-xl border p-3 ${
-                      isCurrent
-                        ? "bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-pink-500/10 border-yellow-400/30"
-                        : "bg-gradient-to-br from-yellow-500/15 via-orange-500/8 to-pink-500/8 border-yellow-400/20"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <Coins className="h-3.5 w-3.5 text-yellow-400 md:h-4 md:w-4 flex-shrink-0" />
-                      <span className="text-[10px] text-yellow-300/80 md:text-xs font-medium">
-                        اعتبار
-                      </span>
+                {credits > 0 && (() => {
+                  const creditUsage = calculateCreditUsage(credits);
+                  return (
+                    <div
+                      className={`mb-3 rounded-xl border p-3 ${
+                        isCurrent
+                          ? "bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-pink-500/10 border-yellow-400/30"
+                          : "bg-gradient-to-br from-yellow-500/15 via-orange-500/8 to-pink-500/8 border-yellow-400/20"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <Coins className="h-3.5 w-3.5 text-yellow-400 md:h-4 md:w-4 flex-shrink-0" />
+                        <span className="text-[10px] text-yellow-300/80 md:text-xs font-medium">
+                          اعتبار
+                        </span>
+                      </div>
+                      <p className="text-xl font-black text-white md:text-2xl mb-2">
+                        {new Intl.NumberFormat("fa-IR").format(credits)}
+                      </p>
+                      {/* Credit Usage Breakdown */}
+                      <div className="space-y-1 border-t border-yellow-400/20 pt-2">
+                        <div className="flex items-center justify-between text-[9px] md:text-[10px]">
+                          <span className="text-slate-400 flex items-center gap-1">
+                            <ImageIcon className="h-2.5 w-2.5 text-emerald-400" />
+                            تصویر
+                          </span>
+                          <span className="text-white font-semibold">
+                            {new Intl.NumberFormat("fa-IR").format(creditUsage.standardImages)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[9px] md:text-[10px]">
+                          <span className="text-slate-400 flex items-center gap-1">
+                            <Sparkles className="h-2.5 w-2.5 text-purple-400" />
+                            پرو 2K
+                          </span>
+                          <span className="text-white font-semibold">
+                            {new Intl.NumberFormat("fa-IR").format(creditUsage.proImages)}
+                          </span>
+                        </div>
+                        {creditUsage.videos5s > 0 && (
+                          <div className="flex items-center justify-between text-[9px] md:text-[10px]">
+                            <span className="text-slate-400 flex items-center gap-1">
+                              <Video className="h-2.5 w-2.5 text-orange-400" />
+                              ویدیو
+                            </span>
+                            <span className="text-white font-semibold">
+                              {new Intl.NumberFormat("fa-IR").format(creditUsage.videos5s)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xl font-black text-white md:text-2xl">
-                      {new Intl.NumberFormat("fa-IR").format(
-                        parseInt(creditsNumber)
-                      )}
-                    </p>
-                  </div>
-                )}
+                  );
+                })()}
 
                 <ul className="mb-3 flex-1 space-y-1.5">
                   {otherHighlights.map((feature, idx) => {

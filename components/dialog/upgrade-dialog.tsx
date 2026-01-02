@@ -27,6 +27,7 @@ interface Plan {
   nameEn: string;
   price: string;
   currency: string;
+  credits?: number;
   tagline: string;
   highlights: string[];
   icon: React.ComponentType<{ className?: string }>;

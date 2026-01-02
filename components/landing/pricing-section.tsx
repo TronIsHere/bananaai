@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { plans } from "@/lib/data";
+import { plans, creditCosts, calculateCreditUsage } from "@/lib/data";
 import { HiCheck, HiSparkles } from "react-icons/hi2";
 import {
   FaImage,
@@ -62,12 +62,8 @@ export function PricingSection() {
       <div className="mt-12 grid gap-3 sm:mt-16 md:grid-cols-4">
         {plans.map((plan) => {
           const isFeatured = plan.featured;
-          // Extract credits from highlights
-          const creditsHighlight = plan.highlights.find((h) =>
-            h.includes("اعتبار")
-          );
-          const creditsMatch = creditsHighlight?.match(/(\d+)\s*اعتبار/);
-          const creditsNumber = creditsMatch ? creditsMatch[1] : null;
+          // Use credits from plan object
+          const credits = plan.credits || 0;
           const otherHighlights = plan.highlights.filter(
             (h) => !h.includes("اعتبار")
           );
@@ -140,21 +136,57 @@ export function PricingSection() {
                 </div>
 
                 {/* Credits - Prominent Display */}
-                {creditsNumber && (
-                  <div className="mb-3 rounded-xl bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-pink-500/10 border border-yellow-400/30 p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <FaCoins className="h-4 w-4 text-yellow-400 md:h-5 md:w-5 flex-shrink-0" />
-                      <span className="text-[10px] text-yellow-300/80 md:text-xs font-medium">
-                        اعتبار
-                      </span>
+                {credits > 0 && (() => {
+                  const usage = calculateCreditUsage(credits);
+                  return (
+                    <div className="mb-3 rounded-xl bg-gradient-to-br from-yellow-500/20 via-orange-500/10 to-pink-500/10 border border-yellow-400/30 p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FaCoins className="h-4 w-4 text-yellow-400 md:h-5 md:w-5 flex-shrink-0" />
+                        <span className="text-[10px] text-yellow-300/80 md:text-xs font-medium">
+                          اعتبار
+                        </span>
+                      </div>
+                      <p className="text-2xl font-black text-white md:text-3xl mb-2">
+                        {new Intl.NumberFormat("fa-IR").format(credits)}
+                      </p>
+                      {/* Credit Usage Breakdown */}
+                      <div className="space-y-1.5 border-t border-yellow-400/20 pt-2">
+                        <p className="text-[9px] text-yellow-300/60 md:text-[10px] font-medium mb-1">
+                          قابل استفاده برای:
+                        </p>
+                        <div className="flex items-center justify-between text-[9px] md:text-[10px]">
+                          <span className="text-slate-400 flex items-center gap-1">
+                            <FaImage className="h-2.5 w-2.5 text-emerald-400" />
+                            تصویر استاندارد
+                          </span>
+                          <span className="text-white font-semibold">
+                            {new Intl.NumberFormat("fa-IR").format(usage.standardImages)} عدد
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-[9px] md:text-[10px]">
+                          <span className="text-slate-400 flex items-center gap-1">
+                            <HiSparkles className="h-2.5 w-2.5 text-purple-400" />
+                            تصویر پرو (2K)
+                          </span>
+                          <span className="text-white font-semibold">
+                            {new Intl.NumberFormat("fa-IR").format(usage.proImages)} عدد
+                          </span>
+                        </div>
+                        {usage.videos5s > 0 && (
+                          <div className="flex items-center justify-between text-[9px] md:text-[10px]">
+                            <span className="text-slate-400 flex items-center gap-1">
+                              <FaVideo className="h-2.5 w-2.5 text-orange-400" />
+                              ویدیو ۵ ثانیه
+                            </span>
+                            <span className="text-white font-semibold">
+                              {new Intl.NumberFormat("fa-IR").format(usage.videos5s)} عدد
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-2xl font-black text-white md:text-3xl">
-                      {new Intl.NumberFormat("fa-IR").format(
-                        parseInt(creditsNumber)
-                      )}
-                    </p>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Features list */}
                 <ul className="mb-3 flex-1 space-y-1.5 min-h-0">
@@ -205,8 +237,59 @@ export function PricingSection() {
         })}
       </div>
 
+      {/* Credit Explanation Section */}
+      <div className="mt-12 rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/50 to-slate-800/50 p-6 sm:p-8">
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full border border-yellow-400/30 bg-yellow-400/10 px-4 py-1.5 mb-3">
+            <FaCoins className="h-4 w-4 text-yellow-400" />
+            <span className="text-xs font-semibold text-yellow-300">اعتبار چیست؟</span>
+          </div>
+          <h3 className="text-xl font-bold text-white sm:text-2xl">
+            هر اعتبار چه کاری انجام می‌دهد؟
+          </h3>
+          <p className="mt-2 text-sm text-slate-400 max-w-2xl mx-auto">
+            اعتبار واحد پرداخت در بنانا است. بسته به نوع خروجی که می‌خواهید، اعتبار متفاوتی مصرف می‌شود.
+          </p>
+        </div>
+        
+        <div className="grid gap-4 sm:grid-cols-3">
+          {/* Standard Image */}
+          <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-400/20">
+              <FaImage className="h-6 w-6 text-emerald-400" />
+            </div>
+            <h4 className="text-base font-bold text-white mb-1">تصویر استاندارد</h4>
+            <p className="text-2xl font-black text-yellow-400 mb-1">{creditCosts.nanoBananaStandard}</p>
+            <p className="text-xs text-slate-400">اعتبار برای هر تصویر</p>
+            <p className="mt-2 text-[10px] text-slate-500">متن به تصویر • تصویر به تصویر</p>
+          </div>
+
+          {/* Pro Image */}
+          <div className="rounded-xl border border-purple-400/30 bg-purple-400/10 p-4 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-purple-400/20">
+              <HiSparkles className="h-6 w-6 text-purple-400" />
+            </div>
+            <h4 className="text-base font-bold text-white mb-1">تصویر پرو (2K)</h4>
+            <p className="text-2xl font-black text-yellow-400 mb-1">{creditCosts.nanoBananaPro}</p>
+            <p className="text-xs text-slate-400">اعتبار برای هر تصویر</p>
+            <p className="mt-2 text-[10px] text-slate-500">کیفیت ۲K • جزئیات بیشتر</p>
+          </div>
+
+          {/* Video */}
+          <div className="rounded-xl border border-orange-400/30 bg-orange-400/10 p-4 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-orange-400/20">
+              <FaVideo className="h-6 w-6 text-orange-400" />
+            </div>
+            <h4 className="text-base font-bold text-white mb-1">ویدیو (Kling)</h4>
+            <p className="text-2xl font-black text-yellow-400 mb-1">{creditCosts.klingVideo5s}-{creditCosts.klingVideo10sSound}</p>
+            <p className="text-xs text-slate-400">اعتبار برای هر ویدیو</p>
+            <p className="mt-2 text-[10px] text-slate-500">۵ثانیه: {creditCosts.klingVideo5s} • ۱۰ثانیه: {creditCosts.klingVideo10s} • با صدا: ×۲</p>
+          </div>
+        </div>
+      </div>
+
       {/* Additional info */}
-      <div className="mt-12 space-y-6">
+      <div className="mt-8 space-y-6">
         {/* Trust badges */}
         <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
           <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-4 py-2">

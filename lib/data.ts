@@ -57,9 +57,10 @@ export const plans = [
     nameEn: "Free",
     price: "0",
     currency: "تومان",
+    credits: 24,
     tagline: "برای شروع و امتحان سرویس",
     highlights: [
-      "۱۲ اعتبار",
+      "۲۴ اعتبار",
       "متن به تصویر",
       "کیفیت ۵۱۲×۵۱۲",
       "پردازش عادی",
@@ -73,6 +74,7 @@ export const plans = [
     nameEn: "Explorer",
     price: "350,000",
     currency: "تومان",
+    credits: 200,
     tagline: "برای شروع و آشنایی با قدرت هوش مصنوعی",
     highlights: [
       "۲۰۰ اعتبار",
@@ -90,6 +92,7 @@ export const plans = [
     nameEn: "Creator",
     price: "1,090,000",
     currency: "تومان",
+    credits: 650,
     tagline: "برای طراحان و فریلنسرها",
     highlights: [
       "۶۵۰ اعتبار",
@@ -109,6 +112,7 @@ export const plans = [
     nameEn: "Studio",
     price: "3,390,000",
     currency: "تومان",
+    credits: 2000,
     tagline: "مناسب تیم‌ها و کسب‌وکارها",
     highlights: [
       "۲۰۰۰ اعتبار",
@@ -192,6 +196,28 @@ export const IMAGE_SIZES = [
   { value: "4:5", label: "عمودی نزدیک به مربع (4:5)" },
   { value: "21:9", label: "افقی اولترا واید (21:9)" },
 ] as const;
+
+// Credit costs for different generation types
+export const creditCosts = {
+  nanoBananaStandard: 4,
+  nanoBananaPro: 24,
+  klingVideo5s: 55,
+  klingVideo5sSound: 110,
+  klingVideo10s: 110,
+  klingVideo10sSound: 220,
+};
+
+// Credit usage examples calculator
+export function calculateCreditUsage(totalCredits: number) {
+  return {
+    standardImages: Math.floor(totalCredits / creditCosts.nanoBananaStandard),
+    proImages: Math.floor(totalCredits / creditCosts.nanoBananaPro),
+    videos5s: Math.floor(totalCredits / creditCosts.klingVideo5s),
+    videos10s: Math.floor(totalCredits / creditCosts.klingVideo10s),
+    videos5sSound: Math.floor(totalCredits / creditCosts.klingVideo5sSound),
+    videos10sSound: Math.floor(totalCredits / creditCosts.klingVideo10sSound),
+  };
+}
 
 // Credit packages for additional credit purchases
 export const creditPackages = [
@@ -292,5 +318,59 @@ export const READY_PROMPTS: ReadyPrompt[] = [
       "https://menucaffe-test.storage.c2.liara.space/bananaai/images/gogosh.jpg",
     route: "/dashboard/image-to-image",
     gradient: "from-purple-400/20 via-pink-400/20 to-rose-500/20",
+  },
+  {
+    title: "کت شلواری",
+    prompt:
+      "Uma foto realista em preto e branco, recriando fielmente todos os traços, linhas faciais e proporções da imagem de referência. O sujeito apresenta um semblante imponente e confiante, com postura firme e elegante. Ele veste um terno preto clássico bem ajustado, com gravata slim preta, transmitindo sofisticação e autoridade. Iluminação controlada de estúdio, com contraste equilibrado, realçando a estrutura do rosto e a textura natural da pele. Estilo editorial, realista, sem exageros artísticos, fundo simples e discreto, foco total no retrato masculino.",
+    imageUrl:
+      "https://menucaffe-test.storage.c2.liara.space/bananaai/styles/black-tie-portrait.webp",
+    route: "/dashboard/image-to-image",
+    gradient: "from-neutral-700/20 via-neutral-800/20 to-black/30",
+  },
+  {
+    title: "کلاس درس",
+    prompt:
+      "Edit this image of a young man into a high-contrast black and white portrait set inside a quiet classroom. The man leans casually on a wooden school chair with legs crossed, wearing a navy blue sweatshirt, beige chinos, and black-and-white Converse sneakers. His expression is calm and neutral. His left arm rests on a desk while his right hand hangs naturally by his side. Behind him is an off-white classroom wall with visible wear, pinned papers, photos, and sticky notes arranged in a loose grid. One paper clearly displays the word 'Silence' above his head. Strong sunlight enters from the right, creating a sharp triangular beam of light on the wall and casting his shadow. The mood is cinematic, realistic, and candid, resembling a film photograph with slight grain, soft vintage texture, and natural imperfections.",
+    imageUrl:
+      "https://menucaffe-test.storage.c2.liara.space/bananaai/styles/classroom-effect.webp",
+    route: "/dashboard/image-to-image",
+    gradient: "from-slate-400/20 via-gray-500/20 to-zinc-600/20",
+  },
+  {
+    title: "شیر",
+    prompt:
+      "Create a realistic and emotional cinematic scene using the provided image for accurate facial features. A man and a majestic lion stand face to face, gently touching foreheads and muzzles in a moment of deep connection, respect, and spiritual bond. The man's eyes are closed with a serene, peaceful expression. The lion appears calm and powerful, with a thick, detailed mane. Both stand on lightly snow-covered ground as soft snowflakes fall. The man wears a dark coat, hair slightly tousled by cold wind. The background shows a misty, cold natural landscape with blurred mountains and gray tones. Lighting is soft and diffuse, emphasizing textures of skin, fur, and fabric. The atmosphere is poetic, calm, powerful, and cinematic.",
+    imageUrl:
+      "https://menucaffe-test.storage.c2.liara.space/bananaai/styles/instinct-spirit-lion.webp",
+    route: "/dashboard/image-to-image",
+    gradient: "from-slate-300/20 via-gray-400/20 to-stone-500/20",
+  },
+  {
+    title: "مونوکرومیک",
+    prompt:
+      "Recreate this scene using my submitted photo as reference, preserving the same framing, pose, lighting, and composition. The image shows a half-length male portrait, seated and leaning slightly forward. The right arm crosses the body, while the left hand rests gently on the opposite arm, conveying elegance and confidence. Facial expression is calm, confident, and subtly enigmatic, with a direct gaze into the camera and relaxed lips. He wears a dark, sophisticated outfit: a structured black blazer over a fitted black shirt or T-shirt, possibly with sunglasses. Hair is neatly groomed in a modern masculine style. Lighting is professional studio-style, with soft directional light (Rembrandt or side lighting) sculpting facial contours and creating elegant shadows. The background is smooth, neutral dark gray. Final image is black and white, high-contrast yet refined, realistic editorial quality, vertical format (1080x1920), cinematic finish.",
+    imageUrl:
+      "https://menucaffe-test.storage.c2.liara.space/bananaai/styles/monochromatic-elegant.webp",
+    route: "/dashboard/image-to-image",
+    gradient: "from-neutral-600/20 via-neutral-700/20 to-neutral-900/30",
+  },
+  {
+    title: "سوار موتور",
+    prompt:
+      "Crie um retrato ultra-realista e cinematográfico usando a foto enviada como referência facial. O homem está sentado sobre uma moto esportiva preta brilhante, em uma área externa cercada por árvores verdes. Ele veste uma camiseta preta solta, jeans escuros com caimento relaxado e dobras na barra, e tênis Nike preto e branco. Usa um relógio preto como acessório. A mão esquerda repousa casualmente sobre a coxa, enquanto a mão direita segura um capacete preto brilhante com viseira transparente, apoiado na moto. A motocicleta é detalhada, com motor robusto, estrutura forte e detalhes cromados que reforçam sua presença moderna e poderosa. Iluminação natural suave atravessa as árvores, equilibrando luz e sombra. Expressão calma e confiante, olhando diretamente para a câmera. Estilo editorial fotorrealista, alta resolução, atmosfera moderna e cinematográfica.",
+    imageUrl:
+      "https://menucaffe-test.storage.c2.liara.space/bananaai/styles/moto-esportiva.webp",
+    route: "/dashboard/image-to-image",
+    gradient: "from-emerald-400/20 via-green-500/20 to-lime-600/20",
+  },
+  {
+    title: "روی صندلی",
+    prompt:
+      "Studio portrait of a confident man sitting on a modern beige armchair with wooden legs. He leans slightly forward with his hands brought together, conveying calm authority and confidence. He wears a dark navy blue dress shirt with the top buttons open, light beige slim-fit trousers, and black loafers with tan soles. He has short dark brown hair styled with texture, a neatly trimmed full beard, warm tanned skin, and an intense, focused gaze directed at the camera. The background is minimalist light gray with a smooth gradient. Lighting is soft, natural studio light, evenly distributed to maintain realism and fine detail. The mood is cinematic and fashion-editorial, shot with a 50mm lens at f/2.8, vertical framing, full-body composition, professional photo quality.",
+    imageUrl:
+      "https://menucaffe-test.storage.c2.liara.space/bananaai/styles/premium-male-editorial-portrait.webp",
+    route: "/dashboard/image-to-image",
+    gradient: "from-stone-300/20 via-neutral-300/20 to-gray-400/20",
   },
 ];
